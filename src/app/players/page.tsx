@@ -135,7 +135,7 @@ export default function PlayersPage() {
               placeholder="Search players..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
             />
             <svg 
               className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
