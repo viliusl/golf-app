@@ -414,7 +414,7 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleOpenAddPlayerModal(team)}
-                        className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm"
+                        className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-sm"
                       >
                         Add Free Player
                       </button>
@@ -716,7 +716,7 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                           </div>
                           <button
                             onClick={() => handleAddPlayerToTeam(player)}
-                            className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition-colors text-sm"
+                            className="bg-green-500 text-white py-1 px-3 rounded-md hover:bg-green-600 transition-colors text-sm"
                           >
                             Add
                           </button>
