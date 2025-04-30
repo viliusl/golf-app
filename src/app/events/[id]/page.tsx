@@ -31,6 +31,8 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
   const [loading, setLoading] = useState(true);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isRenameEventModalOpen, setIsRenameEventModalOpen] = useState(false);
+  const [isRemoveMemberModalOpen, setIsRemoveMemberModalOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; index: number; name: string } | null>(null);
   const [newEventName, setNewEventName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -138,6 +140,42 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
       console.error('Error removing team:', error);
       setError(error instanceof Error ? error.message : 'Failed to remove team');
     }
+  };
+
+  const handleRemoveMember = async (teamId: string, memberIndex: number) => {
+    if (!event) return;
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/events?id=${event._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          teamId,
+          memberIndex
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to remove member');
+      }
+
+      const updatedEvent = await response.json();
+      setEvent(updatedEvent);
+      setIsRemoveMemberModalOpen(false);
+      setMemberToRemove(null);
+    } catch (error) {
+      console.error('Error removing member:', error);
+      setError(error instanceof Error ? error.message : 'Failed to remove member');
+    }
+  };
+
+  const handleRemoveMemberClick = (teamId: string, index: number, name: string) => {
+    setMemberToRemove({ teamId, index, name });
+    setIsRemoveMemberModalOpen(true);
   };
 
   const handleRenameEvent = async () => {
@@ -308,6 +346,9 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Gender
                         </th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -334,11 +375,19 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-black">{member.gender}</div>
                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <button
+                                onClick={() => handleRemoveMemberClick(team._id, idx, member.name)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                Remove
+                              </button>
+                            </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                          <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
                             No members in this team
                           </td>
                         </tr>
@@ -448,6 +497,47 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                     Save
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Remove Member Confirmation Modal */}
+        {isRemoveMemberModalOpen && memberToRemove && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Remove Member</h2>
+                <button
+                  onClick={() => {
+                    setIsRemoveMemberModalOpen(false);
+                    setMemberToRemove(null);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="mb-4 text-gray-700">
+                Are you sure you want to remove {memberToRemove.name} from this team?
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setIsRemoveMemberModalOpen(false);
+                    setMemberToRemove(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRemoveMember(memberToRemove.teamId, memberToRemove.index)}
+                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                >
+                  Remove
+                </button>
               </div>
             </div>
           </div>

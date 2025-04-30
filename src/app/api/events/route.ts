@@ -146,7 +146,7 @@ export async function PUT(request: Request) {
     await connectDB();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const { name, date, teams } = await request.json();
+    const { name, date, teams, teamId, memberIndex } = await request.json();
 
     if (!id) {
       return NextResponse.json(
@@ -165,7 +165,33 @@ export async function PUT(request: Request) {
 
     if (name) event.name = name;
     if (date) event.date = date;
-    if (teams) {
+    
+    // Handle removing a member from a team
+    if (teamId !== undefined && memberIndex !== undefined) {
+      // Find the team in the event
+      const teamIndex = event.teams.findIndex((team: any) => team._id === teamId);
+      
+      if (teamIndex === -1) {
+        return NextResponse.json(
+          { error: 'Team not found in this event' },
+          { status: 404 }
+        );
+      }
+      
+      // Check if member index is valid
+      if (memberIndex < 0 || memberIndex >= event.teams[teamIndex].members.length) {
+        return NextResponse.json(
+          { error: 'Invalid member index' },
+          { status: 400 }
+        );
+      }
+      
+      // Remove the member from the team
+      event.teams[teamIndex].members.splice(memberIndex, 1);
+      console.log('Removed member at index', memberIndex, 'from team', teamId);
+    } 
+    // Handle team operations (add/remove teams)
+    else if (teams) {
       // Initialize teams array if it doesn't exist
       if (!event.teams) {
         event.teams = [];
