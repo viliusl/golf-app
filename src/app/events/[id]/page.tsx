@@ -488,7 +488,7 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <button
                                 onClick={() => handleRemoveMemberClick(team._id, idx, member.name)}
-                                className="bg-red-500 text-white py-1 px-2 rounded-md hover:bg-red-600 transition-colors text-xs"
+                                className="text-red-600 hover:text-red-900"
                               >
                                 Remove
                               </button>
