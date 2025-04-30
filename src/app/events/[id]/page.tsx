@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Player } from '@/app/api/players/route';
+import { Match as MatchType, MatchPlayer } from '@/app/api/matches/route';
 
 interface Team {
   _id: string;
@@ -27,6 +28,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [event, setEvent] = useState<Event | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [freePlayers, setFreePlayers] = useState<Player[]>([]);
+  const [matches, setMatches] = useState<MatchType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isRenameEventModalOpen, setIsRenameEventModalOpen] = useState(false);
@@ -34,8 +36,11 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [isRemoveTeamModalOpen, setIsRemoveTeamModalOpen] = useState(false);
   const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
   const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
+  const [isAddMatchModalOpen, setIsAddMatchModalOpen] = useState(false);
+  const [isEditMatchModalOpen, setIsEditMatchModalOpen] = useState(false);
   const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState<Team | null>(null);
   const [teamToRemove, setTeamToRemove] = useState<Team | null>(null);
+  const [matchToEdit, setMatchToEdit] = useState<MatchType | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; index: number; name: string } | null>(null);
   const [memberToEdit, setMemberToEdit] = useState<{
     name: string;
@@ -46,6 +51,21 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   } | null>(null);
   const [memberTeamIdToEdit, setMemberTeamIdToEdit] = useState<string | null>(null);
   const [memberIndexToEdit, setMemberIndexToEdit] = useState<number | null>(null);
+  const [newMatch, setNewMatch] = useState<{
+    player1: {
+      name: string;
+      teamName: string;
+      score: number;
+    };
+    player2: {
+      name: string;
+      teamName: string;
+      score: number;
+    };
+  }>({
+    player1: { name: '', teamName: '', score: 0 },
+    player2: { name: '', teamName: '', score: 0 }
+  });
   const [newEventName, setNewEventName] = useState('');
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -102,10 +122,25 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         // Don't set global error to avoid confusing the user
       }
     };
+    
+    const fetchMatchesData = async () => {
+      try {
+        const response = await fetch(`/api/matches?eventId=${params.id}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setMatches(data);
+      } catch (error) {
+        console.error('Error fetching matches:', error);
+        // Don't set global error to avoid confusing the user
+      }
+    };
 
     fetchEventData();
     fetchTeamsData();
     fetchFreePlayersData();
+    fetchMatchesData();
   }, [params.id]);
 
   // Keep the original fetch functions for use in other event handlers
@@ -156,6 +191,20 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       setFreePlayers(data);
     } catch (error) {
       console.error('Error fetching free players:', error);
+      // Don't set global error to avoid confusing the user
+    }
+  };
+  
+  const fetchMatches = async () => {
+    try {
+      const response = await fetch(`/api/matches?eventId=${params.id}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setMatches(data);
+    } catch (error) {
+      console.error('Error fetching matches:', error);
       // Don't set global error to avoid confusing the user
     }
   };
@@ -432,6 +481,100 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
+  const handleAddMatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!event) return;
+    setError(null);
+    
+    try {
+      if (!newMatch.player1.name || !newMatch.player1.teamName || 
+          !newMatch.player2.name || !newMatch.player2.teamName) {
+        setError('Please select both players for the match');
+        return;
+      }
+      
+      const response = await fetch('/api/matches', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId: event._id,
+          player1: newMatch.player1,
+          player2: newMatch.player2
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to create match');
+      }
+
+      await fetchMatches();
+      setIsAddMatchModalOpen(false);
+      setNewMatch({
+        player1: { name: '', teamName: '', score: 0 },
+        player2: { name: '', teamName: '', score: 0 }
+      });
+    } catch (error) {
+      console.error('Error adding match:', error);
+      setError(error instanceof Error ? error.message : 'Failed to add match');
+    }
+  };
+
+  const handleEditMatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!matchToEdit) return;
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/matches?id=${matchToEdit._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          player1: matchToEdit.player1,
+          player2: matchToEdit.player2,
+          completed: matchToEdit.completed
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to update match');
+      }
+
+      await fetchMatches();
+      setIsEditMatchModalOpen(false);
+      setMatchToEdit(null);
+    } catch (error) {
+      console.error('Error updating match:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update match');
+    }
+  };
+
+  const handleDeleteMatch = async (matchId: string) => {
+    if (!confirm('Are you sure you want to delete this match?')) return;
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/matches?id=${matchId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to delete match');
+      }
+
+      await fetchMatches();
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      setError(error instanceof Error ? error.message : 'Failed to delete match');
+    }
+  };
+
   if (loading) {
     return (
       <main className="p-8">
@@ -496,7 +639,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           </div>
 
           {/* Event Stats */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-500">Total Teams</p>
               <p className="text-2xl font-semibold text-black">{eventTeams.length}</p>
@@ -504,6 +647,10 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-500">Total Members</p>
               <p className="text-2xl font-semibold text-black">{totalMembers}</p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-500">Total Matches</p>
+              <p className="text-2xl font-semibold text-black">{matches.length}</p>
             </div>
           </div>
         </div>
@@ -513,6 +660,108 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             {error}
           </div>
         )}
+        
+        {/* Matches Section */}
+        <div className="space-y-8 mb-8">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold text-black">Matches</h2>
+            <button
+              onClick={() => setIsAddMatchModalOpen(true)}
+              className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+            >
+              Add Match
+            </button>
+          </div>
+
+          {matches.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+              <p className="text-gray-500">No matches added yet</p>
+              <button
+                onClick={() => setIsAddMatchModalOpen(true)}
+                className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+              >
+                Add Match
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Player 1
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Score
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        vs
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Score
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Player 2
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {matches.map((match) => (
+                      <tr key={match._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-black">{match.player1.name}</div>
+                          <div className="text-xs text-gray-500">{match.player1.teamName}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="text-lg font-bold text-black">{match.player1.score}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="text-sm font-medium text-gray-500">vs</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="text-lg font-bold text-black">{match.player2.score}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-black">{match.player2.name}</div>
+                          <div className="text-xs text-gray-500">{match.player2.teamName}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${match.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                            {match.completed ? 'Completed' : 'In Progress'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => {
+                              setMatchToEdit(match);
+                              setIsEditMatchModalOpen(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-900 mr-4"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMatch(match._id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Teams Section */}
         <div className="space-y-8">
@@ -1007,6 +1256,247 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                       setMemberToEdit(null);
                       setMemberTeamIdToEdit(null);
                       setMemberIndexToEdit(null);
+                      setError(null);
+                    }}
+                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        
+        {/* Add Match Modal */}
+        {isAddMatchModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Add New Match</h2>
+                <button
+                  onClick={() => {
+                    setIsAddMatchModalOpen(false);
+                    setNewMatch({
+                      player1: { name: '', teamName: '', score: 0 },
+                      player2: { name: '', teamName: '', score: 0 }
+                    });
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              {event && event.teams.length < 2 ? (
+                <div className="text-center p-4">
+                  <p className="text-gray-600 mb-4">You need at least two teams with members to create a match.</p>
+                  <button
+                    onClick={() => {
+                      setIsAddMatchModalOpen(false);
+                      setIsAddTeamModalOpen(true);
+                    }}
+                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    Add Teams
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleAddMatch}>
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Player 1</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {event && event.teams.map((team) => (
+                        <div key={`team-${team._id}`} className="mb-4">
+                          <p className="text-sm font-semibold mb-2">{team.name}</p>
+                          {team.members.map((member, idx) => (
+                            <div key={`member-${idx}`} className="flex items-center mb-2">
+                              <input
+                                type="radio"
+                                id={`player1-${team._id}-${idx}`}
+                                name="player1"
+                                className="mr-2"
+                                onChange={() => setNewMatch({
+                                  ...newMatch,
+                                  player1: {
+                                    name: member.name,
+                                    teamName: team.name,
+                                    score: 0
+                                  }
+                                })}
+                                checked={newMatch.player1.name === member.name && newMatch.player1.teamName === team.name}
+                              />
+                              <label htmlFor={`player1-${team._id}-${idx}`} className="text-sm text-gray-700">
+                                {member.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Player 2</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {event && event.teams.map((team) => (
+                        <div key={`team-${team._id}`} className="mb-4">
+                          <p className="text-sm font-semibold mb-2">{team.name}</p>
+                          {team.members.map((member, idx) => (
+                            <div key={`member-${idx}`} className="flex items-center mb-2">
+                              <input
+                                type="radio"
+                                id={`player2-${team._id}-${idx}`}
+                                name="player2"
+                                className="mr-2"
+                                onChange={() => setNewMatch({
+                                  ...newMatch,
+                                  player2: {
+                                    name: member.name,
+                                    teamName: team.name,
+                                    score: 0
+                                  }
+                                })}
+                                checked={newMatch.player2.name === member.name && newMatch.player2.teamName === team.name}
+                                disabled={newMatch.player1.name === member.name && newMatch.player1.teamName === team.name}
+                              />
+                              <label htmlFor={`player2-${team._id}-${idx}`} className="text-sm text-gray-700">
+                                {member.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddMatchModalOpen(false);
+                        setNewMatch({
+                          player1: { name: '', teamName: '', score: 0 },
+                          player2: { name: '', teamName: '', score: 0 }
+                        });
+                        setError(null);
+                      }}
+                      className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                    >
+                      Create Match
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Edit Match Modal */}
+        {isEditMatchModalOpen && matchToEdit && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Edit Match</h2>
+                <button
+                  onClick={() => {
+                    setIsEditMatchModalOpen(false);
+                    setMatchToEdit(null);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <form onSubmit={handleEditMatch}>
+                <div className="grid grid-cols-2 gap-8 mb-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">{matchToEdit.player1.name}</h3>
+                    <p className="text-sm text-gray-500 mb-3">{matchToEdit.player1.teamName}</p>
+                    
+                    <div className="mb-4">
+                      <label htmlFor="player1-score" className="block text-sm font-medium text-gray-700 mb-1">
+                        Score
+                      </label>
+                      <input
+                        type="number"
+                        id="player1-score"
+                        min="0"
+                        value={matchToEdit.player1.score}
+                        onChange={(e) => setMatchToEdit({
+                          ...matchToEdit,
+                          player1: {
+                            ...matchToEdit.player1,
+                            score: parseInt(e.target.value) || 0
+                          }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">{matchToEdit.player2.name}</h3>
+                    <p className="text-sm text-gray-500 mb-3">{matchToEdit.player2.teamName}</p>
+                    
+                    <div className="mb-4">
+                      <label htmlFor="player2-score" className="block text-sm font-medium text-gray-700 mb-1">
+                        Score
+                      </label>
+                      <input
+                        type="number"
+                        id="player2-score"
+                        min="0"
+                        value={matchToEdit.player2.score}
+                        onChange={(e) => setMatchToEdit({
+                          ...matchToEdit,
+                          player2: {
+                            ...matchToEdit.player2,
+                            score: parseInt(e.target.value) || 0
+                          }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={matchToEdit.completed}
+                      onChange={(e) => setMatchToEdit({
+                        ...matchToEdit,
+                        completed: e.target.checked
+                      })}
+                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    Match Completed
+                  </label>
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditMatchModalOpen(false);
+                      setMatchToEdit(null);
                       setError(null);
                     }}
                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
