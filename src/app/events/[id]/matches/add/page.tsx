@@ -41,6 +41,7 @@ interface HoleScore {
   player2Score: number;
   player1Putt: boolean;
   player2Putt: boolean;
+  winner: string; // 'player1', 'player2', or 'tie'
 }
 
 export default function AddMatch({ params }: { params: { id: string } }) {
@@ -68,15 +69,15 @@ export default function AddMatch({ params }: { params: { id: string } }) {
   
   // Default hole data - normally this would come from a course database
   const [holeScores, setHoleScores] = useState<HoleScore[]>([
-    { hole: 1, handicap: 7, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
-    { hole: 2, handicap: 3, par: 5, pace: 18, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
-    { hole: 3, handicap: 15, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
-    { hole: 4, handicap: 11, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
-    { hole: 5, handicap: 5, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
-    { hole: 6, handicap: 9, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
-    { hole: 7, handicap: 1, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
-    { hole: 8, handicap: 13, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
-    { hole: 9, handicap: 17, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 1, handicap: 7, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 2, handicap: 3, par: 5, pace: 18, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 3, handicap: 15, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 4, handicap: 11, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 5, handicap: 5, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 6, handicap: 9, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 7, handicap: 1, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 8, handicap: 13, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 9, handicap: 17, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
   ]);
 
   useEffect(() => {
@@ -159,6 +160,19 @@ export default function AddMatch({ params }: { params: { id: string } }) {
   ) => {
     const updatedHoleScores = [...holeScores];
     updatedHoleScores[holeIndex][player] = value;
+    
+    // Update winner for this hole
+    const hole = updatedHoleScores[holeIndex];
+    if (hole.player1Score === 0 || hole.player2Score === 0) {
+      hole.winner = 'tie';
+    } else if (hole.player1Score < hole.player2Score) {
+      hole.winner = 'player1';
+    } else if (hole.player2Score < hole.player1Score) {
+      hole.winner = 'player2';
+    } else {
+      hole.winner = 'tie';
+    }
+    
     setHoleScores(updatedHoleScores);
     
     // Update total scores
@@ -401,10 +415,19 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             1 Putt
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Score
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             {newMatch.player2.name}
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             1 Putt
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Score
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Winner
                           </th>
                         </tr>
                       </thead>
@@ -434,6 +457,16 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                               />
                             </td>
+                            <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${
+                              hole.player1Score < hole.par ? 'text-green-600' : 
+                              hole.player1Score > hole.par ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              {hole.player1Score > 0 ? (
+                                hole.player1Score === hole.par ? 'Par' :
+                                hole.player1Score < hole.par ? `-${hole.par - hole.player1Score}` :
+                                `+${hole.player1Score - hole.par}`
+                              ) : ''}
+                            </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <input
                                 type="number"
@@ -451,6 +484,25 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                               />
                             </td>
+                            <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${
+                              hole.player2Score < hole.par ? 'text-green-600' : 
+                              hole.player2Score > hole.par ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              {hole.player2Score > 0 ? (
+                                hole.player2Score === hole.par ? 'Par' :
+                                hole.player2Score < hole.par ? `-${hole.par - hole.player2Score}` :
+                                `+${hole.player2Score - hole.par}`
+                              ) : ''}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
+                              {hole.player1Score > 0 && hole.player2Score > 0 ? (
+                                hole.winner === 'player1' ? 
+                                  <span className="text-green-600">{newMatch.player1.name.split(' ')[0]}</span> : 
+                                hole.winner === 'player2' ? 
+                                  <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span> : 
+                                  <span className="text-gray-600">Tie</span>
+                              ) : ''}
+                            </td>
                           </tr>
                         ))}
                         {/* Total row */}
@@ -465,10 +517,25 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             {holeScores.filter(h => h.player1Putt).length}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            —
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                             {newMatch.player2.score}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
                             {holeScores.filter(h => h.player2Putt).length}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            —
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                            {newMatch.player1.score > 0 && newMatch.player2.score > 0 ? (
+                              newMatch.player1.score < newMatch.player2.score ? 
+                                <span className="text-green-600">{newMatch.player1.name.split(' ')[0]}</span> : 
+                              newMatch.player2.score < newMatch.player1.score ? 
+                                <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span> : 
+                                <span className="text-gray-600">Tie</span>
+                            ) : ''}
                           </td>
                         </tr>
                       </tbody>
