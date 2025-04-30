@@ -414,13 +414,13 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleOpenAddPlayerModal(team)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm"
                       >
                         Add Free Player
                       </button>
                       <button
                         onClick={() => handleRemoveTeam(team._id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors text-sm"
                       >
                         Remove Team
                       </button>
@@ -479,7 +479,7 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <button
                                 onClick={() => handleRemoveMemberClick(team._id, idx, member.name)}
-                                className="text-red-600 hover:text-red-900"
+                                className="bg-red-500 text-white py-1 px-2 rounded-md hover:bg-red-600 transition-colors text-xs"
                               >
                                 Remove
                               </button>
