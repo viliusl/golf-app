@@ -63,22 +63,36 @@ export async function POST(request: Request) {
     await connectDB();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
-    // Log to debug
-    console.log('POST /api/events - Request received');
-    console.log('Event ID:', id);
-    
     const body = await request.json();
+    
+    // If no ID is provided, we're creating a new event
+    if (!id) {
+      console.log('Creating new event:', body);
+      const { name, date } = body;
+      
+      if (!name || !date) {
+        return NextResponse.json(
+          { error: 'Event name and date are required' },
+          { status: 400 }
+        );
+      }
+      
+      const newEvent = new Event({
+        name,
+        date,
+        teams: []
+      });
+      
+      await newEvent.save();
+      console.log('Event created successfully:', newEvent);
+      return NextResponse.json(newEvent);
+    }
+    
+    // If an ID is provided, we're adding a team to an existing event
+    console.log('POST /api/events - Adding team to event');
+    console.log('Event ID:', id);
     console.log('Request body:', body);
     const { teamId } = body;
-
-    if (!id) {
-      console.log('Error: Event ID is required');
-      return NextResponse.json(
-        { error: 'Event ID is required' },
-        { status: 400 }
-      );
-    }
 
     if (!teamId) {
       console.log('Error: Team ID is required');
@@ -147,9 +161,9 @@ export async function POST(request: Request) {
     
     return NextResponse.json(eventWithTeams);
   } catch (error) {
-    console.error('Error adding team to event:', error);
+    console.error('Error processing event:', error);
     return NextResponse.json(
-      { error: 'Failed to add team to event', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to process event', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

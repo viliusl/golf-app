@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { use } from 'react';
 import { Player } from '@/app/api/players/route';
 
 interface Team {
@@ -24,8 +23,7 @@ interface Event {
   createdAt: string;
 }
 
-export default function EventDetails({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+export default function EventDetails({ params }: { params: { id: string } }) {
   const [event, setEvent] = useState<Event | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [freePlayers, setFreePlayers] = useState<Player[]>([]);
@@ -43,15 +41,67 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchEvent();
-    fetchTeams();
-    fetchFreePlayers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedParams.id]);
+    // Define fetch functions inside useEffect to properly capture dependencies
+    const fetchEventData = async () => {
+      try {
+        const response = await fetch(`/api/events?id=${params.id}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Fetched event data:', data);
+        
+        // Ensure the teams array exists
+        if (!data.teams) {
+          data.teams = [];
+        }
+        
+        setEvent(data);
+      } catch (error) {
+        console.error('Error fetching event:', error);
+        setError('Failed to load event');
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    const fetchTeamsData = async () => {
+      try {
+        const response = await fetch('/api/teams');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setTeams(data);
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+        setError('Failed to load teams');
+      }
+    };
+
+    const fetchFreePlayersData = async () => {
+      try {
+        const response = await fetch('/api/players');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setFreePlayers(data);
+      } catch (error) {
+        console.error('Error fetching free players:', error);
+        // Don't set global error to avoid confusing the user
+      }
+    };
+
+    fetchEventData();
+    fetchTeamsData();
+    fetchFreePlayersData();
+  }, [params.id]);
+
+  // Keep the original fetch functions for use in other event handlers
   const fetchEvent = async () => {
     try {
-      const response = await fetch(`/api/events?id=${resolvedParams.id}`);
+      const response = await fetch(`/api/events?id=${params.id}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
