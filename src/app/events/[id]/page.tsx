@@ -37,6 +37,9 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [isRemoveTeamModalOpen, setIsRemoveTeamModalOpen] = useState(false);
   const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
   const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
+  const [isDeleteMatchModalOpen, setIsDeleteMatchModalOpen] = useState(false);
+  const [matchToDelete, setMatchToDelete] = useState<string | null>(null);
+  const [matchToDeleteDetails, setMatchToDeleteDetails] = useState<MatchType | null>(null);
   const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState<Team | null>(null);
   const [teamToRemove, setTeamToRemove] = useState<Team | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; index: number; name: string } | null>(null);
@@ -192,12 +195,18 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleDeleteMatch = async (matchId: string) => {
-    if (!confirm('Are you sure you want to delete this match?')) return;
+  const handleDeleteMatchClick = (match: MatchType) => {
+    setMatchToDelete(match._id);
+    setMatchToDeleteDetails(match);
+    setIsDeleteMatchModalOpen(true);
+  };
+
+  const handleDeleteMatch = async () => {
+    if (!matchToDelete) return;
     setError(null);
     
     try {
-      const response = await fetch(`/api/matches?id=${matchId}`, {
+      const response = await fetch(`/api/matches?id=${matchToDelete}`, {
         method: 'DELETE'
       });
 
@@ -207,6 +216,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       }
 
       await fetchMatches();
+      setIsDeleteMatchModalOpen(false);
+      setMatchToDelete(null);
     } catch (error) {
       console.error('Error deleting match:', error);
       setError(error instanceof Error ? error.message : 'Failed to delete match');
@@ -637,7 +648,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             Edit
                           </Link>
                           <button
-                            onClick={() => handleDeleteMatch(match._id)}
+                            onClick={() => handleDeleteMatchClick(match)}
                             className="text-red-600 hover:text-red-900"
                           >
                             Delete
@@ -1173,6 +1184,72 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Match Confirmation Modal */}
+        {isDeleteMatchModalOpen && matchToDeleteDetails && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Delete Match</h2>
+                <button
+                  onClick={() => {
+                    setIsDeleteMatchModalOpen(false);
+                    setMatchToDelete(null);
+                    setMatchToDeleteDetails(null);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+                <div className="flex justify-between items-center mb-3">
+                  <div>
+                    <p className="font-medium text-gray-900">{matchToDeleteDetails.player1.name}</p>
+                    <p className="text-sm text-gray-500">{matchToDeleteDetails.player1.teamName}</p>
+                  </div>
+                  <div className="text-xl font-bold">{matchToDeleteDetails.player1.score}</div>
+                </div>
+                
+                <div className="flex justify-center items-center mb-3">
+                  <span className="text-sm font-medium text-gray-500">vs</span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium text-gray-900">{matchToDeleteDetails.player2.name}</p>
+                    <p className="text-sm text-gray-500">{matchToDeleteDetails.player2.teamName}</p>
+                  </div>
+                  <div className="text-xl font-bold">{matchToDeleteDetails.player2.score}</div>
+                </div>
+              </div>
+              
+              <p className="mb-4 text-gray-700">
+                Are you sure you want to delete this match? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setIsDeleteMatchModalOpen(false);
+                    setMatchToDelete(null);
+                    setMatchToDeleteDetails(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteMatch}
+                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         )}
