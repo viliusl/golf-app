@@ -406,6 +406,9 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             Hole
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Hcp
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Par
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -436,6 +439,9 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           <tr key={`hole-${hole.hole}`} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                               {hole.hole}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                              {hole.handicap}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                               {hole.par}
@@ -507,7 +513,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                         ))}
                         {/* Total row */}
                         <tr className="bg-gray-100 font-bold">
-                          <td colSpan={2} className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
+                          <td colSpan={3} className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
                             Total:
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
