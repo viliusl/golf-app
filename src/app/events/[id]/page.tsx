@@ -30,6 +30,8 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
+  const [isRenameEventModalOpen, setIsRenameEventModalOpen] = useState(false);
+  const [newEventName, setNewEventName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -138,6 +140,39 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
     }
   };
 
+  const handleRenameEvent = async () => {
+    if (!event || !newEventName.trim()) {
+      setError('Event name is required');
+      return;
+    }
+    
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/events?id=${event._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newEventName
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to rename event');
+      }
+
+      const updatedEvent = await response.json();
+      setEvent(updatedEvent);
+      setIsRenameEventModalOpen(false);
+    } catch (error) {
+      console.error('Error renaming event:', error);
+      setError(error instanceof Error ? error.message : 'Failed to rename event');
+    }
+  };
+
   if (loading) {
     return (
       <main className="p-8">
@@ -158,7 +193,8 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
     );
   }
 
-  const availableTeams = teams.filter(team => !event.teams?.some(eventTeam => eventTeam._id === team._id));
+  const eventTeamIds = event.teams?.map(team => team._id) || [];
+  const availableTeams = teams.filter(team => !eventTeamIds.includes(team._id));
   const eventTeams = event.teams || [];
   const totalMembers = eventTeams.reduce((sum, team) => sum + (team.members?.length || 0), 0);
 
@@ -169,7 +205,20 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-black mb-2">{event.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-bold text-black mb-2">{event.name}</h1>
+                <button
+                  onClick={() => {
+                    setNewEventName(event.name);
+                    setIsRenameEventModalOpen(true);
+                  }}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                  </svg>
+                </button>
+              </div>
               <p className="text-lg text-gray-600">
                 {new Date(event.date).toLocaleDateString(undefined, {
                   year: 'numeric',
@@ -320,25 +369,85 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
               </div>
               <div className="space-y-4">
                 {availableTeams.length === 0 ? (
-                  <p className="text-sm text-gray-500">No teams available to add</p>
+                  <div className="text-center p-4">
+                    <p className="text-sm text-gray-500 mb-2">All teams have been added to this event</p>
+                    <a href="/teams" className="text-blue-600 hover:text-blue-800">
+                      Create a new team
+                    </a>
+                  </div>
                 ) : (
-                  availableTeams.map((team) => (
-                    <div key={team._id} className="flex justify-between items-center p-4 border rounded-md">
-                      <div>
-                        <h3 className="text-sm font-medium text-black">{team.name}</h3>
-                        <p className="text-sm text-gray-500">
-                          {team.members?.length || 0} members
-                        </p>
+                  <>
+                    <p className="text-sm text-gray-500">Select a team to add to this event:</p>
+                    {availableTeams.map((team) => (
+                      <div key={team._id} className="flex justify-between items-center p-4 border rounded-md hover:bg-gray-50">
+                        <div>
+                          <h3 className="text-sm font-medium text-black">{team.name}</h3>
+                          <p className="text-sm text-gray-500">
+                            {team.members?.length || 0} members
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleAddTeam(team._id)}
+                          className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition-colors text-sm"
+                        >
+                          Add
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleAddTeam(team._id)}
-                        className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition-colors text-sm"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  ))
+                    ))}
+                  </>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rename Event Modal */}
+        {isRenameEventModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Rename Event</h2>
+                <button
+                  onClick={() => {
+                    setIsRenameEventModalOpen(false);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="eventName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Name
+                  </label>
+                  <input
+                    type="text"
+                    id="eventName"
+                    value={newEventName}
+                    onChange={(e) => setNewEventName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    placeholder="Enter event name"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setIsRenameEventModalOpen(false);
+                      setError(null);
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRenameEvent}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
           </div>

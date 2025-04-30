@@ -81,52 +81,44 @@ export async function DELETE(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    await connectDB();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
-    if (!id) {
-      return NextResponse.json({ error: 'Team ID is required' }, { status: 400 });
-    }
-
     const body = await request.json();
-    console.log('Received update data:', body);
+    const { members, name } = body;
 
-    await connectDB();
-    const team = await Team.findById(id);
-    
-    if (!team) {
-      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Team ID is required' },
+        { status: 400 }
+      );
     }
 
-    console.log(body.members);
+    const team = await Team.findById(id);
+    if (!team) {
+      return NextResponse.json(
+        { error: 'Team not found' },
+        { status: 404 }
+      );
+    }
 
-    // Update team fields
-    if (body.members !== undefined) {
-      // Ensure members is an array of objects
-      if (Array.isArray(body.members)) {
-        team.members = body.members.map((member: {
-          name: string;
-          isCaptain: boolean;
-          handicap: number;
-          tee: 'W' | 'Y' | 'B' | 'R';
-          gender: 'Male' | 'Female';
-        }) => ({
-          name: member.name,
-          isCaptain: member.isCaptain || false,
-          handicap: Number(member.handicap),
-          tee: member.tee,
-          gender: member.gender
-        }));
-      }
+    // Update team name if provided
+    if (name) {
+      team.name = name;
+    }
+
+    // Update members if provided
+    if (members) {
+      team.members = members;
     }
 
     await team.save();
     return NextResponse.json(team);
   } catch (error) {
     console.error('Error updating team:', error);
-    return NextResponse.json({ 
-      error: 'Failed to update team',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update team', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 } 

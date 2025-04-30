@@ -23,9 +23,11 @@ export default function Teams() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
+  const [isRenameTeamModalOpen, setIsRenameTeamModalOpen] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
   const [teamToAddMember, setTeamToAddMember] = useState<Team | null>(null);
   const [teamToEditMember, setTeamToEditMember] = useState<Team | null>(null);
+  const [teamToRename, setTeamToRename] = useState<Team | null>(null);
   const [memberToEdit, setMemberToEdit] = useState<{
     name: string;
     isCaptain: boolean;
@@ -48,6 +50,7 @@ export default function Teams() {
     tee: 'W',
     gender: 'Male'
   });
+  const [renamedTeamName, setRenamedTeamName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -205,6 +208,55 @@ export default function Teams() {
     }
   };
 
+  const handleRenameTeam = async () => {
+    if (!teamToRename) return;
+    setError(null);
+
+    if (!renamedTeamName.trim()) {
+      setError('Team name is required');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/teams?id=${teamToRename._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: renamedTeamName
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to rename team');
+      }
+
+      const updatedTeam = await response.json();
+      
+      // Update the teams list with the renamed team
+      setTeams(prevTeams => 
+        prevTeams.map(team => 
+          team._id === updatedTeam._id ? updatedTeam : team
+        )
+      );
+
+      // Reset and close modal
+      setRenamedTeamName('');
+      setTeamToRename(null);
+      setIsRenameTeamModalOpen(false);
+    } catch (error) {
+      console.error('Error renaming team:', error);
+      setError(error instanceof Error ? error.message : 'Failed to rename team');
+    }
+  };
+
+  const openRenameTeamModal = (team: Team) => {
+    setTeamToRename(team);
+    setRenamedTeamName(team.name);
+    setIsRenameTeamModalOpen(true);
+  };
+
   return (
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
@@ -234,7 +286,17 @@ export default function Teams() {
             teams.map((team) => (
               <div key={team._id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-black">{team.name}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-semibold text-black">{team.name}</h2>
+                    <button
+                      onClick={() => openRenameTeamModal(team)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                      </svg>
+                    </button>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
@@ -666,6 +728,62 @@ export default function Teams() {
                 >
                   Delete
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rename Team Modal */}
+        {isRenameTeamModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Rename Team</h2>
+                <button
+                  onClick={() => {
+                    setIsRenameTeamModalOpen(false);
+                    setTeamToRename(null);
+                    setRenamedTeamName('');
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="teamName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Team Name
+                  </label>
+                  <input
+                    type="text"
+                    id="teamName"
+                    value={renamedTeamName}
+                    onChange={(e) => setRenamedTeamName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    placeholder="Enter team name"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setIsRenameTeamModalOpen(false);
+                      setTeamToRename(null);
+                      setRenamedTeamName('');
+                      setError(null);
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRenameTeam}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
           </div>
