@@ -1,57 +1,94 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Team from '@/models/Team';
-
-interface TeamMember {
-  name: string;
-  isCaptain: boolean;
-  handicap: number;
-  tee: 'W' | 'Y' | 'B' | 'R';
-  gender: 'Male' | 'Female';
-}
+import Player from '@/models/Player';
 
 export interface Player {
+  _id: string;
   name: string;
   handicap: number;
   tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
-  teamId: string;
-  teamName: string;
+  createdAt: string;
 }
 
 export async function GET() {
   try {
     await connectDB();
     
-    // Fetch all teams
-    const teams = await Team.find();
-    
-    // Extract all players from teams
-    const players: Player[] = [];
-    
-    teams.forEach(team => {
-      if (team.members && team.members.length > 0) {
-        team.members.forEach((member: TeamMember) => {
-          players.push({
-            name: member.name,
-            handicap: member.handicap,
-            tee: member.tee,
-            gender: member.gender,
-            teamId: team._id.toString(),
-            teamName: team.name
-          });
-        });
-      }
-    });
-    
-    // Sort players by name
-    players.sort((a, b) => a.name.localeCompare(b.name));
+    // Fetch all free players from the Player collection
+    const players = await Player.find().sort({ name: 1 });
     
     return NextResponse.json(players);
   } catch (error) {
     console.error('Error fetching players:', error);
     return NextResponse.json(
       { error: 'Failed to fetch players', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    if (!body.name || body.handicap === undefined || !body.tee || !body.gender) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+    
+    // Create a new player
+    const player = await Player.create({
+      name: body.name,
+      handicap: body.handicap,
+      tee: body.tee,
+      gender: body.gender,
+      createdAt: new Date()
+    });
+    
+    return NextResponse.json(player, { status: 201 });
+  } catch (error) {
+    console.error('Error creating player:', error);
+    return NextResponse.json(
+      { error: 'Failed to create player', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Player ID is required' },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+    
+    // Delete the player
+    const result = await Player.findByIdAndDelete(id);
+    
+    if (!result) {
+      return NextResponse.json(
+        { error: 'Player not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json({ message: 'Player deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting player:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete player', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
