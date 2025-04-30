@@ -222,6 +222,11 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     }
   };
 
+  // Handle cancel button click
+  const handleCancel = () => {
+    router.push(`/events/${params.id}`);
+  };
+
   if (loading) {
     return (
       <main className="p-8">
@@ -247,12 +252,12 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-black">Add New Match</h1>
-          <Link 
-            href={`/events/${params.id}`}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+          <button 
+            onClick={handleCancel}
+            className="px-4 py-2 bg-white text-black border border-gray-300 hover:bg-gray-100 rounded-md"
           >
             Cancel
-          </Link>
+          </button>
         </div>
 
         {error && (
@@ -334,10 +339,10 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                   <div>
                     {newMatch.player1.name && (
                       <div className="bg-gray-50 p-4 rounded-md">
-                        <h3 className="text-lg font-medium">{newMatch.player1.name}</h3>
+                        <h3 className="text-lg font-medium text-black">{newMatch.player1.name}</h3>
                         <p className="text-sm text-gray-500">Team: {newMatch.player1.teamName}</p>
                         <p className="text-sm text-gray-500">Handicap: {
-                          playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 'N/A'
+                          playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0
                         }</p>
                       </div>
                     )}
@@ -345,10 +350,10 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                   <div>
                     {newMatch.player2.name && (
                       <div className="bg-gray-50 p-4 rounded-md">
-                        <h3 className="text-lg font-medium">{newMatch.player2.name}</h3>
+                        <h3 className="text-lg font-medium text-black">{newMatch.player2.name}</h3>
                         <p className="text-sm text-gray-500">Team: {newMatch.player2.teamName}</p>
                         <p className="text-sm text-gray-500">Handicap: {
-                          playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 'N/A'
+                          playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0
                         }</p>
                       </div>
                     )}
@@ -438,12 +443,13 @@ export default function AddMatch({ params }: { params: { id: string } }) {
               )}
               
               <div className="flex justify-end gap-2 mt-8">
-                <Link
-                  href={`/events/${params.id}`}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-100 rounded-md"
                 >
                   Cancel
-                </Link>
+                </button>
                 <button
                   type="submit"
                   className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
