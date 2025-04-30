@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
+import { Player } from '@/app/api/players/route';
 
 interface Team {
   _id: string;
@@ -28,10 +29,13 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
   const resolvedParams = use(params);
   const [event, setEvent] = useState<Event | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [freePlayers, setFreePlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isRenameEventModalOpen, setIsRenameEventModalOpen] = useState(false);
   const [isRemoveMemberModalOpen, setIsRemoveMemberModalOpen] = useState(false);
+  const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
+  const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState<Team | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; index: number; name: string } | null>(null);
   const [newEventName, setNewEventName] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +44,7 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     fetchEvent();
     fetchTeams();
+    fetchFreePlayers();
   }, [resolvedParams.id]);
 
   const fetchEvent = async () => {
@@ -79,6 +84,20 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
     }
   };
 
+  const fetchFreePlayers = async () => {
+    try {
+      const response = await fetch('/api/players');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setFreePlayers(data);
+    } catch (error) {
+      console.error('Error fetching free players:', error);
+      // Don't set global error to avoid confusing the user
+    }
+  };
+
   const handleAddTeam = async (teamId: string) => {
     if (!event) return;
     setError(null);
@@ -111,6 +130,79 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
     } catch (error) {
       console.error('Error adding team:', error);
       setError(error instanceof Error ? error.message : 'Failed to add team');
+    }
+  };
+
+  const handleOpenAddPlayerModal = (team: Team) => {
+    setSelectedTeamForPlayer(team);
+    setIsAddPlayerModalOpen(true);
+  };
+
+  const handleAddPlayerToTeam = async (player: Player) => {
+    if (!event || !selectedTeamForPlayer) return;
+    setError(null);
+    
+    try {
+      // First find the team in the event
+      const eventTeam = event.teams.find(team => team._id === selectedTeamForPlayer._id);
+      if (!eventTeam) {
+        throw new Error('Team not found in this event');
+      }
+      
+      // Create a new team member from the free player
+      const newMember = {
+        name: player.name,
+        isCaptain: false,
+        handicap: player.handicap,
+        tee: player.tee,
+        gender: player.gender
+      };
+      
+      // Update the team in the event with the new member
+      const updatedTeams = event.teams.map(team => {
+        if (team._id === selectedTeamForPlayer._id) {
+          return {
+            ...team,
+            members: [...team.members, newMember]
+          };
+        }
+        return team;
+      });
+      
+      // Update the event
+      const response = await fetch(`/api/events?id=${event._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          teams: updatedTeams
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to add player to team');
+      }
+
+      const updatedEvent = await response.json();
+      setEvent(updatedEvent);
+      setIsAddPlayerModalOpen(false);
+      setSelectedTeamForPlayer(null);
+      
+      // Optionally remove the player from free players
+      // This would require a DELETE request to /api/players
+      // Uncomment this if you want to remove the player from free players after adding to a team
+      /*
+      await fetch(`/api/players?id=${player._id}`, {
+        method: 'DELETE',
+      });
+      fetchFreePlayers();
+      */
+      
+    } catch (error) {
+      console.error('Error adding player to team:', error);
+      setError(error instanceof Error ? error.message : 'Failed to add player to team');
     }
   };
 
@@ -318,12 +410,20 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                       <h3 className="text-xl font-semibold text-black">{team.name}</h3>
                       <p className="text-sm text-gray-500 mt-1">{team.members?.length || 0} members</p>
                     </div>
-                    <button
-                      onClick={() => handleRemoveTeam(team._id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Remove Team
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleOpenAddPlayerModal(team)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Add Free Player
+                      </button>
+                      <button
+                        onClick={() => handleRemoveTeam(team._id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Remove Team
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
@@ -538,6 +638,62 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                 >
                   Remove
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Free Player Modal */}
+        {isAddPlayerModalOpen && selectedTeamForPlayer && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Add Free Player to {selectedTeamForPlayer.name}</h2>
+                <button
+                  onClick={() => {
+                    setIsAddPlayerModalOpen(false);
+                    setSelectedTeamForPlayer(null);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                {freePlayers.length === 0 ? (
+                  <div className="text-center p-4">
+                    <p className="text-sm text-gray-500 mb-2">No free players available</p>
+                    <a href="/players" className="text-blue-600 hover:text-blue-800">
+                      Create a new player
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-500">Select a player to add to this team:</p>
+                    {freePlayers.map((player) => (
+                      <div key={player._id} className="flex justify-between items-center p-4 border rounded-md hover:bg-gray-50">
+                        <div>
+                          <h3 className="text-sm font-medium text-black">{player.name}</h3>
+                          <p className="text-sm text-gray-500">
+                            Handicap: {player.handicap} | Tee: {
+                              player.tee === 'W' ? 'White' : 
+                              player.tee === 'Y' ? 'Yellow' : 
+                              player.tee === 'B' ? 'Blue' : 
+                              player.tee === 'R' ? 'Red' : player.tee
+                            } | {player.gender}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleAddPlayerToTeam(player)}
+                          className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition-colors text-sm"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>
