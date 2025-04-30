@@ -630,28 +630,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 })}
               </p>
             </div>
-            <button
-              onClick={() => setIsAddTeamModalOpen(true)}
-              className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
-            >
-              Add Team
-            </button>
-          </div>
-
-          {/* Event Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Total Teams</p>
-              <p className="text-2xl font-semibold text-black">{eventTeams.length}</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Total Members</p>
-              <p className="text-2xl font-semibold text-black">{totalMembers}</p>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-500">Total Matches</p>
-              <p className="text-2xl font-semibold text-black">{matches.length}</p>
-            </div>
           </div>
         </div>
 
@@ -665,26 +643,30 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         <div className="space-y-8 mb-8">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold text-black">Matches</h2>
-            <button
-              onClick={() => setIsAddMatchModalOpen(true)}
-              className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
-            >
-              Add Match
-            </button>
           </div>
 
-          {matches.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-              <p className="text-gray-500">No matches added yet</p>
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h3 className="text-lg font-medium text-black">Match List</h3>
               <button
                 onClick={() => setIsAddMatchModalOpen(true)}
-                className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
               >
                 Add Match
               </button>
             </div>
-          ) : (
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+
+            {matches.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-gray-500">No matches added yet</p>
+                <button
+                  onClick={() => setIsAddMatchModalOpen(true)}
+                  className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                >
+                  Add Match
+                </button>
+              </div>
+            ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -759,8 +741,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Teams Section */}
@@ -769,118 +751,132 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             <h2 className="text-2xl font-semibold text-black">Teams</h2>
           </div>
 
-          {eventTeams.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-              <p className="text-gray-500">No teams added yet</p>
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h3 className="text-lg font-medium text-black">Team List</h3>
               <button
                 onClick={() => setIsAddTeamModalOpen(true)}
-                className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
               >
                 Add Team
               </button>
             </div>
-          ) : (
-            eventTeams.map((team) => (
-              <div key={team._id} className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="p-6 border-b">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-xl font-semibold text-black">{team.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{team.members?.length || 0} members</p>
+
+            {eventTeams.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-gray-500">No teams added yet</p>
+                <button
+                  onClick={() => setIsAddTeamModalOpen(true)}
+                  className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                >
+                  Add Team
+                </button>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {eventTeams.map((team) => (
+                  <div key={team._id} className="overflow-hidden">
+                    <div className="p-6 border-b bg-gray-50">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-xl font-semibold text-black">{team.name}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{team.members?.length || 0} members</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleOpenAddPlayerModal(team)}
+                            className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-sm"
+                          >
+                            Add Free Player
+                          </button>
+                          <button
+                            onClick={() => handleRemoveTeamClick(team)}
+                            className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors text-sm"
+                          >
+                            Remove Team
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleOpenAddPlayerModal(team)}
-                        className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-sm"
-                      >
-                        Add Free Player
-                      </button>
-                      <button
-                        onClick={() => handleRemoveTeamClick(team)}
-                        className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors text-sm"
-                      >
-                        Remove Team
-                      </button>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Member Name
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Captain
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Handicap
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Tee
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Gender
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {team.members?.length ? (
+                            team.members.map((member, idx) => (
+                              <tr key={idx} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <button
+                                    onClick={() => handleEditMemberClick(team._id, idx, member)}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                  >
+                                    {member.name}
+                                  </button>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-black">{member.isCaptain ? 'Yes' : 'No'}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-black">{member.handicap}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-black">
+                                    {member.tee === 'W' ? 'White' : 
+                                     member.tee === 'Y' ? 'Yellow' : 
+                                     member.tee === 'B' ? 'Blue' : 
+                                     member.tee === 'R' ? 'Red' : member.tee}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-black">{member.gender}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                  <button
+                                    onClick={() => handleRemoveMemberClick(team._id, idx, member.name)}
+                                    className="text-red-600 hover:text-red-900"
+                                  >
+                                    Remove
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                No members in this team
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Member Name
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Captain
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Handicap
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tee
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Gender
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {team.members?.length ? (
-                        team.members.map((member, idx) => (
-                          <tr key={idx} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <button
-                                onClick={() => handleEditMemberClick(team._id, idx, member)}
-                                className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                {member.name}
-                              </button>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">{member.isCaptain ? 'Yes' : 'No'}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">{member.handicap}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">
-                                {member.tee === 'W' ? 'White' : 
-                                 member.tee === 'Y' ? 'Yellow' : 
-                                 member.tee === 'B' ? 'Blue' : 
-                                 member.tee === 'R' ? 'Red' : member.tee}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">{member.gender}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <button
-                                onClick={() => handleRemoveMemberClick(team._id, idx, member.name)}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Remove
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
-                            No members in this team
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                ))}
               </div>
-            ))
-          )}
+            )}
+          </div>
         </div>
 
         {/* Add Team Modal */}
@@ -903,7 +899,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 {availableTeams.length === 0 ? (
                   <div className="text-center p-4">
                     <p className="text-sm text-gray-500 mb-2">All teams have been added to this event</p>
-                    <a href="/teams" className="text-blue-600 hover:text-blue-800">
+                    <a href="/teams" className="text-green-600 hover:text-green-800">
                       Create a new team
                     </a>
                   </div>
@@ -920,7 +916,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                         </div>
                         <button
                           onClick={() => handleAddTeam(team._id)}
-                          className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition-colors text-sm"
+                          className="bg-green-500 text-white py-1 px-3 rounded-md hover:bg-green-600 transition-colors text-sm"
                         >
                           Add
                         </button>
