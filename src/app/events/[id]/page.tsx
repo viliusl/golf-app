@@ -34,8 +34,10 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isRenameEventModalOpen, setIsRenameEventModalOpen] = useState(false);
   const [isRemoveMemberModalOpen, setIsRemoveMemberModalOpen] = useState(false);
+  const [isRemoveTeamModalOpen, setIsRemoveTeamModalOpen] = useState(false);
   const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
   const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState<Team | null>(null);
+  const [teamToRemove, setTeamToRemove] = useState<Team | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; index: number; name: string } | null>(null);
   const [newEventName, setNewEventName] = useState('');
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
@@ -207,6 +209,11 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
     }
   };
 
+  const handleRemoveTeamClick = (team: Team) => {
+    setTeamToRemove(team);
+    setIsRemoveTeamModalOpen(true);
+  };
+
   const handleRemoveTeam = async (teamId: string) => {
     if (!event) return;
     setError(null);
@@ -229,6 +236,8 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
 
       const updatedEvent = await response.json();
       setEvent(updatedEvent);
+      setIsRemoveTeamModalOpen(false);
+      setTeamToRemove(null);
     } catch (error) {
       console.error('Error removing team:', error);
       setError(error instanceof Error ? error.message : 'Failed to remove team');
@@ -419,7 +428,7 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                         Add Free Player
                       </button>
                       <button
-                        onClick={() => handleRemoveTeam(team._id)}
+                        onClick={() => handleRemoveTeamClick(team)}
                         className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors text-sm"
                       >
                         Remove Team
@@ -724,6 +733,52 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                       ))}
                   </>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Remove Team Confirmation Modal */}
+        {isRemoveTeamModalOpen && teamToRemove && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Remove Team</h2>
+                <button
+                  onClick={() => {
+                    setIsRemoveTeamModalOpen(false);
+                    setTeamToRemove(null);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="mb-4 text-gray-700">
+                Are you sure you want to remove the team "{teamToRemove.name}" from this event?
+                {teamToRemove.members?.length > 0 && (
+                  <span className="block mt-2 text-amber-600">
+                    This team has {teamToRemove.members.length} members that will also be removed from the event.
+                  </span>
+                )}
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setIsRemoveTeamModalOpen(false);
+                    setTeamToRemove(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRemoveTeam(teamToRemove._id)}
+                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                >
+                  Remove
+                </button>
               </div>
             </div>
           </div>
