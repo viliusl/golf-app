@@ -39,6 +39,8 @@ interface HoleScore {
   pace: number; // Expected time to complete
   player1Score: number;
   player2Score: number;
+  player1Putt: boolean;
+  player2Putt: boolean;
 }
 
 export default function AddMatch({ params }: { params: { id: string } }) {
@@ -66,15 +68,15 @@ export default function AddMatch({ params }: { params: { id: string } }) {
   
   // Default hole data - normally this would come from a course database
   const [holeScores, setHoleScores] = useState<HoleScore[]>([
-    { hole: 1, handicap: 7, par: 4, pace: 15, player1Score: 0, player2Score: 0 },
-    { hole: 2, handicap: 3, par: 5, pace: 18, player1Score: 0, player2Score: 0 },
-    { hole: 3, handicap: 15, par: 3, pace: 12, player1Score: 0, player2Score: 0 },
-    { hole: 4, handicap: 11, par: 4, pace: 15, player1Score: 0, player2Score: 0 },
-    { hole: 5, handicap: 5, par: 4, pace: 15, player1Score: 0, player2Score: 0 },
-    { hole: 6, handicap: 9, par: 3, pace: 12, player1Score: 0, player2Score: 0 },
-    { hole: 7, handicap: 1, par: 5, pace: 17, player1Score: 0, player2Score: 0 },
-    { hole: 8, handicap: 13, par: 4, pace: 15, player1Score: 0, player2Score: 0 },
-    { hole: 9, handicap: 17, par: 4, pace: 15, player1Score: 0, player2Score: 0 },
+    { hole: 1, handicap: 7, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 2, handicap: 3, par: 5, pace: 18, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 3, handicap: 15, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 4, handicap: 11, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 5, handicap: 5, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 6, handicap: 9, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 7, handicap: 1, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 8, handicap: 13, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
+    { hole: 9, handicap: 17, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false },
   ]);
 
   useEffect(() => {
@@ -181,6 +183,16 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     }
   };
 
+  const handlePuttChange = (
+    holeIndex: number,
+    player: 'player1Putt' | 'player2Putt',
+    checked: boolean
+  ) => {
+    const updatedHoleScores = [...holeScores];
+    updatedHoleScores[holeIndex][player] = checked;
+    setHoleScores(updatedHoleScores);
+  };
+
   const handleAddMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -204,8 +216,15 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         },
         body: JSON.stringify({
           eventId: params.id,
-          player1: newMatch.player1,
-          player2: newMatch.player2
+          player1: {
+            ...newMatch.player1,
+            putts: holeScores.filter(h => h.player1Putt).length
+          },
+          player2: {
+            ...newMatch.player2,
+            putts: holeScores.filter(h => h.player2Putt).length
+          },
+          holes: holeScores
         }),
       });
 
@@ -385,7 +404,13 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             {newMatch.player1.name}
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            1 Putt
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             {newMatch.player2.name}
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            1 Putt
                           </th>
                         </tr>
                       </thead>
@@ -413,6 +438,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
                               />
                             </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                              <input
+                                type="checkbox"
+                                checked={hole.player1Putt}
+                                onChange={(e) => handlePuttChange(idx, 'player1Putt', e.target.checked)}
+                                className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                              />
+                            </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <input
                                 type="number"
@@ -420,6 +453,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 value={hole.player2Score}
                                 onChange={(e) => handleHoleScoreChange(idx, 'player2Score', parseInt(e.target.value) || 0)}
                                 className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
+                              />
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                              <input
+                                type="checkbox"
+                                checked={hole.player2Putt}
+                                onChange={(e) => handlePuttChange(idx, 'player2Putt', e.target.checked)}
+                                className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                               />
                             </td>
                           </tr>
@@ -432,8 +473,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                             {newMatch.player1.score}
                           </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                            {holeScores.filter(h => h.player1Putt).length}
+                          </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                             {newMatch.player2.score}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                            {holeScores.filter(h => h.player2Putt).length}
                           </td>
                         </tr>
                       </tbody>
