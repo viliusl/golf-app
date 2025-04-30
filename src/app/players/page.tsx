@@ -9,9 +9,7 @@ export default function PlayersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [playerToEdit, setPlayerToEdit] = useState<Player | null>(null);
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [newPlayer, setNewPlayer] = useState<{
     name: string;
@@ -337,7 +335,7 @@ export default function PlayersPage() {
                 </button>
               </div>
               <p className="mb-4 text-gray-700">
-                Are you sure you want to delete the player "{playerToDelete.name}"?
+                Are you sure you want to delete the player &quot;{playerToDelete.name}&quot;?
               </p>
               <div className="flex justify-end gap-2">
                 <button

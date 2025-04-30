@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+// Used in type definitions elsewhere
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface TeamMember {
   name: string;
   isCaptain: boolean;

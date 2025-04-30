@@ -43,9 +43,7 @@ eventSchema.set('toJSON', {
   }
 });
 
-// Clear existing model to avoid overwrites during development
-mongoose.models = {};
-
-const Event = mongoose.model('Event', eventSchema);
+// Use this pattern to avoid model recompilation errors
+const Event = mongoose.models.Event || mongoose.model('Event', eventSchema);
 
 export default Event; 

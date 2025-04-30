@@ -10,7 +10,13 @@ interface Event {
   teams?: {
     _id: string;
     name: string;
-    members: any[];
+    members: { 
+      name: string;
+      isCaptain: boolean;
+      handicap: number;
+      tee: string;
+      gender: string;
+    }[];
   }[];
 }
 
@@ -278,7 +284,7 @@ export default function Home() {
                 </button>
               </div>
               <p className="mb-4 text-gray-700">
-                Are you sure you want to delete the event "{eventToDelete.name}"?
+                Are you sure you want to delete the event &quot;{eventToDelete.name}&quot;?
               </p>
               <div className="flex justify-end gap-2">
                 <button

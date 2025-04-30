@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import { Player } from '@/app/api/players/route';
 
@@ -42,12 +41,12 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
   const [newEventName, setNewEventName] = useState('');
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     fetchEvent();
     fetchTeams();
     fetchFreePlayers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedParams.id]);
 
   const fetchEvent = async () => {
@@ -756,7 +755,7 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                 </button>
               </div>
               <p className="mb-4 text-gray-700">
-                Are you sure you want to remove the team "{teamToRemove.name}" from this event?
+                Are you sure you want to remove the team &quot;{teamToRemove.name}&quot; from this event?
                 {teamToRemove.members?.length > 0 && (
                   <span className="block mt-2 text-amber-600">
                     This team has {teamToRemove.members.length} members that will also be removed from the event.

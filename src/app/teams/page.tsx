@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface Team {
   _id: string;
@@ -52,7 +51,6 @@ export default function Teams() {
   });
   const [renamedTeamName, setRenamedTeamName] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     fetchTeams();
@@ -710,7 +708,7 @@ export default function Teams() {
                 </button>
               </div>
               <p className="mb-4 text-gray-700">
-                Are you sure you want to delete the team "{teamToDelete.name}"?
+                Are you sure you want to delete the team &quot;{teamToDelete.name}&quot;?
               </p>
               <div className="flex justify-end gap-2">
                 <button

@@ -2,8 +2,21 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Event from '@/models/Event';
 import Team from '@/models/Team';
+import { Types } from 'mongoose';
 
 interface TeamData {
+  _id: string;
+  name: string;
+  members: {
+    name: string;
+    isCaptain: boolean;
+    handicap: number;
+    tee: string;
+    gender: string;
+  }[];
+}
+
+interface EventTeam {
   _id: string;
   name: string;
   members: {
@@ -100,11 +113,12 @@ export async function POST(request: Request) {
     // Initialize teams array if it doesn't exist
     if (!event.teams) {
       console.log('Initializing teams array');
-      event.teams = [];
+      event.teams = new Types.DocumentArray([]);
     }
 
     // Check if team is already in the event
-    const teamExists = event.teams.some((team: any) => team._id === teamId);
+    // @ts-expect-error - Mongoose types issue
+    const teamExists = event.teams.some((team) => (team as unknown as EventTeam)._id === teamId);
     if (teamExists) {
       console.log('Error: Team is already in the event');
       return NextResponse.json(
@@ -170,7 +184,8 @@ export async function PUT(request: Request) {
     // Handle removing a member from a team
     if (teamId !== undefined && memberIndex !== undefined) {
       // Find the team in the event
-      const teamIndex = event.teams.findIndex((team: any) => team._id === teamId);
+      // @ts-expect-error - Mongoose types issue
+      const teamIndex = event.teams.findIndex((team) => (team as unknown as EventTeam)._id === teamId);
       
       if (teamIndex === -1) {
         return NextResponse.json(
@@ -195,13 +210,13 @@ export async function PUT(request: Request) {
     else if (teams && Array.isArray(teams) && teams.length > 0 && typeof teams[0] === 'object' && teams[0]._id) {
       console.log('Updating teams with complete team objects');
       // This is the case where we're receiving full team objects
-      event.teams = teams;
+      event.teams = new Types.DocumentArray(teams);
     }
     // Handle team operations (add/remove teams)
     else if (teams && Array.isArray(teams)) {
       // Initialize teams array if it doesn't exist
       if (!event.teams) {
-        event.teams = [];
+        event.teams = new Types.DocumentArray([]);
       }
 
       // When adding a team, fetch its full data first
@@ -219,7 +234,8 @@ export async function PUT(request: Request) {
         }
       } else {
         // When removing a team, just filter the array
-        event.teams = event.teams.filter((team: TeamData) => teams.includes(team._id));
+        // @ts-expect-error - Mongoose types issue
+        event.teams = new Types.DocumentArray(event.teams.filter((team) => teams.includes((team as unknown as TeamData)._id)));
       }
     }
 
