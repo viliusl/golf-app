@@ -392,13 +392,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             Hole
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Handicap
-                          </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Par
-                          </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Pace (min)
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             {newMatch.player1.name}
@@ -421,13 +415,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                               {hole.hole}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                              {hole.handicap}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                               {hole.par}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                              {hole.pace}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <input
@@ -467,7 +455,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                         ))}
                         {/* Total row */}
                         <tr className="bg-gray-100 font-bold">
-                          <td colSpan={4} className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
+                          <td colSpan={2} className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
                             Total:
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
