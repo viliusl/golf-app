@@ -38,6 +38,7 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
   const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState<Team | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; index: number; name: string } | null>(null);
   const [newEventName, setNewEventName] = useState('');
+  const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -646,13 +647,14 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
         {/* Add Free Player Modal */}
         {isAddPlayerModalOpen && selectedTeamForPlayer && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-black">Add Free Player to {selectedTeamForPlayer.name}</h2>
                 <button
                   onClick={() => {
                     setIsAddPlayerModalOpen(false);
                     setSelectedTeamForPlayer(null);
+                    setPlayerSearchTerm('');
                     setError(null);
                   }}
                   className="text-gray-500 hover:text-gray-700"
@@ -660,7 +662,30 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                   ✕
                 </button>
               </div>
-              <div className="space-y-4">
+              
+              {/* Add search filter */}
+              <div className="mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search players..."
+                    value={playerSearchTerm}
+                    onChange={(e) => setPlayerSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  />
+                  <svg 
+                    className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+              
+              <div className="space-y-4 overflow-y-auto flex-grow">
                 {freePlayers.length === 0 ? (
                   <div className="text-center p-4">
                     <p className="text-sm text-gray-500 mb-2">No free players available</p>
@@ -671,27 +696,32 @@ export default function EventDetails({ params }: { params: Promise<{ id: string 
                 ) : (
                   <>
                     <p className="text-sm text-gray-500">Select a player to add to this team:</p>
-                    {freePlayers.map((player) => (
-                      <div key={player._id} className="flex justify-between items-center p-4 border rounded-md hover:bg-gray-50">
-                        <div>
-                          <h3 className="text-sm font-medium text-black">{player.name}</h3>
-                          <p className="text-sm text-gray-500">
-                            Handicap: {player.handicap} | Tee: {
-                              player.tee === 'W' ? 'White' : 
-                              player.tee === 'Y' ? 'Yellow' : 
-                              player.tee === 'B' ? 'Blue' : 
-                              player.tee === 'R' ? 'Red' : player.tee
-                            } | {player.gender}
-                          </p>
+                    {freePlayers
+                      .filter(player => 
+                        playerSearchTerm === '' || 
+                        player.name.toLowerCase().includes(playerSearchTerm.toLowerCase())
+                      )
+                      .map((player) => (
+                        <div key={player._id} className="flex justify-between items-center p-4 border rounded-md hover:bg-gray-50">
+                          <div>
+                            <h3 className="text-sm font-medium text-black">{player.name}</h3>
+                            <p className="text-sm text-gray-500">
+                              Handicap: {player.handicap} | Tee: {
+                                player.tee === 'W' ? 'White' : 
+                                player.tee === 'Y' ? 'Yellow' : 
+                                player.tee === 'B' ? 'Blue' : 
+                                player.tee === 'R' ? 'Red' : player.tee
+                              } | {player.gender}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleAddPlayerToTeam(player)}
+                            className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition-colors text-sm"
+                          >
+                            Add
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleAddPlayerToTeam(player)}
-                          className="bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition-colors text-sm"
-                        >
-                          Add
-                        </button>
-                      </div>
-                    ))}
+                      ))}
                   </>
                 )}
               </div>
