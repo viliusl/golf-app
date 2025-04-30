@@ -33,9 +33,19 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [isRemoveMemberModalOpen, setIsRemoveMemberModalOpen] = useState(false);
   const [isRemoveTeamModalOpen, setIsRemoveTeamModalOpen] = useState(false);
   const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
+  const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
   const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState<Team | null>(null);
   const [teamToRemove, setTeamToRemove] = useState<Team | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; index: number; name: string } | null>(null);
+  const [memberToEdit, setMemberToEdit] = useState<{
+    name: string;
+    isCaptain: boolean;
+    handicap: number;
+    tee: 'W' | 'Y' | 'B' | 'R';
+    gender: 'Male' | 'Female';
+  } | null>(null);
+  const [memberTeamIdToEdit, setMemberTeamIdToEdit] = useState<string | null>(null);
+  const [memberIndexToEdit, setMemberIndexToEdit] = useState<number | null>(null);
   const [newEventName, setNewEventName] = useState('');
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -362,6 +372,66 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
+  const handleEditMemberClick = (teamId: string, index: number, member: {
+    name: string;
+    isCaptain: boolean;
+    handicap: number;
+    tee: 'W' | 'Y' | 'B' | 'R';
+    gender: 'Male' | 'Female';
+  }) => {
+    setMemberToEdit({...member});
+    setMemberTeamIdToEdit(teamId);
+    setMemberIndexToEdit(index);
+    setIsEditMemberModalOpen(true);
+  };
+
+  const handleEditMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!event || !memberToEdit || memberTeamIdToEdit === null || memberIndexToEdit === null) return;
+    setError(null);
+    
+    try {
+      // Update the member in the team
+      const updatedTeams = event.teams.map(team => {
+        if (team._id === memberTeamIdToEdit) {
+          const updatedMembers = [...team.members];
+          updatedMembers[memberIndexToEdit] = memberToEdit;
+          return {
+            ...team,
+            members: updatedMembers
+          };
+        }
+        return team;
+      });
+      
+      // Submit the update
+      const response = await fetch(`/api/events?id=${event._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          teams: updatedTeams
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to update member');
+      }
+
+      const updatedEvent = await response.json();
+      setEvent(updatedEvent);
+      setIsEditMemberModalOpen(false);
+      setMemberToEdit(null);
+      setMemberTeamIdToEdit(null);
+      setMemberIndexToEdit(null);
+    } catch (error) {
+      console.error('Error updating member:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update member');
+    }
+  };
+
   if (loading) {
     return (
       <main className="p-8">
@@ -515,7 +585,12 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                         team.members.map((member, idx) => (
                           <tr key={idx} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-black">{member.name}</div>
+                              <button
+                                onClick={() => handleEditMemberClick(team._id, idx, member)}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {member.name}
+                              </button>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-black">{member.isCaptain ? 'Yes' : 'No'}</div>
@@ -829,6 +904,123 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   Remove
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Member Modal */}
+        {isEditMemberModalOpen && memberToEdit && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Edit Team Member</h2>
+                <button
+                  onClick={() => {
+                    setIsEditMemberModalOpen(false);
+                    setMemberToEdit(null);
+                    setMemberTeamIdToEdit(null);
+                    setMemberIndexToEdit(null);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <form onSubmit={handleEditMember}>
+                <div className="mb-4">
+                  <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Member Name
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-name"
+                    value={memberToEdit.name}
+                    onChange={(e) => setMemberToEdit({...memberToEdit, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
+                    Handicap
+                  </label>
+                  <input
+                    type="number"
+                    id="edit-handicap"
+                    value={memberToEdit.handicap}
+                    onChange={(e) => setMemberToEdit({...memberToEdit, handicap: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                    min="0"
+                    max="54"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-tee" className="block text-sm font-medium text-gray-700 mb-1">
+                    Tee
+                  </label>
+                  <select
+                    id="edit-tee"
+                    value={memberToEdit.tee}
+                    onChange={(e) => setMemberToEdit({...memberToEdit, tee: e.target.value as 'W' | 'Y' | 'B' | 'R'})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  >
+                    <option value="W">White</option>
+                    <option value="Y">Yellow</option>
+                    <option value="B">Blue</option>
+                    <option value="R">Red</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-700 mb-1">
+                    Gender
+                  </label>
+                  <select
+                    id="edit-gender"
+                    value={memberToEdit.gender}
+                    onChange={(e) => setMemberToEdit({...memberToEdit, gender: e.target.value as 'Male' | 'Female'})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={memberToEdit.isCaptain}
+                      onChange={(e) => setMemberToEdit({...memberToEdit, isCaptain: e.target.checked})}
+                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    Team Captain
+                  </label>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditMemberModalOpen(false);
+                      setMemberToEdit(null);
+                      setMemberTeamIdToEdit(null);
+                      setMemberIndexToEdit(null);
+                      setError(null);
+                    }}
+                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

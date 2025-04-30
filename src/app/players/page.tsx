@@ -9,9 +9,22 @@ export default function PlayersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const [playerToEdit, setPlayerToEdit] = useState<Player | null>(null);
   const [newPlayer, setNewPlayer] = useState<{
+    name: string;
+    handicap: number;
+    tee: 'W' | 'Y' | 'B' | 'R';
+    gender: 'Male' | 'Female';
+  }>({
+    name: '',
+    handicap: 0,
+    tee: 'W',
+    gender: 'Male'
+  });
+  const [editedPlayer, setEditedPlayer] = useState<{
     name: string;
     handicap: number;
     tee: 'W' | 'Y' | 'B' | 'R';
@@ -78,6 +91,48 @@ export default function PlayersPage() {
     }
   };
 
+  const handleEditClick = (player: Player) => {
+    setPlayerToEdit(player);
+    setEditedPlayer({
+      name: player.name,
+      handicap: player.handicap,
+      tee: player.tee,
+      gender: player.gender
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (!playerToEdit) return;
+    
+    try {
+      const response = await fetch(`/api/players?id=${playerToEdit._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editedPlayer),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to update player');
+      }
+
+      setIsEditModalOpen(false);
+      setPlayerToEdit(null);
+      
+      // Refresh players list
+      fetchPlayers();
+    } catch (error) {
+      console.error('Error updating player:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update player');
+    }
+  };
+
   const handleDeleteClick = (player: Player) => {
     setPlayerToDelete(player);
     setIsDeleteModalOpen(true);
@@ -133,7 +188,7 @@ export default function PlayersPage() {
               placeholder="Search players..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             />
             <svg 
               className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
@@ -186,7 +241,12 @@ export default function PlayersPage() {
                   {filteredPlayers.map((player) => (
                     <tr key={player._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">{player.name}</div>
+                        <button
+                          className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                          onClick={() => handleEditClick(player)}
+                        >
+                          {player.name}
+                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-black">{player.handicap}</div>
@@ -204,8 +264,14 @@ export default function PlayersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
+                          onClick={() => handleEditClick(player)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          Edit
+                        </button>
+                        <button
                           onClick={() => handleDeleteClick(player)}
-                          className="text-red-600 hover:text-red-900 ml-2"
+                          className="text-red-600 hover:text-red-900 ml-4"
                         >
                           Delete
                         </button>
@@ -311,6 +377,108 @@ export default function PlayersPage() {
                     className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
                   >
                     Add Player
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Player Modal */}
+        {isEditModalOpen && playerToEdit && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Edit Player</h2>
+                <button
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setPlayerToEdit(null);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <form onSubmit={handleEditSubmit}>
+                <div className="mb-4">
+                  <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Player Name
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-name"
+                    value={editedPlayer.name}
+                    onChange={(e) => setEditedPlayer({ ...editedPlayer, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
+                    Handicap
+                  </label>
+                  <input
+                    type="number"
+                    id="edit-handicap"
+                    value={editedPlayer.handicap}
+                    onChange={(e) => setEditedPlayer({ ...editedPlayer, handicap: parseInt(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                    min="0"
+                    max="54"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-tee" className="block text-sm font-medium text-gray-700 mb-1">
+                    Tee
+                  </label>
+                  <select
+                    id="edit-tee"
+                    value={editedPlayer.tee}
+                    onChange={(e) => setEditedPlayer({ ...editedPlayer, tee: e.target.value as 'W' | 'Y' | 'B' | 'R' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  >
+                    <option value="W">White</option>
+                    <option value="Y">Yellow</option>
+                    <option value="B">Blue</option>
+                    <option value="R">Red</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-700 mb-1">
+                    Gender
+                  </label>
+                  <select
+                    id="edit-gender"
+                    value={editedPlayer.gender}
+                    onChange={(e) => setEditedPlayer({ ...editedPlayer, gender: e.target.value as 'Male' | 'Female' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditModalOpen(false);
+                      setPlayerToEdit(null);
+                      setError(null);
+                    }}
+                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    Save Changes
                   </button>
                 </div>
               </form>
