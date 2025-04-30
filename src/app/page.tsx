@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Event {
   _id: string;
@@ -16,6 +17,7 @@ export default function Home() {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [newEvent, setNewEvent] = useState({ name: '', date: '' });
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     fetchEvents();
@@ -95,11 +97,15 @@ export default function Home() {
     }
   };
 
+  const handleEventClick = (eventId: string) => {
+    router.push(`/events/${eventId}`);
+  };
+
   return (
-    <main className="min-h-screen p-8">
+    <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Event Management</h1>
+          <h1 className="text-3xl font-bold text-black">Events</h1>
           <button
             onClick={() => setIsModalOpen(true)}
             className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
@@ -141,7 +147,12 @@ export default function Home() {
                   {events.map((event) => (
                     <tr key={event._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">{event.name}</div>
+                        <button
+                          onClick={() => handleEventClick(event._id)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium"
+                        >
+                          {event.name}
+                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-black">
@@ -194,7 +205,7 @@ export default function Home() {
                     id="name"
                     value={newEvent.name}
                     onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
                 </div>
@@ -207,7 +218,7 @@ export default function Home() {
                     id="date"
                     value={newEvent.date}
                     onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
                 </div>

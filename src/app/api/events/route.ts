@@ -2,11 +2,25 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Event from '@/models/Event';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
     await connectDB();
-    const events = await Event.find().sort({ date: 1 });
-    return NextResponse.json(events);
+
+    if (id) {
+      // Fetch single event
+      const event = await Event.findById(id);
+      if (!event) {
+        return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+      }
+      return NextResponse.json(event);
+    } else {
+      // Fetch all events
+      const events = await Event.find().sort({ date: 1 });
+      return NextResponse.json(events);
+    }
   } catch (error) {
     console.error('Error fetching events:', error);
     return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
