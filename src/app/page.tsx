@@ -7,6 +7,11 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  teams?: {
+    _id: string;
+    name: string;
+    members: any[];
+  }[];
 }
 
 export default function Home() {
@@ -138,6 +143,9 @@ export default function Home() {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Teams
+                    </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
@@ -161,6 +169,14 @@ export default function Home() {
                             month: 'long',
                             day: 'numeric'
                           })}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-black">
+                          {event.teams && event.teams.length > 0 
+                            ? event.teams.map(team => team.name).join(', ')
+                            : 'No teams'
+                          }
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
