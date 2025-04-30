@@ -68,9 +68,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Event Management</h1>
+          <h1 className="text-3xl font-bold text-black">Event Management</h1>
           <button
             onClick={() => setIsModalOpen(true)}
             className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
@@ -85,24 +85,46 @@ export default function Home() {
           </div>
         )}
 
-        {/* Events List */}
+        {/* Events Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
+          <h2 className="text-xl font-semibold mb-4 text-black">Upcoming Events</h2>
           {loading ? (
-            <p>Loading events...</p>
+            <p className="text-black">Loading events...</p>
           ) : events.length === 0 ? (
-            <p>No events found</p>
+            <p className="text-black">No events found</p>
           ) : (
-            <ul className="space-y-4">
-              {events.map((event) => (
-                <li key={event._id} className="border-b pb-4">
-                  <div className="font-medium">{event.name}</div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(event.date).toLocaleDateString()}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Event Name
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {events.map((event) => (
+                    <tr key={event._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-black">{event.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-black">
+                          {new Date(event.date).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -111,7 +133,7 @@ export default function Home() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Add New Event</h2>
+                <h2 className="text-xl font-semibold text-black">Add New Event</h2>
                 <button
                   onClick={() => {
                     setIsModalOpen(false);
