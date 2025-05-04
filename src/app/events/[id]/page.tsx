@@ -591,34 +591,34 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-xs">
+                <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Player 1
                       </th>
-                      <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Score
                       </th>
-                      <th scope="col" className="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-6">
+                      <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         vs
                       </th>
-                      <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Score
                       </th>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Player 2
                       </th>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Time
                       </th>
-                      <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Tee
                       </th>
-                      <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
-                      <th scope="col" className="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -626,40 +626,40 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {matches.map((match) => (
                       <tr key={match._id} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <div className="text-xs font-medium text-black">{match.player1.name}</div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-black">{match.player1.name}</div>
                           <div className="text-xs text-gray-500">{match.player1.teamName}</div>
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="text-sm font-bold text-black">{match.player1.score}</div>
                         </td>
-                        <td className="px-1 py-2 whitespace-nowrap text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="text-xs font-medium text-gray-500">vs</div>
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="text-sm font-bold text-black">{match.player2.score}</div>
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <div className="text-xs font-medium text-black">{match.player2.name}</div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-black">{match.player2.name}</div>
                           <div className="text-xs text-gray-500">{match.player2.teamName}</div>
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <div className="text-xs text-black">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">
                             {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </div>
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap text-center">
-                          <div className="text-xs text-black">{match.tee}</div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">{match.tee}</div>
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap text-center">
-                          <span className={`px-1.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${match.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${match.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                             {match.completed ? 'Completed' : 'In Progress'}
                           </span>
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap text-right text-xs">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <Link
                             href={`/events/${params.id}/matches/${match._id}/edit`}
-                            className="text-blue-600 hover:text-blue-900 mr-2"
+                            className="text-blue-600 hover:text-blue-900 mr-4"
                           >
                             Edit
                           </Link>
