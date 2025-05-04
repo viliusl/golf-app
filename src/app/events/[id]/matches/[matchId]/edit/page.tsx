@@ -125,16 +125,33 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
         
         // Set hole scores from match data
         if (matchData.holes && matchData.holes.length > 0) {
-          // Make sure each hole has properly defined values
-          const validatedHoleScores = matchData.holes.map((hole: any) => ({
-            ...hole,
-            player1Score: hole.player1Score || 0,
-            player2Score: hole.player2Score || 0,
-            player1Putt: !!hole.player1Putt,
-            player2Putt: !!hole.player2Putt,
-            winner: hole.winner || 'tie'
-          }));
+          console.log('Original match holes:', JSON.stringify(matchData.holes, null, 2));
           
+          // Make sure each hole has properly defined values
+          const validatedHoleScores = matchData.holes.map((hole: any) => {
+            const player1ScoreVal = typeof hole.player1Score === 'string' 
+              ? parseInt(hole.player1Score) || 0 
+              : (hole.player1Score || 0);
+              
+            const player2ScoreVal = typeof hole.player2Score === 'string' 
+              ? parseInt(hole.player2Score) || 0 
+              : (hole.player2Score || 0);
+            
+            console.log(`Processing hole ${hole.hole}:`);
+            console.log(`Original - player1Score: ${hole.player1Score} (${typeof hole.player1Score}), player2Score: ${hole.player2Score} (${typeof hole.player2Score})`);
+            console.log(`Converted - player1Score: ${player1ScoreVal} (${typeof player1ScoreVal}), player2Score: ${player2ScoreVal} (${typeof player2ScoreVal})`);
+            
+            return {
+              ...hole,
+              player1Score: player1ScoreVal,
+              player2Score: player2ScoreVal,
+              player1Putt: !!hole.player1Putt,
+              player2Putt: !!hole.player2Putt,
+              winner: hole.winner || 'tie'
+            };
+          });
+          
+          console.log('Validated hole scores:', JSON.stringify(validatedHoleScores, null, 2));
           setHoleScores(validatedHoleScores);
           
           // Initial calculation of totals based on loaded data
@@ -219,6 +236,11 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
 
     fetchData();
   }, [params.id, params.matchId]);
+
+  useEffect(() => {
+    // Log the hole scores to debug
+    console.log('Current hole scores in state:', holeScores);
+  }, [holeScores]);
 
   const handleEditMatch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -627,140 +649,145 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {holeScores.map((hole, idx) => (
-                      <tr key={`hole-${hole.hole}`} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-gray-900 border-r border-gray-200">
-                          {hole.hole}
-                        </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-500 border-r border-gray-200">
-                          {hole.handicap}
-                        </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-500 border-r-2 border-gray-300">
-                          {hole.par}
-                        </td>
-                        {/* Player 1 columns with blue tint */}
-                        <td className="px-3 py-1 whitespace-nowrap border-r border-gray-200 bg-blue-50">
-                          <input
-                            type="number"
-                            min="0"
-                            value={hole.player1Score === 0 ? '' : hole.player1Score}
-                            onChange={(e) => {
-                              const val = e.target.value === '' ? 0 : Number(e.target.value);
-                              handleHoleScoreChange(idx, 'player1Score', val);
-                            }}
-                            className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center text-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-blue-50">
-                          <input
-                            type="checkbox"
-                            checked={hole.player1Putt}
-                            onChange={(e) => handlePuttChange(idx, 'player1Putt', e.target.checked)}
-                            className="h-3 w-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                        </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-blue-50">
-                          {(() => {
-                            const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                            const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
-                            const [player1EffHcp, _] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
-                            return player1EffHcp;
-                          })()}
-                        </td>
-                        <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-blue-50 ${
-                          hole.player1Score > 0 ? 'text-green-600' : 'text-gray-600'
-                        }`}>
-                          {hole.player1Score > 0 ? 
-                            (() => {
+                    {holeScores.map((hole, idx) => {
+                      console.log(`Rendering hole ${hole.hole} player1Score: ${hole.player1Score}, type: ${typeof hole.player1Score}`);
+                      console.log(`Rendering hole ${hole.hole} player2Score: ${hole.player2Score}, type: ${typeof hole.player2Score}`);
+                      
+                      return (
+                        <tr key={`hole-${hole.hole}`} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-gray-900 border-r border-gray-200">
+                            {hole.hole}
+                          </td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-500 border-r border-gray-200">
+                            {hole.handicap}
+                          </td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-500 border-r-2 border-gray-300">
+                            {hole.par}
+                          </td>
+                          {/* Player 1 columns with blue tint */}
+                          <td className="px-3 py-1 whitespace-nowrap border-r border-gray-200 bg-blue-50">
+                            <input
+                              type="number"
+                              min="0"
+                              value={Number(hole.player1Score) > 0 ? Number(hole.player1Score) : ''}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                handleHoleScoreChange(idx, 'player1Score', val);
+                              }}
+                              className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center text-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          </td>
+                          <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-blue-50">
+                            <input
+                              type="checkbox"
+                              checked={hole.player1Putt}
+                              onChange={(e) => handlePuttChange(idx, 'player1Putt', e.target.checked)}
+                              className="h-3 w-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                          </td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-blue-50">
+                            {(() => {
                               const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
                               const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
-                              const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
-                              
-                              const result = calculateScore(
-                                player1EffHcp, 
-                                hole.player1Score, 
-                                hole.player1Putt,
-                                player2EffHcp, 
-                                hole.player2Score, 
-                                hole.player2Putt,
-                                hole.par
-                              );
-                              
-                              return result.player1Score;
-                            })() 
-                          : ''}
-                        </td>
-                        
-                        {/* Player 2 columns with green tint */}
-                        <td className="px-3 py-1 whitespace-nowrap border-r border-gray-200 bg-green-50">
-                          <input
-                            type="number"
-                            min="0"
-                            value={hole.player2Score === 0 ? '' : hole.player2Score}
-                            onChange={(e) => {
-                              const val = e.target.value === '' ? 0 : Number(e.target.value);
-                              handleHoleScoreChange(idx, 'player2Score', val);
-                            }}
-                            className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center text-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-green-50">
-                          <input
-                            type="checkbox"
-                            checked={hole.player2Putt}
-                            onChange={(e) => handlePuttChange(idx, 'player2Putt', e.target.checked)}
-                            className="h-3 w-3 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                          />
-                        </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-green-50">
-                          {(() => {
-                            const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                            const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
-                            const [_, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
-                            return player2EffHcp;
-                          })()}
-                        </td>
-                        <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-green-50 ${
-                          hole.player2Score > 0 ? 'text-green-600' : 'text-gray-600'
-                        }`}>
-                          {hole.player2Score > 0 ? 
-                            (() => {
+                              const [player1EffHcp, _] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                              return player1EffHcp;
+                            })()}
+                          </td>
+                          <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-blue-50 ${
+                            hole.player1Score > 0 ? 'text-green-600' : 'text-gray-600'
+                          }`}>
+                            {hole.player1Score > 0 ? 
+                              (() => {
+                                const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
+                                const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                                const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                
+                                const result = calculateScore(
+                                  player1EffHcp, 
+                                  hole.player1Score, 
+                                  hole.player1Putt,
+                                  player2EffHcp, 
+                                  hole.player2Score, 
+                                  hole.player2Putt,
+                                  hole.par
+                                );
+                                
+                                return result.player1Score;
+                              })() 
+                            : ''}
+                          </td>
+                          
+                          {/* Player 2 columns with green tint */}
+                          <td className="px-3 py-1 whitespace-nowrap border-r border-gray-200 bg-green-50">
+                            <input
+                              type="number"
+                              min="0"
+                              value={Number(hole.player2Score) > 0 ? Number(hole.player2Score) : ''}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                handleHoleScoreChange(idx, 'player2Score', val);
+                              }}
+                              className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center text-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          </td>
+                          <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-green-50">
+                            <input
+                              type="checkbox"
+                              checked={hole.player2Putt}
+                              onChange={(e) => handlePuttChange(idx, 'player2Putt', e.target.checked)}
+                              className="h-3 w-3 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                            />
+                          </td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-green-50">
+                            {(() => {
                               const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
                               const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
-                              const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
-                              
-                              const result = calculateScore(
-                                player1EffHcp, 
-                                hole.player1Score, 
-                                hole.player1Putt,
-                                player2EffHcp, 
-                                hole.player2Score, 
-                                hole.player2Putt,
-                                hole.par
-                              );
-                              
-                              return result.player2Score;
-                            })() 
-                          : ''}
-                        </td>
-                        
-                        {/* Winner column */}
-                        <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-center">
-                          {hole.player1Score > 0 && hole.player2Score > 0 ? (
-                            (() => {
-                              console.log(`Rendering winner for hole ${hole.hole}: winner=${hole.winner}`);
-                              if (hole.winner === 'player1') {
-                                return <span className="text-blue-600">{match.player1.name.split(' ')[0]}</span>;
-                              } else if (hole.winner === 'player2') {
-                                return <span className="text-green-600">{match.player2.name.split(' ')[0]}</span>;
-                              } else {
-                                return <span className="text-gray-600">Tie</span>;
-                              }
-                            })()
-                          ) : ''}
-                        </td>
-                      </tr>
-                    ))}
+                              const [_, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                              return player2EffHcp;
+                            })()}
+                          </td>
+                          <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-green-50 ${
+                            hole.player2Score > 0 ? 'text-green-600' : 'text-gray-600'
+                          }`}>
+                            {hole.player2Score > 0 ? 
+                              (() => {
+                                const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
+                                const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                                const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                
+                                const result = calculateScore(
+                                  player1EffHcp, 
+                                  hole.player1Score, 
+                                  hole.player1Putt,
+                                  player2EffHcp, 
+                                  hole.player2Score, 
+                                  hole.player2Putt,
+                                  hole.par
+                                );
+                                
+                                return result.player2Score;
+                              })() 
+                            : ''}
+                          </td>
+                          
+                          {/* Winner column */}
+                          <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-center">
+                            {hole.player1Score > 0 && hole.player2Score > 0 ? (
+                              (() => {
+                                console.log(`Rendering winner for hole ${hole.hole}: winner=${hole.winner}`);
+                                if (hole.winner === 'player1') {
+                                  return <span className="text-blue-600">{match.player1.name.split(' ')[0]}</span>;
+                                } else if (hole.winner === 'player2') {
+                                  return <span className="text-green-600">{match.player2.name.split(' ')[0]}</span>;
+                                } else {
+                                  return <span className="text-gray-600">Tie</span>;
+                                }
+                              })()
+                            ) : ''}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {/* Total row */}
                     <tr className="bg-gray-100 font-bold">
                       <td colSpan={3} className="px-3 py-1 whitespace-nowrap text-xs text-right text-gray-900 border-r-2 border-gray-300">
