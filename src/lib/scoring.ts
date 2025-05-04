@@ -14,22 +14,29 @@ export const calculatePlayerScore = (
   strokes: number,
   isPutt: boolean,
   par: number = 0,
-  strokesValue: number = 1,
-  onePuttValue: number = 1
 ): number => {
-  // Base score is strokes times the stroke value (usually 1)
-  const strokesScore = strokes * strokesValue;
+  let score = 0;
+  let effStroke = strokes + effectiveHandicap;
+
+  if (isPutt) {
+    score += 4;
+  }
+
+  if (strokes == 1) {
+    score += 64;
+  }
   
-  // Subtract effective handicap
-  const handicapAdjustedScore = strokesScore - effectiveHandicap;
-  
-  // Subtract one-putt value if applicable
-  const finalScore = isPutt ? handicapAdjustedScore - onePuttValue : handicapAdjustedScore;
-  
-  // Apply par adjustment if par is provided (optional)
-  const parAdjustedScore = par > 0 ? finalScore - par : finalScore;
-  
-  return parAdjustedScore;
+  if (par - effStroke == 0) {
+    score += 4;
+  } else if (par - effStroke == 1) {
+    score += 8;
+  } else if (par - effStroke == 2) {
+    score += 16;
+  } else if (par - effStroke == 3) {
+    score += 64;
+  }
+
+  return score;
 };
 
 /**
@@ -54,42 +61,45 @@ export const calculateScore = (
   player2Strokes: number,
   player2Putt: boolean,
   par: number,
-  strokesValue: number = 1,
-  onePuttValue: number = 1
 ): { player1Score: number; player2Score: number; winner: 'player1' | 'player2' | 'tie' } => {
   
   // Calculate individual scores
-  const player1Score = calculatePlayerScore(
+  let player1Score = calculatePlayerScore(
     player1EffHcp, 
     player1Strokes, 
     player1Putt, 
     par, 
-    strokesValue, 
-    onePuttValue
   );
   
-  const player2Score = calculatePlayerScore(
+  let player2Score = calculatePlayerScore(
     player2EffHcp, 
     player2Strokes, 
     player2Putt, 
     par, 
-    strokesValue, 
-    onePuttValue
   );
-  
+
   // Determine winner based on scores
   let winner: 'player1' | 'player2' | 'tie';
+
+  const player1AdjustedStrokes = player1Strokes + player1EffHcp;
+  const player2AdjustedStrokes = player2Strokes + player2EffHcp;
   
-  if (player1Strokes === 0 || player2Strokes === 0) {
+  if (player1AdjustedStrokes === 0 || player2AdjustedStrokes === 0) {
     winner = 'tie'; // No winner if either player hasn't recorded strokes
-  } else if (player1Score < player2Score) {
+  } else if (player1AdjustedStrokes < player2AdjustedStrokes) {
     winner = 'player1';
-  } else if (player2Score < player1Score) {
+  } else if (player2AdjustedStrokes < player1AdjustedStrokes) {
     winner = 'player2';
   } else {
     winner = 'tie';
   }
   
+  if (winner === 'player1') {
+    player1Score += 16;
+  } else if (winner === 'player2') {
+    player2Score += 16;
+  }
+
   return { player1Score, player2Score, winner };
 };
 
@@ -109,8 +119,6 @@ export const calculateTotalScore = (
   strokes: number[],
   isPutts: boolean[],
   pars: number[] = [],
-  strokesValue: number = 1,
-  onePuttValue: number = 1
 ): number => {
   if (
     effectiveHandicaps.length !== strokes.length || 
@@ -128,8 +136,6 @@ export const calculateTotalScore = (
       strokes[i],
       isPutts[i],
       pars.length > 0 ? pars[i] : 0,
-      strokesValue,
-      onePuttValue
     );
   }
   

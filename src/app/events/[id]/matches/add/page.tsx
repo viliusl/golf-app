@@ -658,25 +658,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                               })()}
                             </td>
                             <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-blue-50 ${
-                              hole.player1Score === 0 ? '' : 
-                              (() => {
-                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
-                                const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
-                                
-                                const result = calculateScore(
-                                  player1EffHcp, 
-                                  hole.player1Score, 
-                                  hole.player1Putt,
-                                  player2EffHcp, 
-                                  hole.player2Score, 
-                                  hole.player2Putt,
-                                  hole.par
-                                );
-                                
-                                return result.player1Score < 0 ? 'text-green-600' : 
-                                       result.player1Score > 0 ? 'text-red-600' : 'text-gray-600';
-                              })()
+                              hole.player1Score > 0 ? 'text-green-600' : 'text-gray-600'
                             }`}>
                               {hole.player1Score > 0 ? 
                                 (() => {
@@ -729,25 +711,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                               })()}
                             </td>
                             <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-green-50 ${
-                              hole.player2Score === 0 ? '' : 
-                              (() => {
-                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
-                                const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
-                                
-                                const result = calculateScore(
-                                  player1EffHcp, 
-                                  hole.player1Score, 
-                                  hole.player1Putt,
-                                  player2EffHcp, 
-                                  hole.player2Score, 
-                                  hole.player2Putt,
-                                  hole.par
-                                );
-                                
-                                return result.player2Score < 0 ? 'text-green-600' : 
-                                       result.player2Score > 0 ? 'text-red-600' : 'text-gray-600';
-                              })()
+                              hole.player2Score > 0 ? 'text-green-600' : 'text-gray-600'
                             }`}>
                               {hole.player2Score > 0 ? 
                                 (() => {
