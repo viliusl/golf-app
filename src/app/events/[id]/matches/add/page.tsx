@@ -62,9 +62,13 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       teamName: string;
       score: number;
     };
+    teeTime: string;
+    tee: number;
   }>({
     player1: { name: '', teamName: '', score: 0 },
-    player2: { name: '', teamName: '', score: 0 }
+    player2: { name: '', teamName: '', score: 0 },
+    teeTime: new Date().toISOString().slice(0, 16), // Initial fallback to current time
+    tee: 1
   });
   
   // Default hole data for a full 18-hole course
@@ -119,6 +123,21 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         });
         
         setPlayerOptions(allPlayers);
+        
+        // Set the default tee time to event date with current time
+        if (data.date) {
+          const eventDate = new Date(data.date);
+          const now = new Date();
+          
+          // Combine event date with current time
+          eventDate.setHours(now.getHours());
+          eventDate.setMinutes(now.getMinutes());
+          
+          setNewMatch(prevMatch => ({
+            ...prevMatch,
+            teeTime: eventDate.toISOString().slice(0, 16) // Format: YYYY-MM-DDTHH:MM
+          }));
+        }
       } catch (error) {
         console.error('Error fetching event:', error);
         setError('Failed to load event data');
@@ -247,6 +266,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
             ...newMatch.player2,
             putts: holeScores.filter(h => h.player2Putt).length
           },
+          teeTime: newMatch.teeTime,
+          tee: newMatch.tee,
           holes: holeScores
         }),
       });
@@ -402,6 +423,45 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                   </div>
                 </div>
               )}
+              
+              {/* Tee Time and Tee input */}
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                {/* Tee Time input */}
+                <div>
+                  <label htmlFor="teeTime" className="block text-sm font-medium text-gray-700 mb-2">
+                    Tee Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="teeTime"
+                    value={newMatch.teeTime}
+                    onChange={(e) => setNewMatch({
+                      ...newMatch,
+                      teeTime: e.target.value
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                  />
+                </div>
+                
+                {/* Tee (starting hole) input */}
+                <div>
+                  <label htmlFor="tee" className="block text-sm font-medium text-gray-700 mb-2">
+                    Tee
+                  </label>
+                  <input
+                    type="number"
+                    id="tee"
+                    min="1"
+                    max="18"
+                    value={newMatch.tee}
+                    onChange={(e) => setNewMatch({
+                      ...newMatch,
+                      tee: parseInt(e.target.value) || 1
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                  />
+                </div>
+              </div>
               
               {/* Scoring table */}
               {newMatch.player1.name && newMatch.player2.name && (

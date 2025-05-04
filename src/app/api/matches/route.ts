@@ -16,6 +16,8 @@ export interface Match {
   player1: MatchPlayer;
   player2: MatchPlayer;
   date: string;
+  teeTime: string;
+  tee: number;
   completed: boolean;
 }
 
@@ -64,7 +66,7 @@ export async function POST(request: Request) {
   try {
     await connectDB();
     const body = await request.json();
-    const { eventId, player1, player2 } = body;
+    const { eventId, player1, player2, teeTime, tee } = body;
     
     if (!eventId || !player1 || !player2) {
       return NextResponse.json(
@@ -87,6 +89,8 @@ export async function POST(request: Request) {
       player1,
       player2,
       date: new Date(),
+      teeTime: teeTime || new Date(),
+      tee: tee || 1,
       completed: false
     });
     

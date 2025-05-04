@@ -33,6 +33,15 @@ const matchSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  teeTime: {
+    type: Date,
+    default: Date.now
+  },
+  tee: {
+    type: Number,
+    default: 1,
+    min: [1, 'Tee number must be at least 1']
+  },
   completed: {
     type: Boolean,
     default: false
