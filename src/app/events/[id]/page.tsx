@@ -609,8 +609,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                       <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Player 2
                       </th>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                        Tee Time
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                        Time
                       </th>
                       <th scope="col" className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
                         Tee
@@ -645,8 +645,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">
                           <div className="text-xs text-black">
-                            {new Date(match.teeTime).toLocaleDateString([], {month: 'short', day: 'numeric'})}
-                            {' '}
                             {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </div>
                         </td>
