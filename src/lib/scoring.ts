@@ -80,13 +80,12 @@ export const calculateScore = (
 
   // Determine winner based on calculated scores
   let winner: 'player1' | 'player2' | 'tie';
+  const player1EffStrokes = player1Strokes - player1EffHcp;
+  const player2EffStrokes = player2Strokes - player2EffHcp;
 
-  // Skip determination if either player hasn't recorded strokes
-  if (player1Strokes === 0 || player2Strokes === 0) {
-    winner = 'tie';
-  } else if (player1Score > player2Score) {
+  if (player1EffStrokes < player2EffStrokes) {
     winner = 'player1';
-  } else if (player2Score > player1Score) {
+  } else if (player1EffStrokes > player2EffStrokes) {
     winner = 'player2';
   } else {
     winner = 'tie';
@@ -100,42 +99,3 @@ export const calculateScore = (
 
   return { player1Score, player2Score, winner };
 };
-
-/**
- * Calculates the score for all holes
- * 
- * @param effectiveHandicaps - Array of effective handicap strokes for each hole
- * @param strokes - Array of strokes taken for each hole
- * @param isPutts - Array of boolean values indicating if one-putts were made
- * @param pars - Array of par values for each hole (optional)
- * @param strokesValue - Value of each stroke (default 1)
- * @param onePuttValue - Value of a one-putt (default 1)
- * @returns The total calculated score
- */
-export const calculateTotalScore = (
-  effectiveHandicaps: number[],
-  strokes: number[],
-  isPutts: boolean[],
-  pars: number[] = [],
-): number => {
-  if (
-    effectiveHandicaps.length !== strokes.length || 
-    strokes.length !== isPutts.length ||
-    (pars.length > 0 && pars.length !== strokes.length)
-  ) {
-    throw new Error('Input arrays must have the same length');
-  }
-
-  let totalScore = 0;
-  
-  for (let i = 0; i < strokes.length; i++) {
-    totalScore += calculatePlayerScore(
-      effectiveHandicaps[i],
-      strokes[i],
-      isPutts[i],
-      pars.length > 0 ? pars[i] : 0,
-    );
-  }
-  
-  return totalScore;
-}; 
