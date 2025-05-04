@@ -59,13 +59,13 @@ export async function GET(request: Request) {
     }
     
     if (eventId) {
-      // Get all matches for a specific event
-      const matches = await Match.find({ eventId }).sort({ date: -1 });
+      // Get all matches for a specific event, sorted by tee time
+      const matches = await Match.find({ eventId }).sort({ teeTime: 1 });
       return NextResponse.json(matches);
     }
     
-    // Get all matches
-    const matches = await Match.find().sort({ date: -1 });
+    // Get all matches, sorted by tee time
+    const matches = await Match.find().sort({ teeTime: 1 });
     return NextResponse.json(matches);
   } catch (error) {
     console.error('Error fetching matches:', error);
