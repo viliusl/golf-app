@@ -199,8 +199,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
     const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
     
-    const player1FinalScore = calculateScore(player1EffHcp, hole.player1Score, hole.player1Putt);
-    const player2FinalScore = calculateScore(player2EffHcp, hole.player2Score, hole.player2Putt);
+    const player1FinalScore = calculateScore(player1EffHcp, hole.player1Score, hole.player1Putt, hole.par);
+    const player2FinalScore = calculateScore(player2EffHcp, hole.player2Score, hole.player2Putt, hole.par);
     
     if (hole.player1Score === 0 || hole.player2Score === 0) {
       hole.winner = 'tie';
@@ -234,8 +234,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
       const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
       
-      const player1FinalScore = calculateScore(player1EffHcp, hole.player1Score, hole.player1Putt);
-      const player2FinalScore = calculateScore(player2EffHcp, hole.player2Score, hole.player2Putt);
+      const player1FinalScore = calculateScore(player1EffHcp, hole.player1Score, hole.player1Putt, hole.par);
+      const player2FinalScore = calculateScore(player2EffHcp, hole.player2Score, hole.player2Putt, hole.par);
       
       if (player1FinalScore < player2FinalScore) {
         hole.winner = 'player1';
@@ -261,14 +261,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     const player1TotalScore = updatedHoleScores.reduce((total, hole) => {
       if (hole.player1Score === 0) return total;
       const [player1EffHcp, _] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
-      return total + calculateScore(player1EffHcp, hole.player1Score, hole.player1Putt);
+      return total + calculateScore(player1EffHcp, hole.player1Score, hole.player1Putt, hole.par);
     }, 0);
     
     // Calculate player 2 score
     const player2TotalScore = updatedHoleScores.reduce((total, hole) => {
       if (hole.player2Score === 0) return total;
       const [_, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
-      return total + calculateScore(player2EffHcp, hole.player2Score, hole.player2Putt);
+      return total + calculateScore(player2EffHcp, hole.player2Score, hole.player2Putt, hole.par);
     }, 0);
     
     setNewMatch({
@@ -634,7 +634,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                   return player1EffHcp;
                                 })(),
                                 hole.player1Score,
-                                hole.player1Putt
+                                hole.player1Putt,
+                                hole.par
                               ) < 0 ? 'text-green-600' : 
                               calculateScore(
                                 (() => {
@@ -644,7 +645,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                   return player1EffHcp;
                                 })(),
                                 hole.player1Score,
-                                hole.player1Putt
+                                hole.player1Putt,
+                                hole.par
                               ) > 0 ? 'text-red-600' : 'text-gray-600'
                             }`}>
                               {hole.player1Score > 0 ? 
@@ -656,7 +658,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                     return player1EffHcp;
                                   })(),
                                   hole.player1Score,
-                                  hole.player1Putt
+                                  hole.player1Putt,
+                                  hole.par
                                 ) 
                               : ''}
                             </td>
@@ -700,7 +703,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                   return player2EffHcp;
                                 })(),
                                 hole.player2Score,
-                                hole.player2Putt
+                                hole.player2Putt,
+                                hole.par
                               ) < 0 ? 'text-green-600' : 
                               calculateScore(
                                 (() => {
@@ -710,7 +714,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                   return player2EffHcp;
                                 })(),
                                 hole.player2Score,
-                                hole.player2Putt
+                                hole.player2Putt,
+                                hole.par
                               ) > 0 ? 'text-red-600' : 'text-gray-600'
                             }`}>
                               {hole.player2Score > 0 ? 
@@ -722,7 +727,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                     return player2EffHcp;
                                   })(),
                                   hole.player2Score,
-                                  hole.player2Putt
+                                  hole.player2Putt,
+                                  hole.par
                                 )
                               : ''}
                             </td>

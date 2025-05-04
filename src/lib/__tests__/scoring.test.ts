@@ -12,19 +12,29 @@ describe('calculateScore', () => {
 
   // Test case 2: Different stroke values
   test('should calculate scores with different stroke values', () => {
-    // effectiveHandicap, strokes, isPutt, strokesValue
-    expect(calculateScore(0, 4, false, 2)).toBe(8); // 4 strokes at 2 points each
-    expect(calculateScore(1, 4, false, 2)).toBe(7); // With 1 handicap
-    expect(calculateScore(0, 4, true, 2)).toBe(7);  // With one-putt
-    expect(calculateScore(1, 4, true, 2)).toBe(6);  // With handicap and putt
+    // effectiveHandicap, strokes, isPutt, par, strokesValue
+    expect(calculateScore(0, 4, false, 0, 2)).toBe(8); // 4 strokes at 2 points each
+    expect(calculateScore(1, 4, false, 0, 2)).toBe(7); // With 1 handicap
+    expect(calculateScore(0, 4, true, 0, 2)).toBe(7);  // With one-putt
+    expect(calculateScore(1, 4, true, 0, 2)).toBe(6);  // With handicap and putt
   });
 
   // Test case 3: Different one-putt values
   test('should calculate scores with different putt values', () => {
-    // effectiveHandicap, strokes, isPutt, strokesValue, onePuttValue
-    expect(calculateScore(0, 4, true, 1, 2)).toBe(2); // One-putt worth 2 points
-    expect(calculateScore(1, 4, true, 1, 2)).toBe(1); // With handicap
-    expect(calculateScore(0, 4, true, 2, 3)).toBe(5); // 2 points per stroke, 3 for putt
+    // effectiveHandicap, strokes, isPutt, par, strokesValue, onePuttValue
+    expect(calculateScore(0, 4, true, 0, 1, 2)).toBe(2); // One-putt worth 2 points
+    expect(calculateScore(1, 4, true, 0, 1, 2)).toBe(1); // With handicap
+    expect(calculateScore(0, 4, true, 0, 2, 3)).toBe(5); // 2 points per stroke, 3 for putt
+  });
+
+  // Test case 4: Par values
+  test('should calculate scores with par values', () => {
+    // effectiveHandicap, strokes, isPutt, par
+    expect(calculateScore(0, 4, false, 4)).toBe(0);   // 4 strokes on par 4 = 0
+    expect(calculateScore(0, 5, false, 4)).toBe(1);   // 5 strokes on par 4 = +1
+    expect(calculateScore(0, 3, false, 4)).toBe(-1);  // 3 strokes on par 4 = -1
+    expect(calculateScore(1, 4, false, 4)).toBe(-1);  // 4 strokes with 1 handicap on par 4 = -1
+    expect(calculateScore(0, 4, true, 4)).toBe(-1);   // 4 strokes with putt on par 4 = -1
   });
 });
 
@@ -61,12 +71,33 @@ describe('calculateTotalScore', () => {
       effectiveHandicaps, 
       strokes, 
       isPutts, 
+      [],
       strokesValue, 
       onePuttValue
     )).toBe(16);
   });
 
-  // Test case 3: Error handling
+  // Test case 3: With par values
+  test('should calculate total score with par values', () => {
+    const effectiveHandicaps = [1, 0, 2];
+    const strokes = [4, 3, 5];
+    const isPutts = [true, false, true];
+    const pars = [4, 3, 5];
+    
+    // Expected:
+    // Hole 1: 4 strokes - 1 handicap - 1 putt - 4 par = -2
+    // Hole 2: 3 strokes - 0 handicap - 0 putt - 3 par = 0
+    // Hole 3: 5 strokes - 2 handicap - 1 putt - 5 par = -3
+    // Total: -5
+    expect(calculateTotalScore(
+      effectiveHandicaps,
+      strokes,
+      isPutts,
+      pars
+    )).toBe(-5);
+  });
+
+  // Test case 4: Error handling
   test('should throw error when arrays have different lengths', () => {
     expect(() => calculateTotalScore(
       [1, 2], 
@@ -84,6 +115,13 @@ describe('calculateTotalScore', () => {
       [1, 2, 3], 
       [3, 4, 5], 
       [true, false]
+    )).toThrow('Input arrays must have the same length');
+
+    expect(() => calculateTotalScore(
+      [1, 2, 3],
+      [3, 4, 5],
+      [true, true, true],
+      [4, 4] // Different length pars array
     )).toThrow('Input arrays must have the same length');
   });
 }); 
