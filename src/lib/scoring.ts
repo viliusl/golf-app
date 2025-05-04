@@ -16,7 +16,7 @@ export const calculatePlayerScore = (
   par: number = 0,
 ): number => {
   let score = 0;
-  let effStroke = strokes + effectiveHandicap;
+  let effStroke = strokes - effectiveHandicap;
 
   if (isPutt) {
     score += 4;
@@ -78,17 +78,15 @@ export const calculateScore = (
     par, 
   );
 
-  // Determine winner based on scores
+  // Determine winner based on calculated scores
   let winner: 'player1' | 'player2' | 'tie';
 
-  const player1AdjustedStrokes = player1Strokes + player1EffHcp;
-  const player2AdjustedStrokes = player2Strokes + player2EffHcp;
-  
-  if (player1AdjustedStrokes === 0 || player2AdjustedStrokes === 0) {
-    winner = 'tie'; // No winner if either player hasn't recorded strokes
-  } else if (player1AdjustedStrokes < player2AdjustedStrokes) {
+  // Skip determination if either player hasn't recorded strokes
+  if (player1Strokes === 0 || player2Strokes === 0) {
+    winner = 'tie';
+  } else if (player1Score > player2Score) {
     winner = 'player1';
-  } else if (player2AdjustedStrokes < player1AdjustedStrokes) {
+  } else if (player2Score > player1Score) {
     winner = 'player2';
   } else {
     winner = 'tie';

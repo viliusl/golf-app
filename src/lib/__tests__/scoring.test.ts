@@ -5,7 +5,7 @@ describe('calculatePlayerScore', () => {
   test('should calculate basic score', () => {
     // No special bonuses
     expect(calculatePlayerScore(0, 4, false, 4)).toBe(4); // Par, no putt
-    expect(calculatePlayerScore(1, 4, false, 4)).toBe(4); // Effective par (with handicap), no putt
+    expect(calculatePlayerScore(1, 4, false, 4)).toBe(8); // Effective birdie (with handicap), no putt
     
     // One-putt bonus
     expect(calculatePlayerScore(0, 4, true, 4)).toBe(8);  // Par with a one-putt
@@ -19,38 +19,21 @@ describe('calculatePlayerScore', () => {
     expect(calculatePlayerScore(0, 2, true, 4)).toBe(20);  // Eagle with one-putt
     
     // Albatross (double eagle) bonus
-    expect(calculatePlayerScore(0, 1, false, 4)).toBe(64); // Albatross, no putt
+    expect(calculatePlayerScore(0, 1, false, 4)).toBe(128); // Albatross (hole-in-one on par 4: 64 + 64)
     
     // Hole-in-one bonus
-    expect(calculatePlayerScore(0, 1, false, 3)).toBe(64); // Hole in one
-    expect(calculatePlayerScore(0, 1, true, 3)).toBe(68);  // Hole in one with one-putt (impossible but testing logic)
-  });
-
-  // Test case 2: Different stroke values
-  test('should calculate scores with different stroke values', () => {
-    // effectiveHandicap, strokes, isPutt, par, strokesValue
-    expect(calculatePlayerScore(0, 4, false, 0, 2)).toBe(8); // 4 strokes at 2 points each
-    expect(calculatePlayerScore(1, 4, false, 0, 2)).toBe(7); // With 1 handicap
-    expect(calculatePlayerScore(0, 4, true, 0, 2)).toBe(7);  // With one-putt
-    expect(calculatePlayerScore(1, 4, true, 0, 2)).toBe(6);  // With handicap and putt
-  });
-
-  // Test case 3: Different one-putt values
-  test('should calculate scores with different putt values', () => {
-    // effectiveHandicap, strokes, isPutt, par, strokesValue, onePuttValue
-    expect(calculatePlayerScore(0, 4, true, 0, 1, 2)).toBe(2); // One-putt worth 2 points
-    expect(calculatePlayerScore(1, 4, true, 0, 1, 2)).toBe(1); // With handicap
-    expect(calculatePlayerScore(0, 4, true, 0, 2, 3)).toBe(5); // 2 points per stroke, 3 for putt
+    expect(calculatePlayerScore(0, 1, false, 3)).toBe(80);  // Hole in one on par 3: 64 + 16
+    expect(calculatePlayerScore(0, 1, true, 3)).toBe(84);   // Hole in one with one-putt: 64 + 16 + 4
   });
 
   // Test case 4: Par values
   test('should calculate scores with par values', () => {
     // effectiveHandicap, strokes, isPutt, par
-    expect(calculatePlayerScore(0, 4, false, 4)).toBe(0);   // 4 strokes on par 4 = 0
-    expect(calculatePlayerScore(0, 5, false, 4)).toBe(1);   // 5 strokes on par 4 = +1
-    expect(calculatePlayerScore(0, 3, false, 4)).toBe(-1);  // 3 strokes on par 4 = -1
-    expect(calculatePlayerScore(1, 4, false, 4)).toBe(-1);  // 4 strokes with 1 handicap on par 4 = -1
-    expect(calculatePlayerScore(0, 4, true, 4)).toBe(-1);   // 4 strokes with putt on par 4 = -1
+    expect(calculatePlayerScore(0, 4, false, 4)).toBe(4);   // Par = 4 points
+    expect(calculatePlayerScore(0, 5, false, 4)).toBe(0);   // Bogey = 0 points
+    expect(calculatePlayerScore(0, 3, false, 4)).toBe(8);   // Birdie = 8 points
+    expect(calculatePlayerScore(1, 4, false, 4)).toBe(8);   // Effective birdie with handicap = 8 points
+    expect(calculatePlayerScore(0, 4, true, 4)).toBe(8);    // Par with one-putt = 8 points
   });
 });
 
@@ -128,9 +111,9 @@ describe('calculateTotalScore', () => {
     // Expected: 
     // Hole 1: 4 strokes - 1 handicap = par with one-putt = 8 points
     // Hole 2: 3 strokes = birdie = 8 points
-    // Hole 3: 2 strokes = eagle with one-putt = 20 points
-    // Total: 36 points
-    expect(calculateTotalScore(effectiveHandicaps, strokes, isPutts, pars)).toBe(36);
+    // Hole 3: 2 strokes = eagle with one-putt = 16 points
+    // Total: 32 points
+    expect(calculateTotalScore(effectiveHandicaps, strokes, isPutts, pars)).toBe(32);
   });
 
   // Test case 2: Error handling

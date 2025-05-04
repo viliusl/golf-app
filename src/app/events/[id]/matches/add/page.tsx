@@ -800,9 +800,9 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           {/* Overall winner */}
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900">
                             {newMatch.player1.score > 0 && newMatch.player2.score > 0 ? (
-                              newMatch.player1.score < newMatch.player2.score ? 
+                              newMatch.player1.score > newMatch.player2.score ? 
                                 <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]}</span> : 
-                              newMatch.player2.score < newMatch.player1.score ? 
+                              newMatch.player2.score > newMatch.player1.score ? 
                                 <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span> : 
                                 <span className="text-gray-600">Tie</span>
                             ) : ''}
