@@ -365,31 +365,51 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         return;
       }
       
+      // Validate hole scores have numeric values 
+      const validatedHoleScores = holeScores.map(hole => ({
+        ...hole,
+        player1Score: Number(hole.player1Score) || 0,
+        player2Score: Number(hole.player2Score) || 0
+      }));
+      
+      // Calculate putt counts
+      const player1PuttCount = validatedHoleScores.filter(h => h.player1Putt).length;
+      const player2PuttCount = validatedHoleScores.filter(h => h.player2Putt).length;
+      
+      // Prepare match data
+      const matchData = {
+        eventId: params.id,
+        player1: {
+          ...newMatch.player1,
+          putts: player1PuttCount
+        },
+        player2: {
+          ...newMatch.player2,
+          putts: player2PuttCount
+        },
+        teeTime: newMatch.teeTime,
+        tee: newMatch.tee,
+        holes: validatedHoleScores
+      };
+      
+      console.log('Sending match data to API:', JSON.stringify(matchData, null, 2));
+      
       const response = await fetch('/api/matches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          eventId: params.id,
-          player1: {
-            ...newMatch.player1,
-            putts: holeScores.filter(h => h.player1Putt).length
-          },
-          player2: {
-            ...newMatch.player2,
-            putts: holeScores.filter(h => h.player2Putt).length
-          },
-          teeTime: newMatch.teeTime,
-          tee: newMatch.tee,
-          holes: holeScores
-        }),
+        body: JSON.stringify(matchData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.details || 'Failed to create match');
       }
+
+      // Get the created match data
+      const createdMatch = await response.json();
+      console.log('Match created successfully:', JSON.stringify(createdMatch, null, 2));
 
       // Navigate back to event details page
       router.push(`/events/${params.id}`);

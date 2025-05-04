@@ -8,6 +8,20 @@ export interface MatchPlayer {
   name: string;
   teamName: string;
   score: number;
+  putts?: number;
+  holeWins?: number;
+}
+
+export interface HoleScore {
+  hole: number;
+  handicap: number;
+  par: number;
+  pace: number;
+  player1Score: number;
+  player2Score: number;
+  player1Putt: boolean;
+  player2Putt: boolean;
+  winner: string;
 }
 
 export interface Match {
@@ -18,6 +32,7 @@ export interface Match {
   date: string;
   teeTime: string;
   tee: number;
+  holes: HoleScore[];
   completed: boolean;
 }
 
@@ -66,7 +81,7 @@ export async function POST(request: Request) {
   try {
     await connectDB();
     const body = await request.json();
-    const { eventId, player1, player2, teeTime, tee } = body;
+    const { eventId, player1, player2, teeTime, tee, holes } = body;
     
     if (!eventId || !player1 || !player2) {
       return NextResponse.json(
@@ -91,6 +106,7 @@ export async function POST(request: Request) {
       date: new Date(),
       teeTime: teeTime || new Date(),
       tee: tee || 1,
+      holes: holes || [],
       completed: false
     });
     
@@ -119,11 +135,14 @@ export async function PUT(request: Request) {
     }
     
     const body = await request.json();
-    const { player1, player2, completed } = body;
+    const { player1, player2, teeTime, tee, holes, completed } = body;
     
     const updateData: any = {};
     if (player1) updateData.player1 = player1;
     if (player2) updateData.player2 = player2;
+    if (teeTime) updateData.teeTime = teeTime;
+    if (tee) updateData.tee = tee;
+    if (holes) updateData.holes = holes;
     if (completed !== undefined) updateData.completed = completed;
     
     const match = await Match.findByIdAndUpdate(

@@ -248,31 +248,51 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
     setError(null);
     
     try {
+      // Validate hole scores have numeric values
+      const validatedHoleScores = holeScores.map(hole => ({
+        ...hole,
+        player1Score: Number(hole.player1Score) || 0,
+        player2Score: Number(hole.player2Score) || 0
+      }));
+      
+      // Calculate putt counts
+      const player1PuttCount = validatedHoleScores.filter(h => h.player1Putt).length;
+      const player2PuttCount = validatedHoleScores.filter(h => h.player2Putt).length;
+      
+      // Prepare match data
+      const matchData = {
+        player1: {
+          ...match.player1,
+          putts: player1PuttCount
+        },
+        player2: {
+          ...match.player2,
+          putts: player2PuttCount
+        },
+        teeTime: match.teeTime,
+        tee: match.tee,
+        holes: validatedHoleScores,
+        completed: match.completed
+      };
+      
+      console.log('Sending match update data to API:', JSON.stringify(matchData, null, 2));
+    
       const response = await fetch(`/api/matches?id=${match._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          player1: {
-            ...match.player1,
-            putts: holeScores.filter(h => h.player1Putt).length
-          },
-          player2: {
-            ...match.player2,
-            putts: holeScores.filter(h => h.player2Putt).length
-          },
-          teeTime: match.teeTime,
-          tee: match.tee,
-          holes: holeScores,
-          completed: match.completed
-        }),
+        body: JSON.stringify(matchData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.details || 'Failed to update match');
       }
+      
+      // Get the updated match data
+      const updatedMatch = await response.json();
+      console.log('Match updated successfully:', JSON.stringify(updatedMatch, null, 2));
 
       // Navigate back to event details page
       router.push(`/events/${params.id}`);
