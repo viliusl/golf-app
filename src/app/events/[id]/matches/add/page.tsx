@@ -605,7 +605,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                   const val = e.target.value === '' ? 0 : Number(e.target.value);
                                   handleHoleScoreChange(idx, 'player1Score', val);
                                 }}
-                                className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center text-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                             </td>
                             <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-blue-50">
@@ -671,7 +671,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                   const val = e.target.value === '' ? 0 : Number(e.target.value);
                                   handleHoleScoreChange(idx, 'player2Score', val);
                                 }}
-                                className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center text-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                             </td>
                             <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-green-50">
