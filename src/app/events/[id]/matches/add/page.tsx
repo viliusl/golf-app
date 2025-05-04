@@ -613,6 +613,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 className="h-3 w-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               />
                             </td>
+                            <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-blue-50">
+                              {(() => {
+                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
+                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                const [player1EffHcp, _] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                return player1EffHcp;
+                              })()}
+                            </td>
                             <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-blue-50 ${
                               hole.player1Score === 0 ? '' : 
                               calculateScore(
@@ -667,6 +675,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 onChange={(e) => handlePuttChange(idx, 'player2Putt', e.target.checked)}
                                 className="h-3 w-3 text-green-600 border-gray-300 rounded focus:ring-green-500"
                               />
+                            </td>
+                            <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-green-50">
+                              {(() => {
+                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
+                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                const [_, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                return player2EffHcp;
+                              })()}
                             </td>
                             <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-green-50 ${
                               hole.player2Score === 0 ? '' : 
@@ -729,7 +745,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 bg-blue-50 border-r border-gray-200">
                             {holeScores.filter(h => h.player1Putt).length}
                           </td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 bg-blue-50 border-r border-gray-200">
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">
                             {(() => {
                               const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
                               const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
@@ -752,7 +768,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 bg-green-50 border-r border-gray-200">
                             {holeScores.filter(h => h.player2Putt).length}
                           </td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 bg-green-50 border-r border-gray-200">
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">
                             {(() => {
                               const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
                               const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
