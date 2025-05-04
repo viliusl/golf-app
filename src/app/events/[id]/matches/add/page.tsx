@@ -753,7 +753,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           </td>
                           {/* Player 1 totals */}
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">
-                            {newMatch.player1.score}
+                            {holeScores.reduce((total, hole) => total + (hole.player1Score || 0), 0)}
                           </td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 bg-blue-50 border-r border-gray-200">
                             {holeScores.filter(h => h.player1Putt).length}
@@ -770,13 +770,13 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                               }, 0);
                             })()}
                           </td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r-2 border-gray-300">
-                            —
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r-2 border-gray-300 text-green-600">
+                            {newMatch.player1.score}
                           </td>
                           
                           {/* Player 2 totals */}
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">
-                            {newMatch.player2.score}
+                            {holeScores.reduce((total, hole) => total + (hole.player2Score || 0), 0)}
                           </td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 bg-green-50 border-r border-gray-200">
                             {holeScores.filter(h => h.player2Putt).length}
@@ -793,8 +793,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                               }, 0);
                             })()}
                           </td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r-2 border-gray-300">
-                            —
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r-2 border-gray-300 text-green-600">
+                            {newMatch.player2.score}
                           </td>
                           
                           {/* Overall winner */}
