@@ -19,14 +19,21 @@ export const calculateEffectiveHandicap = (
 
   let handicapDiffAbs = Math.abs(handicapDiff);
   let handicapPerHole = Array(18).fill(0);
-  let lasVisitedHole = 0;
-
-  while (handicapDiffAbs > 0) {
-    handicapPerHole[lasVisitedHole] = 1;
-    lasVisitedHole = (lasVisitedHole + 1) % 18; // Wrap around to ensure we don't exceed array bounds
-    handicapDiffAbs = handicapDiffAbs - 1;
+  
+  // First pass: distribute one stroke per hole
+  for (let i = 0; i < Math.min(handicapDiffAbs, 18); i++) {
+    handicapPerHole[i] = 1;
+  }
+  
+  // Second pass: if handicap difference is more than 18, add additional strokes
+  if (handicapDiffAbs > 18) {
+    let remainingStrokes = handicapDiffAbs - 18;
+    for (let i = 0; i < Math.min(remainingStrokes, 18); i++) {
+      handicapPerHole[i]++;
+    }
   }
 
+  // Determine which player gets the strokes
   if (player1Handicap > player2Handicap) {
     return [handicapPerHole[holeHandicapIndex - 1], 0]; // Adjust for 0-based array indexing
   } else {
