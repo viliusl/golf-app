@@ -602,7 +602,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 min="0"
                                 value={hole.player1Score}
                                 onChange={(e) => handleHoleScoreChange(idx, 'player1Score', parseInt(e.target.value) || 0)}
-                                className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center"
+                                className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                             </td>
                             <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-blue-50">
@@ -665,7 +665,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 min="0"
                                 value={hole.player2Score}
                                 onChange={(e) => handleHoleScoreChange(idx, 'player2Score', parseInt(e.target.value) || 0)}
-                                className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center"
+                                className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                             </td>
                             <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-green-50">
