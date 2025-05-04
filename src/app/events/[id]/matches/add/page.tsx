@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { calculateEffectiveHandicap } from '@/lib/handicap';
 
 interface TeamMember {
   name: string;
@@ -288,34 +289,6 @@ export default function AddMatch({ params }: { params: { id: string } }) {
   // Handle cancel button click
   const handleCancel = () => {
     router.push(`/events/${params.id}`);
-  };
-
-  // Calculate effective handicap for players on a specific hole
-  const calculateEffectiveHandicap = (player1Handicap: number, player2Handicap: number, holeHandicapIndex: number): [number, number] => {
-    const handicapDiff = player1Handicap - player2Handicap;
-
-    if (handicapDiff == 0) {
-      return [0, 0];
-    }
-
-    let handicapDiffAbs = Math.abs(handicapDiff);
-    let handicapPerHole = Array(18).fill(0);
-    let lasVisitedHole = 0;
-
-    while (handicapDiffAbs >= 0) {
-      handicapPerHole[lasVisitedHole] = 1;
-      lasVisitedHole++;
-      handicapDiffAbs = handicapDiffAbs - 1;
-    }
-
-    const holeHandicap = handicapDiffAbs;
-
-
-    if (player1Handicap > player2Handicap) {
-      return [handicapPerHole[holeHandicapIndex], 0];
-    } else {
-      return [0, handicapPerHole[holeHandicapIndex]];
-    }
   };
 
   if (loading) {
