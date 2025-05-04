@@ -40,6 +40,8 @@ describe('calculateEffectiveHandicap', () => {
     expect(calculateEffectiveHandicap(24, 2, 4)).toEqual([2, 0]);
     expect(calculateEffectiveHandicap(24, 2, 5)).toEqual([1, 0]);
     expect(calculateEffectiveHandicap(24, 2, 18)).toEqual([1, 0]);
+
+    expect(calculateEffectiveHandicap(180, 0, 18)).toEqual([10, 0]);
 });
 
   // Test case 6: Zero handicap
