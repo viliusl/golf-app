@@ -125,7 +125,67 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
         
         // Set hole scores from match data
         if (matchData.holes && matchData.holes.length > 0) {
-          setHoleScores(matchData.holes);
+          // Make sure each hole has properly defined values
+          const validatedHoleScores = matchData.holes.map((hole: any) => ({
+            ...hole,
+            player1Score: hole.player1Score || 0,
+            player2Score: hole.player2Score || 0,
+            player1Putt: !!hole.player1Putt,
+            player2Putt: !!hole.player2Putt,
+            winner: hole.winner || 'tie'
+          }));
+          
+          setHoleScores(validatedHoleScores);
+          
+          // Initial calculation of totals based on loaded data
+          const player1Handicap = allPlayers.find(p => p.name === matchData.player1.name)?.handicap || 0;
+          const player2Handicap = allPlayers.find(p => p.name === matchData.player2.name)?.handicap || 0;
+          
+          let player1TotalScore = 0;
+          let player2TotalScore = 0;
+          
+          // Calculate scores for each hole and sum them up
+          validatedHoleScores.forEach((hole: HoleScore) => {
+            if (hole.player1Score === 0 && hole.player2Score === 0) {
+              return; // Skip holes where neither player has a score
+            }
+            
+            const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(
+              player1Handicap, 
+              player2Handicap, 
+              hole.handicap
+            );
+            
+            const result = calculateScore(
+              player1EffHcp, 
+              hole.player1Score, 
+              hole.player1Putt,
+              player2EffHcp, 
+              hole.player2Score, 
+              hole.player2Putt,
+              hole.par
+            );
+            
+            player1TotalScore += result.player1Score;
+            player2TotalScore += result.player2Score;
+          });
+          
+          // Count hole wins
+          const player1Wins = validatedHoleScores.filter((h: HoleScore) => h.winner === 'player1').length;
+          const player2Wins = validatedHoleScores.filter((h: HoleScore) => h.winner === 'player2').length;
+          
+          // Add 32 points for the player who won more holes
+          if (player1Wins > player2Wins) {
+            player1TotalScore += 32;
+          } else if (player2Wins > player1Wins) {
+            player2TotalScore += 32;
+          }
+          
+          // Update match with calculated values
+          matchData.player1.score = player1TotalScore;
+          matchData.player1.holeWins = player1Wins;
+          matchData.player2.score = player2TotalScore;
+          matchData.player2.holeWins = player2Wins;
         } else {
           // Default hole data if not available
           setHoleScores([
