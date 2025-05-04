@@ -469,59 +469,85 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Score by Hole</h3>
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                      <colgroup>
+                        <col className="w-12" /> {/* Hole */}
+                        <col className="w-12" /> {/* Hcp */}
+                        <col className="w-12" style={{borderRight: '2px solid #e5e7eb'}} /> {/* Par */}
+                        <col className="w-16" /> {/* Player 1 Score */}
+                        <col className="w-12" /> {/* Player 1 1 Putt */}
+                        <col className="w-16" /> {/* Player 1 Eff Hcp */}
+                        <col className="w-16" style={{borderRight: '2px solid #e5e7eb'}} /> {/* Player 1 +/- */}
+                        <col className="w-16" /> {/* Player 2 Score */}
+                        <col className="w-12" /> {/* Player 2 1 Putt */}
+                        <col className="w-16" /> {/* Player 2 Eff Hcp */}
+                        <col className="w-16" style={{borderRight: '2px solid #e5e7eb'}} /> {/* Player 2 +/- */}
+                        <col className="w-16" /> {/* Winner */}
+                      </colgroup>
                       <thead className="bg-gray-50">
                         <tr>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Hole
+                          <th colSpan={3} className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r-2 border-gray-300">
+                            Hole Info
                           </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Hcp
-                          </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Par
-                          </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th colSpan={4} className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r-2 border-gray-300 bg-blue-50">
                             {newMatch.player1.name}
                           </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            1 Putt
-                          </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Effective Hcp
-                          </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Score
-                          </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th colSpan={4} className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r-2 border-gray-300 bg-green-50">
                             {newMatch.player2.name}
                           </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            1 Putt
+                          <th rowSpan={2} className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Winner
                           </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Effective Hcp
+                        </tr>
+                        <tr>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            Hole
                           </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                            Hcp
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r-2 border-gray-300">
+                            Par
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r border-gray-200">
                             Score
                           </th>
-                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Winner
+                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r border-gray-200">
+                            1 Putt
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r border-gray-200">
+                            Eff Hcp
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r-2 border-gray-300">
+                            +/-
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-r border-gray-200">
+                            Score
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-r border-gray-200">
+                            1 Putt
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-r border-gray-200">
+                            Eff Hcp
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-r-2 border-gray-300">
+                            +/-
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {holeScores.map((hole, idx) => (
                           <tr key={`hole-${hole.hole}`} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-200">
                               {hole.hole}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 border-r border-gray-200">
                               {hole.handicap}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 border-r-2 border-gray-300">
                               {hole.par}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            {/* Player 1 columns with blue tint */}
+                            <td className="px-4 py-3 whitespace-nowrap border-r border-gray-200 bg-blue-50">
                               <input
                                 type="number"
                                 min="0"
@@ -530,15 +556,15 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
                               />
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                            <td className="px-4 py-3 whitespace-nowrap text-center border-r border-gray-200 bg-blue-50">
                               <input
                                 type="checkbox"
                                 checked={hole.player1Putt}
                                 onChange={(e) => handlePuttChange(idx, 'player1Putt', e.target.checked)}
-                                className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               />
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-center">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-center border-r border-gray-200 bg-blue-50">
                               {(() => {
                                 const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
                                 // Check if hole handicap is less than or equal to player handicap
@@ -546,7 +572,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 return hole.handicap <= player1Handicap ? '1' : '0';
                               })()}
                             </td>
-                            <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${
+                            <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium text-center border-r-2 border-gray-300 bg-blue-50 ${
                               hole.player1Score < hole.par ? 'text-green-600' : 
                               hole.player1Score > hole.par ? 'text-red-600' : 'text-gray-600'
                             }`}>
@@ -556,7 +582,9 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 `+${hole.player1Score - hole.par}`
                               ) : ''}
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            
+                            {/* Player 2 columns with green tint */}
+                            <td className="px-4 py-3 whitespace-nowrap border-r border-gray-200 bg-green-50">
                               <input
                                 type="number"
                                 min="0"
@@ -565,7 +593,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
                               />
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                            <td className="px-4 py-3 whitespace-nowrap text-center border-r border-gray-200 bg-green-50">
                               <input
                                 type="checkbox"
                                 checked={hole.player2Putt}
@@ -573,14 +601,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                               />
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-center">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-center border-r border-gray-200 bg-green-50">
                               {(() => {
                                 const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
                                 // Check if hole handicap is less than or equal to player handicap
                                 return hole.handicap <= player2Handicap ? '1' : '0';
                               })()}
                             </td>
-                            <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${
+                            <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium text-center border-r-2 border-gray-300 bg-green-50 ${
                               hole.player2Score < hole.par ? 'text-green-600' : 
                               hole.player2Score > hole.par ? 'text-red-600' : 'text-gray-600'
                             }`}>
@@ -590,10 +618,12 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 `+${hole.player2Score - hole.par}`
                               ) : ''}
                             </td>
+                            
+                            {/* Winner column */}
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
                               {hole.player1Score > 0 && hole.player2Score > 0 ? (
                                 hole.winner === 'player1' ? 
-                                  <span className="text-green-600">{newMatch.player1.name.split(' ')[0]}</span> : 
+                                  <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]}</span> : 
                                 hole.winner === 'player2' ? 
                                   <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span> : 
                                   <span className="text-gray-600">Tie</span>
@@ -603,43 +633,48 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                         ))}
                         {/* Total row */}
                         <tr className="bg-gray-100 font-bold">
-                          <td colSpan={3} className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
+                          <td colSpan={3} className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 border-r-2 border-gray-300">
                             Total:
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {/* Player 1 totals */}
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center bg-blue-50 border-r border-gray-200">
                             {newMatch.player1.score}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 bg-blue-50 border-r border-gray-200">
                             {holeScores.filter(h => h.player1Putt).length}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 bg-blue-50 border-r border-gray-200">
                             {(() => {
                               const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
                               return holeScores.filter(hole => hole.handicap <= player1Handicap).length;
                             })()}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center bg-blue-50 border-r-2 border-gray-300">
                             —
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          
+                          {/* Player 2 totals */}
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center bg-green-50 border-r border-gray-200">
                             {newMatch.player2.score}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 bg-green-50 border-r border-gray-200">
                             {holeScores.filter(h => h.player2Putt).length}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 bg-green-50 border-r border-gray-200">
                             {(() => {
                               const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
                               return holeScores.filter(hole => hole.handicap <= player2Handicap).length;
                             })()}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-center bg-green-50 border-r-2 border-gray-300">
                             —
                           </td>
+                          
+                          {/* Overall winner */}
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
                             {newMatch.player1.score > 0 && newMatch.player2.score > 0 ? (
                               newMatch.player1.score < newMatch.player2.score ? 
-                                <span className="text-green-600">{newMatch.player1.name.split(' ')[0]}</span> : 
+                                <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]}</span> : 
                               newMatch.player2.score < newMatch.player1.score ? 
                                 <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span> : 
                                 <span className="text-gray-600">Tie</span>
