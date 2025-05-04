@@ -487,6 +487,9 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             1 Putt
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Effective Hcp
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Score
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -494,6 +497,9 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             1 Putt
+                          </th>
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Effective Hcp
                           </th>
                           <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Score
@@ -532,6 +538,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                               />
                             </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-center">
+                              {(() => {
+                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
+                                // Check if hole handicap is less than or equal to player handicap
+                                // This assumes that lower hole handicap numbers are more difficult holes
+                                return hole.handicap <= player1Handicap ? '1' : '0';
+                              })()}
+                            </td>
                             <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${
                               hole.player1Score < hole.par ? 'text-green-600' : 
                               hole.player1Score > hole.par ? 'text-red-600' : 'text-gray-600'
@@ -558,6 +572,13 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 onChange={(e) => handlePuttChange(idx, 'player2Putt', e.target.checked)}
                                 className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                               />
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-center">
+                              {(() => {
+                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                // Check if hole handicap is less than or equal to player handicap
+                                return hole.handicap <= player2Handicap ? '1' : '0';
+                              })()}
                             </td>
                             <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${
                               hole.player2Score < hole.par ? 'text-green-600' : 
@@ -591,6 +612,12 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
                             {holeScores.filter(h => h.player1Putt).length}
                           </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                            {(() => {
+                              const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
+                              return holeScores.filter(hole => hole.handicap <= player1Handicap).length;
+                            })()}
+                          </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                             —
                           </td>
@@ -599,6 +626,12 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
                             {holeScores.filter(h => h.player2Putt).length}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900">
+                            {(() => {
+                              const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                              return holeScores.filter(hole => hole.handicap <= player2Handicap).length;
+                            })()}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                             —
