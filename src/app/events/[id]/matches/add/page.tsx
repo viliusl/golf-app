@@ -600,8 +600,11 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                               <input
                                 type="number"
                                 min="0"
-                                value={hole.player1Score}
-                                onChange={(e) => handleHoleScoreChange(idx, 'player1Score', parseInt(e.target.value) || 0)}
+                                value={hole.player1Score === 0 ? '' : hole.player1Score}
+                                onChange={(e) => {
+                                  const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                  handleHoleScoreChange(idx, 'player1Score', val);
+                                }}
                                 className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                             </td>
@@ -663,8 +666,11 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                               <input
                                 type="number"
                                 min="0"
-                                value={hole.player2Score}
-                                onChange={(e) => handleHoleScoreChange(idx, 'player2Score', parseInt(e.target.value) || 0)}
+                                value={hole.player2Score === 0 ? '' : hole.player2Score}
+                                onChange={(e) => {
+                                  const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                  handleHoleScoreChange(idx, 'player2Score', val);
+                                }}
                                 className="w-12 px-1 py-0.5 text-xs border border-gray-300 rounded-md text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                             </td>
