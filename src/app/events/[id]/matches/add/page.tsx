@@ -58,17 +58,19 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       name: string;
       teamName: string;
       score: number;
+      holeWins?: number;
     };
     player2: {
       name: string;
       teamName: string;
       score: number;
+      holeWins?: number;
     };
     teeTime: string;
     tee: number;
   }>({
-    player1: { name: '', teamName: '', score: 0 },
-    player2: { name: '', teamName: '', score: 0 },
+    player1: { name: '', teamName: '', score: 0, holeWins: 0 },
+    player2: { name: '', teamName: '', score: 0, holeWins: 0 },
     teeTime: new Date().toISOString().slice(0, 16), // Initial fallback to current time
     tee: 1
   });
@@ -219,9 +221,12 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     // Update the winner
     hole.winner = result.winner;
     
+    console.log(`handleHoleScoreChange - Hole ${holeIndex+1}: Set winner to ${result.winner}`);
+    console.log(`P1: ${hole.player1Score} (${player1EffHcp}), P2: ${hole.player2Score} (${player2EffHcp})`);
+    console.log(`Result scores - P1: ${result.player1Score}, P2: ${result.player2Score}`);
+    
     setHoleScores(updatedHoleScores);
     
-    // Update total scores
     calculateAndUpdateTotalScores(updatedHoleScores);
   };
 
@@ -262,6 +267,10 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       
       // Update the winner
       hole.winner = result.winner;
+      
+      console.log(`handlePuttChange - Hole ${holeIndex+1}: Set winner to ${result.winner}`);
+      console.log(`P1: ${hole.player1Score} (${player1EffHcp}) Putt: ${hole.player1Putt}, P2: ${hole.player2Score} (${player2EffHcp}) Putt: ${hole.player2Putt}`);
+      console.log(`Result scores - P1: ${result.player1Score}, P2: ${result.player2Score}`);
     }
     
     setHoleScores(updatedHoleScores);
@@ -304,15 +313,38 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       player2TotalScore += result.player2Score;
     });
     
+    // Count hole wins for each player
+    const player1Wins = updatedHoleScores.filter(h => h.winner === 'player1').length;
+    const player2Wins = updatedHoleScores.filter(h => h.winner === 'player2').length;
+    
+    // Add 32 points for the player who won more holes
+    if (player1Wins > player2Wins) {
+      player1TotalScore += 32;
+    } else if (player2Wins > player1Wins) {
+      player2TotalScore += 32;
+    }
+    
+    console.log('--- Summary ---');
+    console.log(`Player 1 wins: ${player1Wins} holes`);
+    console.log(`Player 2 wins: ${player2Wins} holes`);
+    console.log('Individual hole winners:');
+    updatedHoleScores.forEach((hole, idx) => {
+      if (hole.player1Score > 0 && hole.player2Score > 0) {
+        console.log(`Hole ${idx+1}: winner=${hole.winner}`);
+      }
+    });
+    
     setNewMatch({
       ...newMatch,
       player1: {
         ...newMatch.player1,
-        score: player1TotalScore
+        score: player1TotalScore,
+        holeWins: player1Wins
       },
       player2: {
         ...newMatch.player2,
-        score: player2TotalScore
+        score: player2TotalScore,
+        holeWins: player2Wins
       }
     });
   };
@@ -737,11 +769,16 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             {/* Winner column */}
                             <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-center">
                               {hole.player1Score > 0 && hole.player2Score > 0 ? (
-                                hole.winner === 'player1' ? 
-                                  <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]}</span> : 
-                                hole.winner === 'player2' ? 
-                                  <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span> : 
-                                  <span className="text-gray-600">Tie</span>
+                                (() => {
+                                  console.log(`Rendering winner for hole ${hole.hole}: winner=${hole.winner}`);
+                                  if (hole.winner === 'player1') {
+                                    return <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]}</span>;
+                                  } else if (hole.winner === 'player2') {
+                                    return <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span>;
+                                  } else {
+                                    return <span className="text-gray-600">Tie</span>;
+                                  }
+                                })()
                               ) : ''}
                             </td>
                           </tr>
@@ -800,11 +837,19 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           {/* Overall winner */}
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900">
                             {newMatch.player1.score > 0 && newMatch.player2.score > 0 ? (
-                              newMatch.player1.score > newMatch.player2.score ? 
-                                <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]}</span> : 
-                              newMatch.player2.score > newMatch.player1.score ? 
-                                <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span> : 
-                                <span className="text-gray-600">Tie</span>
+                              (() => {
+                                // Determine winner by number of holes won
+                                const player1Wins = holeScores.filter(h => h.winner === 'player1').length;
+                                const player2Wins = holeScores.filter(h => h.winner === 'player2').length;
+                                
+                                if (player1Wins > player2Wins) {
+                                  return <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]} ({player1Wins} holes)</span>;
+                                } else if (player2Wins > player1Wins) {
+                                  return <span className="text-green-600">{newMatch.player2.name.split(' ')[0]} ({player2Wins} holes)</span>;
+                                } else {
+                                    return <span className="text-gray-600">Tie</span>;
+                                }
+                              })()
                             ) : ''}
                           </td>
                         </tr>
