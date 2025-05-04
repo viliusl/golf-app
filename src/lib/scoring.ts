@@ -1,5 +1,5 @@
 /**
- * Calculates the score based on effective handicap, strokes, and one-putt values
+ * Calculates a single player's score based on effective handicap, strokes, and one-putt values
  * 
  * @param effectiveHandicap - The effective handicap strokes for the hole
  * @param strokes - The number of strokes taken
@@ -9,7 +9,7 @@
  * @param onePuttValue - Value of a one-putt (default 1)
  * @returns The calculated score
  */
-export const calculateScore = (
+export const calculatePlayerScore = (
   effectiveHandicap: number,
   strokes: number,
   isPutt: boolean,
@@ -30,6 +30,67 @@ export const calculateScore = (
   const parAdjustedScore = par > 0 ? finalScore - par : finalScore;
   
   return parAdjustedScore;
+};
+
+/**
+ * Calculates scores for both players and determines the hole winner
+ * 
+ * @param player1EffHcp - Player 1's effective handicap for the hole
+ * @param player1Strokes - Player 1's strokes for the hole
+ * @param player1Putt - Whether player 1 made a one-putt (true/false)
+ * @param player2EffHcp - Player 2's effective handicap for the hole
+ * @param player2Strokes - Player 2's strokes for the hole
+ * @param player2Putt - Whether player 2 made a one-putt (true/false)
+ * @param par - The par value for the hole
+ * @param strokesValue - Value of each stroke (default 1)
+ * @param onePuttValue - Value of a one-putt (default 1)
+ * @returns An object containing player scores and the winner
+ */
+export const calculateScore = (
+  player1EffHcp: number,
+  player1Strokes: number,
+  player1Putt: boolean,
+  player2EffHcp: number,
+  player2Strokes: number,
+  player2Putt: boolean,
+  par: number,
+  strokesValue: number = 1,
+  onePuttValue: number = 1
+): { player1Score: number; player2Score: number; winner: 'player1' | 'player2' | 'tie' } => {
+  
+  // Calculate individual scores
+  const player1Score = calculatePlayerScore(
+    player1EffHcp, 
+    player1Strokes, 
+    player1Putt, 
+    par, 
+    strokesValue, 
+    onePuttValue
+  );
+  
+  const player2Score = calculatePlayerScore(
+    player2EffHcp, 
+    player2Strokes, 
+    player2Putt, 
+    par, 
+    strokesValue, 
+    onePuttValue
+  );
+  
+  // Determine winner based on scores
+  let winner: 'player1' | 'player2' | 'tie';
+  
+  if (player1Strokes === 0 || player2Strokes === 0) {
+    winner = 'tie'; // No winner if either player hasn't recorded strokes
+  } else if (player1Score < player2Score) {
+    winner = 'player1';
+  } else if (player2Score < player1Score) {
+    winner = 'player2';
+  } else {
+    winner = 'tie';
+  }
+  
+  return { player1Score, player2Score, winner };
 };
 
 /**
@@ -62,7 +123,7 @@ export const calculateTotalScore = (
   let totalScore = 0;
   
   for (let i = 0; i < strokes.length; i++) {
-    totalScore += calculateScore(
+    totalScore += calculatePlayerScore(
       effectiveHandicaps[i],
       strokes[i],
       isPutts[i],
