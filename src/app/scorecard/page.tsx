@@ -214,7 +214,7 @@ export default function Scorecard() {
 
   const calculateMatchProgress = () => {
     if (scorecardEvents.some(event => event.isLoading)) {
-      return { completed: 0, total: 0, percent: 0 };
+      return { completed: 0, total: 0, percent: 0, registered: 0 };
     }
 
     // Count total players across all events
@@ -242,15 +242,16 @@ export default function Scorecard() {
       }
     });
 
-    // Calculate percentage
-    const percentComplete = registeredMatches > 0 
-      ? Math.min(100, Math.round((completedMatches / registeredMatches) * 100))
+    // Calculate percentage based on total possible matches
+    const percentComplete = totalPossibleMatches > 0 
+      ? Math.min(100, Math.round((completedMatches / totalPossibleMatches) * 100))
       : 0;
 
     return {
       completed: completedMatches,
-      total: registeredMatches,
-      percent: percentComplete
+      total: totalPossibleMatches,
+      percent: percentComplete,
+      registered: registeredMatches
     };
   };
 
@@ -306,7 +307,7 @@ export default function Scorecard() {
                 <h2 className="text-lg font-medium text-black mb-2">Match Progress</h2>
                 <div className="mt-1">
                   <div className="flex justify-between items-center text-sm text-gray-600 mb-1">
-                    <span>Completed: {matchProgress.completed} of {matchProgress.total} matches</span>
+                    <span>Completed: {matchProgress.completed} of {matchProgress.total} possible matches ({matchProgress.registered} registered)</span>
                     <span>{matchProgress.percent}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
