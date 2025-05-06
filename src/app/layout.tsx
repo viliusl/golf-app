@@ -4,8 +4,8 @@ import "./globals.css";
 import '@/lib/config'; // Import config to ensure env variables are loaded
 import dynamic from 'next/dynamic';
 
-// Use dynamic import with no SSR for the sidebar
-const SidebarWrapper = dynamic(() => import('@/components/SidebarWrapper'), { ssr: false });
+// Use dynamic import with no SSR for the layout wrapper
+const LayoutWrapper = dynamic(() => import('@/components/LayoutWrapper'), { ssr: false });
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,17 +19,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // This is a server component, so we can't use pathname directly
-  // We'll let the SidebarWrapper handle the conditional rendering
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <div className="flex min-h-screen">
-          <SidebarWrapper />
-          <div className="flex-1">
-            {children}
-          </div>
-        </div>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );

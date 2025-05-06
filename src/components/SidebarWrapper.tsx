@@ -1,17 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 export default function SidebarWrapper() {
-  const pathname = usePathname();
-  
-  // Don't render sidebar on scores pages
-  if (!pathname || pathname === '/scores' || pathname.startsWith('/scores/')) {
-    return null;
-  }
-
-  // Return normal sidebar for non-scores pages
   return (
     <div className="w-64 bg-gray-800 text-white p-4">
       <div className="mb-8">
