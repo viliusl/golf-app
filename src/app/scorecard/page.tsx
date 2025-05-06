@@ -42,6 +42,15 @@ interface AggregateTeam {
   eventCount: number;
 }
 
+interface AggregatePlayer {
+  name: string;
+  teamName: string;
+  totalScore: number;
+  matchCount: number;
+  eventCount: number;
+  averageScore: number;
+}
+
 export default function Scorecard() {
   const [scorecardEvents, setScorecardEvents] = useState<EventWithScores[]>([]);
   const [loading, setLoading] = useState(true);
@@ -212,6 +221,89 @@ export default function Scorecard() {
     return aggregateScoresArray;
   };
 
+  const calculatePlayerScores = (): AggregatePlayer[] => {
+    // Skip if events are still loading
+    if (scorecardEvents.some(event => event.isLoading)) {
+      return [];
+    }
+
+    // Create a map to track player scores across all events
+    const playerScoreMap = new Map<string, {
+      name: string;
+      teamName: string;
+      totalScore: number;
+      matchCount: number;
+      eventIds: Set<string>;
+    }>();
+
+    // Iterate through all events and collect player data from matches
+    scorecardEvents.forEach(event => {
+      if (!event.matches) return;
+
+      // Process only completed matches
+      const completedMatches = event.matches.filter(match => match.completed);
+      
+      completedMatches.forEach(match => {
+        // Process player 1
+        const player1Key = match.player1.name;
+        const existingPlayer1 = playerScoreMap.get(player1Key);
+        
+        if (existingPlayer1) {
+          existingPlayer1.totalScore += match.player1.score;
+          existingPlayer1.matchCount += 1;
+          existingPlayer1.eventIds.add(event._id);
+          playerScoreMap.set(player1Key, existingPlayer1);
+        } else {
+          playerScoreMap.set(player1Key, {
+            name: match.player1.name,
+            teamName: match.player1.teamName,
+            totalScore: match.player1.score,
+            matchCount: 1,
+            eventIds: new Set([event._id])
+          });
+        }
+
+        // Process player 2
+        const player2Key = match.player2.name;
+        const existingPlayer2 = playerScoreMap.get(player2Key);
+        
+        if (existingPlayer2) {
+          existingPlayer2.totalScore += match.player2.score;
+          existingPlayer2.matchCount += 1;
+          existingPlayer2.eventIds.add(event._id);
+          playerScoreMap.set(player2Key, existingPlayer2);
+        } else {
+          playerScoreMap.set(player2Key, {
+            name: match.player2.name,
+            teamName: match.player2.teamName,
+            totalScore: match.player2.score,
+            matchCount: 1,
+            eventIds: new Set([event._id])
+          });
+        }
+      });
+    });
+
+    // Convert map to array and calculate averages
+    const playerScoresArray = Array.from(playerScoreMap.values()).map(player => ({
+      name: player.name,
+      teamName: player.teamName,
+      totalScore: player.totalScore,
+      matchCount: player.matchCount,
+      eventCount: player.eventIds.size,
+      averageScore: player.matchCount > 0 ? Math.round(player.totalScore / player.matchCount * 10) / 10 : 0
+    }));
+
+    // Sort by total score (highest first), then by match count (highest first for tiebreaker)
+    playerScoresArray.sort((a, b) => 
+      b.totalScore !== a.totalScore 
+        ? b.totalScore - a.totalScore 
+        : b.matchCount - a.matchCount
+    );
+    
+    return playerScoresArray;
+  };
+
   const calculateMatchProgress = () => {
     if (scorecardEvents.some(event => event.isLoading)) {
       return { completed: 0, total: 0, percent: 0, registered: 0 };
@@ -265,8 +357,9 @@ export default function Scorecard() {
     );
   }
 
-  // Calculate aggregate scores
+  // Calculate scores and progress
   const aggregateScores = calculateAggregateScores();
+  const playerScores = calculatePlayerScores();
   const allEventsLoaded = !scorecardEvents.some(event => event.isLoading);
   const matchProgress = calculateMatchProgress();
 
@@ -379,6 +472,87 @@ export default function Scorecard() {
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <div className={`text-sm font-bold ${index === 0 ? "text-orange-600" : "text-gray-900"}`}>
                               {team.totalScore}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            {/* Player Scores Section */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+              <div className="p-6 border-b bg-gradient-to-r from-green-50 to-blue-50">
+                <h2 className="text-xl font-semibold text-black">
+                  Individual Player Scores
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Aggregate scores for all players across displayed events
+                </p>
+              </div>
+              
+              {!allEventsLoaded ? (
+                <div className="p-6 text-center">
+                  <p className="text-gray-500">Loading data from all events...</p>
+                </div>
+              ) : playerScores.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-gray-500">No player data available</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Rank
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Player
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Team
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Events
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Matches
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Avg Score
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total Score
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {playerScores.map((player, index) => (
+                        <tr key={player.name} className={index === 0 ? "bg-gradient-to-r from-green-50 to-blue-50" : "hover:bg-gray-50"}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-black">{index + 1}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-black">{player.name}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-700">{player.teamName}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="text-sm text-gray-900">{player.eventCount}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="text-sm text-gray-900">{player.matchCount}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="text-sm text-gray-900">{player.averageScore}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className={`text-sm font-bold ${index === 0 ? "text-blue-600" : "text-gray-900"}`}>
+                              {player.totalScore}
                             </div>
                           </td>
                         </tr>
