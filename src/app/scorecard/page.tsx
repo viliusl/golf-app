@@ -228,22 +228,28 @@ export default function Scorecard() {
     // Calculate the total possible matches (total players divided by 2)
     const totalPossibleMatches = Math.floor(totalPlayers / 2);
 
-    // Count completed matches
+    // Count registered and completed matches
+    let registeredMatches = 0;
     let completedMatches = 0;
+    
     scorecardEvents.forEach(event => {
       if (event.matches) {
-        completedMatches += event.matches.length;
+        // Count all matches that exist
+        registeredMatches += event.matches.length;
+        
+        // Count only completed matches
+        completedMatches += event.matches.filter(match => match.completed).length;
       }
     });
 
     // Calculate percentage
-    const percentComplete = totalPossibleMatches > 0 
-      ? Math.min(100, Math.round((completedMatches / totalPossibleMatches) * 100))
+    const percentComplete = registeredMatches > 0 
+      ? Math.min(100, Math.round((completedMatches / registeredMatches) * 100))
       : 0;
 
     return {
       completed: completedMatches,
-      total: totalPossibleMatches,
+      total: registeredMatches,
       percent: percentComplete
     };
   };
