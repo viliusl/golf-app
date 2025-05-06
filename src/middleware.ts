@@ -6,11 +6,12 @@ const USERNAME = process.env.BASIC_AUTH_USERNAME || 'modestas';
 const PASSWORD = process.env.BASIC_AUTH_PASSWORD || 'TMog7pdkfpQM';
 
 export function middleware(request: NextRequest) {
-  // Skip authentication for public assets
+  // Skip authentication for public assets and public scorecard
   if (
     request.nextUrl.pathname.startsWith('/_next') || 
     request.nextUrl.pathname.includes('/public/') ||
-    request.nextUrl.pathname === '/favicon.ico'
+    request.nextUrl.pathname === '/favicon.ico' ||
+    request.nextUrl.pathname === '/public-scorecard'
   ) {
     return NextResponse.next();
   }
