@@ -32,6 +32,7 @@ interface Event {
 interface EventWithScores extends Event {
   teamScores: Team[];
   isLoading: boolean;
+  matches?: MatchType[];
 }
 
 interface AggregateTeam {
@@ -102,6 +103,7 @@ export default function Scorecard() {
             return {
               ...event,
               teamScores,
+              matches: data,
               isLoading: false
             };
           }
@@ -210,6 +212,42 @@ export default function Scorecard() {
     return aggregateScoresArray;
   };
 
+  const calculateMatchProgress = () => {
+    if (scorecardEvents.some(event => event.isLoading)) {
+      return { completed: 0, total: 0, percent: 0 };
+    }
+
+    // Count total players across all events
+    let totalPlayers = 0;
+    scorecardEvents.forEach(event => {
+      event.teams.forEach(team => {
+        totalPlayers += team.members.length;
+      });
+    });
+
+    // Calculate the total possible matches (total players divided by 2)
+    const totalPossibleMatches = Math.floor(totalPlayers / 2);
+
+    // Count completed matches
+    let completedMatches = 0;
+    scorecardEvents.forEach(event => {
+      if (event.matches) {
+        completedMatches += event.matches.length;
+      }
+    });
+
+    // Calculate percentage
+    const percentComplete = totalPossibleMatches > 0 
+      ? Math.min(100, Math.round((completedMatches / totalPossibleMatches) * 100))
+      : 0;
+
+    return {
+      completed: completedMatches,
+      total: totalPossibleMatches,
+      percent: percentComplete
+    };
+  };
+
   if (loading && scorecardEvents.length === 0) {
     return (
       <main className="p-8">
@@ -223,6 +261,7 @@ export default function Scorecard() {
   // Calculate aggregate scores
   const aggregateScores = calculateAggregateScores();
   const allEventsLoaded = !scorecardEvents.some(event => event.isLoading);
+  const matchProgress = calculateMatchProgress();
 
   return (
     <main className="p-8">
@@ -254,6 +293,25 @@ export default function Scorecard() {
                 ))}
               </div>
             </div>
+            
+            {/* Match Progress Section */}
+            {allEventsLoaded && (
+              <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
+                <h2 className="text-lg font-medium text-black mb-2">Match Progress</h2>
+                <div className="mt-1">
+                  <div className="flex justify-between items-center text-sm text-gray-600 mb-1">
+                    <span>Completed: {matchProgress.completed} of {matchProgress.total} matches</span>
+                    <span>{matchProgress.percent}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-blue-600 h-2.5 rounded-full" 
+                      style={{ width: `${matchProgress.percent}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* Aggregate Scores Section */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
