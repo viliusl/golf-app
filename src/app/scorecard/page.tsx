@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Match as MatchType } from '@/app/api/matches/route';
+import Link from 'next/link';
 
 interface Team {
   _id: string;
@@ -364,7 +365,16 @@ export default function Scorecard() {
   return (
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-black mb-6">Scorecard</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-black">Scorecard</h1>
+          <Link 
+            href="/scores" 
+            className="text-sm text-blue-600 hover:text-blue-800"
+            target="_blank"
+          >
+            View public scorecard →
+          </Link>
+        </div>
         
         {error && (
           <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">

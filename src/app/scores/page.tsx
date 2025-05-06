@@ -51,7 +51,7 @@ interface AggregatePlayer {
   eventCount: number;
 }
 
-export default function PublicScorecard() {
+export default function Scores() {
   const [scorecardEvents, setScorecardEvents] = useState<EventWithScores[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

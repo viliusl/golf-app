@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/_next') || 
     request.nextUrl.pathname.includes('/public/') ||
     request.nextUrl.pathname === '/favicon.ico' ||
-    request.nextUrl.pathname === '/public-scorecard'
+    request.nextUrl.pathname === '/scores'
   ) {
     return NextResponse.next();
   }

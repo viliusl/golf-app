@@ -6,11 +6,11 @@ import '@/lib/config';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Golf Scorecard - Public View",
-  description: "Public view of the golf scorecard",
+  title: "Golf Tournament Scorecard",
+  description: "Live scores and standings for golf tournaments",
 };
 
-export default function PublicLayout({
+export default function ScoresLayout({
   children,
 }: {
   children: React.ReactNode;
