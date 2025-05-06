@@ -6,13 +6,16 @@ const USERNAME = process.env.BASIC_AUTH_USERNAME || 'modestas';
 const PASSWORD = process.env.BASIC_AUTH_PASSWORD || 'TMog7pdkfpQM';
 
 export function middleware(request: NextRequest) {
-  // Skip authentication for public assets and public scorecard
+  // Skip authentication for public assets, public scorecard, and needed API routes
   if (
     request.nextUrl.pathname.startsWith('/_next') || 
     request.nextUrl.pathname.includes('/public/') ||
     request.nextUrl.pathname === '/favicon.ico' ||
     request.nextUrl.pathname === '/scores' || 
-    request.nextUrl.pathname.startsWith('/scores/')
+    request.nextUrl.pathname.startsWith('/scores/') ||
+    // Allow API routes needed for public scorecard
+    request.nextUrl.pathname === '/api/events' ||
+    (request.nextUrl.pathname === '/api/matches' && request.nextUrl.search.includes('eventId='))
   ) {
     return NextResponse.next();
   }
