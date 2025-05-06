@@ -26,6 +26,7 @@ interface Event {
   date: string;
   teams: Team[];
   createdAt: string;
+  displayInScorecard: boolean;
 }
 
 interface PlayerOption {

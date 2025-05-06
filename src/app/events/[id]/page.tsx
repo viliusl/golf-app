@@ -23,6 +23,7 @@ interface Event {
   date: string;
   teams: Team[];
   createdAt: string;
+  displayInScorecard: boolean;
 }
 
 export default function EventDetails({ params }: { params: { id: string } }) {
@@ -498,6 +499,32 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
+  // Add this function to handle toggling displayInScorecard
+  const handleScorecardDisplayToggle = async (displayInScorecard: boolean) => {
+    if (!event) return;
+    
+    try {
+      const response = await fetch(`/api/events?id=${params.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ displayInScorecard }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to update event');
+      }
+
+      // Update the local state
+      setEvent(prev => prev ? { ...prev, displayInScorecard } : null);
+    } catch (error) {
+      console.error('Error updating event:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update event');
+    }
+  };
+
   if (loading) {
     return (
       <main className="p-8">
@@ -552,6 +579,18 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   weekday: 'long'
                 })}
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Display in Scorecard</span>
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={event.displayInScorecard || false}
+                  onChange={() => handleScorecardDisplayToggle(!event.displayInScorecard)}
+                  className="sr-only peer"
+                />
+                <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
             </div>
           </div>
         </div>

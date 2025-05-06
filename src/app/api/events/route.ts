@@ -175,7 +175,7 @@ export async function PUT(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const requestBody = await request.json();
-    const { name, date, teams, teamId, memberIndex } = requestBody;
+    const { name, date, teams, teamId, memberIndex, displayInScorecard } = requestBody;
 
     if (!id) {
       return NextResponse.json(
@@ -194,6 +194,7 @@ export async function PUT(request: Request) {
 
     if (name) event.name = name;
     if (date) event.date = date;
+    if (displayInScorecard !== undefined) event.displayInScorecard = displayInScorecard;
     
     // Handle removing a member from a team
     if (teamId !== undefined && memberIndex !== undefined) {

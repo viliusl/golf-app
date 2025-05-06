@@ -26,6 +26,7 @@ interface Event {
     }[];
   }[];
   createdAt: string;
+  displayInScorecard: boolean;
 }
 
 export default function Scorecard() {
@@ -44,11 +45,14 @@ export default function Scorecard() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        setEvents(data);
+        
+        // Filter events to only show those marked for scorecard display
+        const scorecardEvents = data.filter((event: Event) => event.displayInScorecard);
+        setEvents(scorecardEvents);
         
         // If there are events, select the first one by default
-        if (data.length > 0) {
-          setSelectedEvent(data[0]);
+        if (scorecardEvents.length > 0) {
+          setSelectedEvent(scorecardEvents[0]);
         }
         
       } catch (error) {

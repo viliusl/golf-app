@@ -28,6 +28,10 @@ const eventSchema = new mongoose.Schema({
     type: [TeamSchema],
     default: []
   },
+  displayInScorecard: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
