@@ -48,7 +48,6 @@ interface AggregatePlayer {
   totalScore: number;
   matchCount: number;
   eventCount: number;
-  averageScore: number;
 }
 
 export default function Scorecard() {
@@ -290,8 +289,7 @@ export default function Scorecard() {
       teamName: player.teamName,
       totalScore: player.totalScore,
       matchCount: player.matchCount,
-      eventCount: player.eventIds.size,
-      averageScore: player.matchCount > 0 ? Math.round(player.totalScore / player.matchCount * 10) / 10 : 0
+      eventCount: player.eventIds.size
     }));
 
     // Sort by total score (highest first), then by match count (highest first for tiebreaker)
@@ -521,9 +519,6 @@ export default function Scorecard() {
                         <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Matches
                         </th>
-                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Avg Score
-                        </th>
                         <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Total Score
                         </th>
@@ -546,9 +541,6 @@ export default function Scorecard() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <div className="text-sm text-gray-900">{player.matchCount}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <div className="text-sm text-gray-900">{player.averageScore}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <div className={`text-sm font-bold ${index === 0 ? "text-blue-600" : "text-gray-900"}`}>
