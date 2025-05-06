@@ -53,6 +53,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playerOptions, setPlayerOptions] = useState<PlayerOption[]>([]);
+  const [availablePlayerOptions, setAvailablePlayerOptions] = useState<PlayerOption[]>([]);
+  const [existingMatches, setExistingMatches] = useState<any[]>([]);
   
   const [newMatch, setNewMatch] = useState<{
     player1: {
@@ -129,6 +131,24 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         
         setPlayerOptions(allPlayers);
         
+        // Now fetch existing matches for this event
+        const matchesResponse = await fetch(`/api/matches?eventId=${params.id}`);
+        if (!matchesResponse.ok) {
+          throw new Error(`HTTP error! status: ${matchesResponse.status}`);
+        }
+        const matchesData = await matchesResponse.json();
+        setExistingMatches(matchesData);
+        
+        // Filter out players who are already in matches
+        const playersInMatches = new Set<string>();
+        matchesData.forEach((match: any) => {
+          playersInMatches.add(match.player1.name);
+          playersInMatches.add(match.player2.name);
+        });
+        
+        const availablePlayers = allPlayers.filter(player => !playersInMatches.has(player.name));
+        setAvailablePlayerOptions(availablePlayers);
+        
         // Set the default tee time to event date with current time
         if (data.date) {
           const eventDate = new Date(data.date);
@@ -156,7 +176,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
 
   const handlePlayer1Change = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedPlayerName = event.target.value;
-    const selectedPlayer = playerOptions.find(player => player.name === selectedPlayerName);
+    const selectedPlayer = availablePlayerOptions.find(player => player.name === selectedPlayerName);
     
     if (selectedPlayer) {
       setNewMatch({
@@ -172,7 +192,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
 
   const handlePlayer2Change = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedPlayerName = event.target.value;
-    const selectedPlayer = playerOptions.find(player => player.name === selectedPlayerName);
+    const selectedPlayer = availablePlayerOptions.find(player => player.name === selectedPlayerName);
     
     if (selectedPlayer) {
       setNewMatch({
@@ -493,7 +513,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                     required
                   >
                     <option value="">Select Player 1</option>
-                    {playerOptions.map((player, idx) => (
+                    {availablePlayerOptions.map((player, idx) => (
                       <option 
                         key={`p1-${idx}`} 
                         value={player.name}
@@ -518,7 +538,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                     required
                   >
                     <option value="">Select Player 2</option>
-                    {playerOptions.map((player, idx) => (
+                    {availablePlayerOptions.map((player, idx) => (
                       <option 
                         key={`p2-${idx}`} 
                         value={player.name}
