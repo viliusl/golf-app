@@ -11,7 +11,8 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/_next') || 
     request.nextUrl.pathname.includes('/public/') ||
     request.nextUrl.pathname === '/favicon.ico' ||
-    request.nextUrl.pathname === '/scores'
+    request.nextUrl.pathname === '/scores' || 
+    request.nextUrl.pathname.startsWith('/scores/')
   ) {
     return NextResponse.next();
   }
@@ -37,7 +38,7 @@ export function middleware(request: NextRequest) {
   });
 }
 
-// Apply middleware to all routes
+// Apply middleware to all routes except API routes
 export const config = {
-  matcher: ['/((?!api/auth).*)'],
+  matcher: ['/((?!api/auth|_next/static|_next/image|favicon.ico).*)'],
 }; 

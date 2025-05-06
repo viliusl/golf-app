@@ -2,8 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { Match as MatchType } from '@/app/api/matches/route';
-import Link from 'next/link';
 
+// More robust client-only wrapper that completely skips hydration
+function ClientOnly({ children, fallback = null }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) {
+    return <>{fallback}</>;
+  }
+
+  return <>{children}</>;
+}
+
+// Date formatting components
+function FormattedDate() {
+  const [dateString, setDateString] = useState('');
+  
+  useEffect(() => {
+    setDateString(`${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`);
+  }, []);
+  
+  return <span>{dateString}</span>;
+}
+
+function EventDateDisplay({ date }: { date: string }) {
+  const [formattedDate, setFormattedDate] = useState('');
+  
+  useEffect(() => {
+    setFormattedDate(new Date(date).toLocaleDateString());
+  }, [date]);
+  
+  return <span>{formattedDate}</span>;
+}
+
+// Type definitions
 interface Team {
   _id: string;
   name: string;
@@ -51,12 +87,24 @@ interface AggregatePlayer {
   eventCount: number;
 }
 
+// Loading fallback component
+function LoadingFallback() {
+  return (
+    <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+      <p className="text-gray-500">Loading scorecard...</p>
+    </div>
+  );
+}
+
+// Main scorecard component
 export default function Scores() {
+  // Store state for events data
   const [scorecardEvents, setScorecardEvents] = useState<EventWithScores[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  
   useEffect(() => {
+    // Fetch events data
     const fetchEvents = async () => {
       try {
         setLoading(true);
@@ -346,28 +394,32 @@ export default function Scores() {
     };
   };
 
-  if (loading && scorecardEvents.length === 0) {
-    return (
-      <main className="p-8">
-        <div className="max-w-5xl mx-auto">
-          <p className="text-black">Loading events...</p>
-        </div>
-      </main>
-    );
-  }
-
   // Calculate scores and progress
   const aggregateScores = calculateAggregateScores();
   const playerScores = calculatePlayerScores();
   const allEventsLoaded = !scorecardEvents.some(event => event.isLoading);
   const matchProgress = calculateMatchProgress();
+  
+  if (loading && scorecardEvents.length === 0) {
+    return (
+      <main className="p-8">
+        <div className="max-w-5xl mx-auto">
+          <header className="mb-8 text-center">
+            <h1 className="text-4xl font-bold text-black mb-2">Golf Tournament Scorecard</h1>
+          </header>
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <p className="text-gray-500">Loading events...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="p-8">
       <div className="max-w-5xl mx-auto">
         <header className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-black mb-2">Golf Tournament Scorecard</h1>
-          <p className="text-gray-600">Live scores and standings</p>
         </header>
         
         {error && (
@@ -387,7 +439,7 @@ export default function Scores() {
               <div className="flex flex-wrap gap-2">
                 {scorecardEvents.map(event => (
                   <span key={event._id} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {event.name} ({new Date(event.date).toLocaleDateString()})
+                    {event.name} (<EventDateDisplay date={event.date} />)
                   </span>
                 ))}
               </div>
@@ -556,9 +608,8 @@ export default function Scores() {
               )}
             </div>
             
-            <footer className="text-center text-sm text-gray-500 mt-8 pb-4">
-              <p>View the <Link href="/scorecard" className="text-blue-600 hover:underline">admin version</Link> of this scorecard</p>
-              <p className="mt-2">Updated: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
+            <footer className="text-center text-sm text-gray-500 mt-8 mb-0">
+              <p>Updated: <FormattedDate /></p>
             </footer>
           </>
         )}

@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description: "Live scores and standings for golf tournaments",
 };
 
+// This layout completely replaces the root layout for the scores route
 export default function ScoresLayout({
   children,
 }: {
@@ -17,13 +18,8 @@ export default function ScoresLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <div className="min-h-screen">
-          {/* Main content without sidebar */}
-          <div className="w-full">
-            {children}
-          </div>
-        </div>
+      <body className={`${inter.className} bg-white min-h-screen`}>
+        {children}
       </body>
     </html>
   );
