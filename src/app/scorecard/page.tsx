@@ -29,17 +29,20 @@ interface Event {
   displayInScorecard: boolean;
 }
 
+interface EventWithScores extends Event {
+  teamScores: Team[];
+  isLoading: boolean;
+}
+
 export default function Scorecard() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [matches, setMatches] = useState<MatchType[]>([]);
-  const [teamScores, setTeamScores] = useState<Team[]>([]);
+  const [scorecardEvents, setScorecardEvents] = useState<EventWithScores[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        setLoading(true);
         const response = await fetch('/api/events');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -47,12 +50,21 @@ export default function Scorecard() {
         const data = await response.json();
         
         // Filter events to only show those marked for scorecard display
-        const scorecardEvents = data.filter((event: Event) => event.displayInScorecard);
-        setEvents(scorecardEvents);
+        const filteredEvents = data
+          .filter((event: Event) => event.displayInScorecard)
+          .map((event: Event) => ({
+            ...event,
+            teamScores: [],
+            isLoading: true
+          }));
         
-        // If there are events, select the first one by default
-        if (scorecardEvents.length > 0) {
-          setSelectedEvent(scorecardEvents[0]);
+        setScorecardEvents(filteredEvents);
+        
+        // If there are events, fetch matches for each one
+        if (filteredEvents.length > 0) {
+          filteredEvents.forEach((event: EventWithScores) => {
+            fetchMatchesForEvent(event._id);
+          });
         }
         
       } catch (error) {
@@ -66,34 +78,49 @@ export default function Scorecard() {
     fetchEvents();
   }, []);
 
-  useEffect(() => {
-    if (!selectedEvent) return;
-    
-    const fetchMatches = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/matches?eventId=${selectedEvent._id}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setMatches(data);
-        
-        // Calculate team scores
-        calculateTeamScores(data, selectedEvent.teams);
-        
-      } catch (error) {
-        console.error('Error fetching matches:', error);
-        setError('Failed to load matches');
-      } finally {
-        setLoading(false);
+  const fetchMatchesForEvent = async (eventId: string) => {
+    try {
+      const response = await fetch(`/api/matches?eventId=${eventId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      const data = await response.json();
+      
+      // Update the event with match data
+      setScorecardEvents(prevEvents => {
+        return prevEvents.map(event => {
+          if (event._id === eventId) {
+            // Calculate team scores for this event
+            const teamScores = calculateTeamScores(data, event.teams);
+            return {
+              ...event,
+              teamScores,
+              isLoading: false
+            };
+          }
+          return event;
+        });
+      });
+      
+    } catch (error) {
+      console.error(`Error fetching matches for event ${eventId}:`, error);
+      
+      // Mark the event as not loading, even if there was an error
+      setScorecardEvents(prevEvents => {
+        return prevEvents.map(event => {
+          if (event._id === eventId) {
+            return {
+              ...event,
+              isLoading: false
+            };
+          }
+          return event;
+        });
+      });
+    }
+  };
 
-    fetchMatches();
-  }, [selectedEvent]);
-
-  const calculateTeamScores = (matches: MatchType[], eventTeams: Event['teams']) => {
+  const calculateTeamScores = (matches: MatchType[], eventTeams: Event['teams']): Team[] => {
     // Initialize team scores
     const teamScoreMap = new Map<string, { totalScore: number; matchCount: number }>();
     
@@ -132,16 +159,10 @@ export default function Scorecard() {
     // Sort by total score (highest first)
     teamScoresArray.sort((a, b) => b.totalScore - a.totalScore);
     
-    setTeamScores(teamScoresArray);
+    return teamScoresArray;
   };
 
-  const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const eventId = e.target.value;
-    const event = events.find(event => event._id === eventId);
-    setSelectedEvent(event || null);
-  };
-
-  if (loading && !selectedEvent) {
+  if (loading && scorecardEvents.length === 0) {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
@@ -162,100 +183,94 @@ export default function Scorecard() {
           </div>
         )}
         
-        {/* Event Selection */}
-        <div className="mb-8">
-          <label htmlFor="event-select" className="block text-sm font-medium text-gray-700 mb-2">
-            Select Event
-          </label>
-          <select
-            id="event-select"
-            value={selectedEvent?._id || ''}
-            onChange={handleEventChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-white bg-gray-800"
-          >
-            {events.length === 0 ? (
-              <option value="">No events available</option>
-            ) : (
-              events.map(event => (
-                <option key={event._id} value={event._id}>
-                  {event.name} ({new Date(event.date).toLocaleDateString()})
-                </option>
-              ))
-            )}
-          </select>
-        </div>
-        
-        {/* Team Scores Table */}
-        {selectedEvent ? (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold text-black">
-                {selectedEvent.name} - Team Scores
-              </h2>
-              <p className="text-sm text-gray-500">
-                {new Date(selectedEvent.date).toLocaleDateString(undefined, {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-            </div>
-            
-            {loading ? (
-              <div className="p-6 text-center">
-                <p className="text-gray-500">Loading match data...</p>
-              </div>
-            ) : teamScores.length === 0 ? (
-              <div className="p-6 text-center">
-                <p className="text-gray-500">No matches recorded for this event yet</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Rank
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Team
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Match Count
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Total Score
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {teamScores.map((team, index) => (
-                      <tr key={team._id} className={index === 0 ? "bg-yellow-50" : "hover:bg-gray-50"}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-black">{index + 1}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-black">{team.name}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className="text-sm text-gray-900">{team.matchCount}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className={`text-sm font-bold ${index === 0 ? "text-yellow-600" : "text-gray-900"}`}>
-                            {team.totalScore}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+        {scorecardEvents.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <p className="text-gray-500">No events are currently marked for display in scorecard</p>
+            <p className="text-gray-500 mt-2 text-sm">
+              To display an event here, go to an event page and toggle "Display in Scorecard"
+            </p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <p className="text-gray-500">Please select an event to view the scorecard</p>
-          </div>
+          <>
+            <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
+              <h2 className="text-lg font-medium text-black mb-2">Events Displayed</h2>
+              <div className="flex flex-wrap gap-2">
+                {scorecardEvents.map(event => (
+                  <span key={event._id} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {event.name} ({new Date(event.date).toLocaleDateString()})
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            {scorecardEvents.map(event => (
+              <div key={event._id} className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+                <div className="p-6 border-b">
+                  <h2 className="text-xl font-semibold text-black">
+                    {event.name} - Team Scores
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {new Date(event.date).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+                
+                {event.isLoading ? (
+                  <div className="p-6 text-center">
+                    <p className="text-gray-500">Loading match data...</p>
+                  </div>
+                ) : event.teamScores.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <p className="text-gray-500">No matches recorded for this event yet</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Rank
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Team
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Match Count
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Total Score
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {event.teamScores.map((team, index) => (
+                          <tr key={team._id} className={index === 0 ? "bg-yellow-50" : "hover:bg-gray-50"}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-black">{index + 1}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-black">{team.name}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <div className="text-sm text-gray-900">{team.matchCount}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                              <div className={`text-sm font-bold ${index === 0 ? "text-yellow-600" : "text-gray-900"}`}>
+                                {team.totalScore}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))}
+          </>
         )}
       </div>
     </main>
