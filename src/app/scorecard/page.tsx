@@ -245,7 +245,7 @@ export default function Scorecard() {
         ) : (
           <>
             <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-lg font-medium text-black mb-2">Events Included</h2>
+              <h2 className="text-lg font-medium text-black mb-2">Scores for Events</h2>
               <div className="flex flex-wrap gap-2">
                 {scorecardEvents.map(event => (
                   <span key={event._id} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -259,7 +259,7 @@ export default function Scorecard() {
             <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
               <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
                 <h2 className="text-xl font-semibold text-black">
-                  Combined Team Scores
+                  Team Scores
                 </h2>
                 <p className="text-sm text-gray-500">
                   Aggregate scores across all displayed events
