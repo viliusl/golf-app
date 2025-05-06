@@ -34,6 +34,13 @@ interface EventWithScores extends Event {
   isLoading: boolean;
 }
 
+interface AggregateTeam {
+  name: string;
+  totalScore: number;
+  matchCount: number;
+  eventCount: number;
+}
+
 export default function Scorecard() {
   const [scorecardEvents, setScorecardEvents] = useState<EventWithScores[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,6 +169,47 @@ export default function Scorecard() {
     return teamScoresArray;
   };
 
+  const calculateAggregateScores = (): AggregateTeam[] => {
+    // Skip if events are still loading
+    if (scorecardEvents.some(event => event.isLoading)) {
+      return [];
+    }
+
+    // Create a map to track aggregate scores
+    const aggregateScoreMap = new Map<string, AggregateTeam>();
+
+    // Iterate through all events and collect team scores
+    scorecardEvents.forEach(event => {
+      // Skip if event has no scores
+      if (event.teamScores.length === 0) return;
+
+      event.teamScores.forEach(team => {
+        const existingTeam = aggregateScoreMap.get(team.name);
+        if (existingTeam) {
+          // Update existing team entry
+          existingTeam.totalScore += team.totalScore;
+          existingTeam.matchCount += team.matchCount;
+          existingTeam.eventCount += 1;
+          aggregateScoreMap.set(team.name, existingTeam);
+        } else {
+          // Create new team entry
+          aggregateScoreMap.set(team.name, {
+            name: team.name,
+            totalScore: team.totalScore,
+            matchCount: team.matchCount,
+            eventCount: 1
+          });
+        }
+      });
+    });
+
+    // Convert map to array and sort by score (descending)
+    const aggregateScoresArray = Array.from(aggregateScoreMap.values());
+    aggregateScoresArray.sort((a, b) => b.totalScore - a.totalScore);
+    
+    return aggregateScoresArray;
+  };
+
   if (loading && scorecardEvents.length === 0) {
     return (
       <main className="p-8">
@@ -171,6 +219,10 @@ export default function Scorecard() {
       </main>
     );
   }
+
+  // Calculate aggregate scores
+  const aggregateScores = calculateAggregateScores();
+  const allEventsLoaded = !scorecardEvents.some(event => event.isLoading);
 
   return (
     <main className="p-8">
@@ -193,7 +245,7 @@ export default function Scorecard() {
         ) : (
           <>
             <div className="mb-6 bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-lg font-medium text-black mb-2">Events Displayed</h2>
+              <h2 className="text-lg font-medium text-black mb-2">Events Included</h2>
               <div className="flex flex-wrap gap-2">
                 {scorecardEvents.map(event => (
                   <span key={event._id} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -203,73 +255,74 @@ export default function Scorecard() {
               </div>
             </div>
             
-            {scorecardEvents.map(event => (
-              <div key={event._id} className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
-                <div className="p-6 border-b">
-                  <h2 className="text-xl font-semibold text-black">
-                    {event.name} - Team Scores
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {new Date(event.date).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                </div>
-                
-                {event.isLoading ? (
-                  <div className="p-6 text-center">
-                    <p className="text-gray-500">Loading match data...</p>
-                  </div>
-                ) : event.teamScores.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <p className="text-gray-500">No matches recorded for this event yet</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Rank
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Team
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Match Count
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Total Score
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {event.teamScores.map((team, index) => (
-                          <tr key={team._id} className={index === 0 ? "bg-yellow-50" : "hover:bg-gray-50"}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-black">{index + 1}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-black">{team.name}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <div className="text-sm text-gray-900">{team.matchCount}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <div className={`text-sm font-bold ${index === 0 ? "text-yellow-600" : "text-gray-900"}`}>
-                                {team.totalScore}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+            {/* Aggregate Scores Section */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+              <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
+                <h2 className="text-xl font-semibold text-black">
+                  Combined Team Scores
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Aggregate scores across all displayed events
+                </p>
               </div>
-            ))}
+              
+              {!allEventsLoaded ? (
+                <div className="p-6 text-center">
+                  <p className="text-gray-500">Loading data from all events...</p>
+                </div>
+              ) : aggregateScores.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-gray-500">No match data available</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Rank
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Team
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Events
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Matches
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total Score
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {aggregateScores.map((team, index) => (
+                        <tr key={team.name} className={index === 0 ? "bg-gradient-to-r from-yellow-50 to-orange-50" : "hover:bg-gray-50"}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-black">{index + 1}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-black">{team.name}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="text-sm text-gray-900">{team.eventCount}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <div className="text-sm text-gray-900">{team.matchCount}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className={`text-sm font-bold ${index === 0 ? "text-orange-600" : "text-gray-900"}`}>
+                              {team.totalScore}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
