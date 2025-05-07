@@ -372,7 +372,7 @@ export default function Scorecard() {
             className="text-sm text-blue-600 hover:text-blue-800"
             target="_blank"
           >
-            View public scorecard →
+            View public leaderboard →
           </Link>
         </div>
         
