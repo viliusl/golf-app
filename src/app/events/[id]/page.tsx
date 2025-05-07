@@ -572,12 +572,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 </button>
               </div>
               <p className="text-lg text-gray-600">
-                {new Date(event.date).toLocaleDateString(undefined, {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  weekday: 'long'
-                })}
+                {new Date(event.date).toISOString().split('T')[0]}
               </p>
             </div>
             <div className="flex items-center gap-2">

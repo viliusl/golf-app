@@ -196,11 +196,7 @@ export default function Home() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-black">
-                          {new Date(event.date).toLocaleDateString(undefined, {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+                          {new Date(event.date).toISOString().split('T')[0]}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

@@ -23,7 +23,13 @@ function FormattedDate() {
   const [dateString, setDateString] = useState('');
   
   useEffect(() => {
-    setDateString(`${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    setDateString(`${year}-${month}-${day} ${hours}:${minutes}`);
   }, []);
   
   return <span>{dateString}</span>;
@@ -33,7 +39,11 @@ function EventDateDisplay({ date }: { date: string }) {
   const [formattedDate, setFormattedDate] = useState('');
   
   useEffect(() => {
-    setFormattedDate(new Date(date).toLocaleDateString());
+    const dateObj = new Date(date);
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    setFormattedDate(`${year}-${month}-${day}`);
   }, [date]);
   
   return <span>{formattedDate}</span>;

@@ -396,7 +396,7 @@ export default function Scorecard() {
               <div className="flex flex-wrap gap-2">
                 {scorecardEvents.map(event => (
                   <span key={event._id} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {event.name} ({new Date(event.date).toLocaleDateString()})
+                    {event.name} ({new Date(event.date).toISOString().split('T')[0]})
                   </span>
                 ))}
               </div>
