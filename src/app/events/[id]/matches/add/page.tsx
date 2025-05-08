@@ -170,16 +170,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         const matchesData = await matchesResponse.json();
         setExistingMatches(matchesData);
         
-        // Filter out players who are already in matches
-        const playersInMatches = new Set<string>();
-        matchesData.forEach((match: any) => {
-          playersInMatches.add(match.player1.name);
-          playersInMatches.add(match.player2.name);
-        });
-        
-        const availablePlayers = allPlayers.filter(player => !playersInMatches.has(player.name));
-        console.log('Available players:', availablePlayers);
-        setAvailablePlayerOptions(availablePlayers);
+        // Use all players for the dropdown options
+        setAvailablePlayerOptions(allPlayers);
         
         // Set the default tee time to event date with current time
         if (data.date) {
