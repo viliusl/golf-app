@@ -22,6 +22,7 @@ interface OriginalTeam {
     name: string;
     isCaptain: boolean;
     handicap: number;
+    player_handicap?: number;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }[];
@@ -34,12 +35,16 @@ interface Event {
   teams: Team[];
   createdAt: string;
   displayInScorecard: boolean;
+  freePlayers?: {
+    playerId: string;
+  }[];
 }
 
 interface PlayerDetails {
   name: string;
   isCaptain: boolean;
   handicap: number;
+  player_handicap?: number;
   tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
 }
@@ -49,6 +54,7 @@ interface TeamMember {
   name: string;
   isCaptain: boolean;
   handicap: number;
+  player_handicap?: number;
   tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
 }
@@ -619,6 +625,135 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   }, [event, teams, freePlayers]);
 
+  const handleRandomizeMatches = async () => {
+    if (!event) return;
+    setError(null);
+    
+    try {
+      // Get all players from teams
+      const allPlayers: { name: string; teamName: string; handicap: number; player_handicap: number }[] = [];
+      
+      // Add players from teams
+      event.teams.forEach((eventTeam) => {
+        const team = teams.find(t => t._id === eventTeam._id);
+        if (team) {
+          team.members.forEach((member) => {
+            allPlayers.push({
+              name: member.name,
+              teamName: team.name,
+              handicap: member.handicap,
+              player_handicap: member.player_handicap || 0
+            });
+          });
+        }
+      });
+      
+      // Add free players
+      if (event.freePlayers && Array.isArray(event.freePlayers)) {
+        event.freePlayers.forEach((player) => {
+          const freePlayer = freePlayers.find(p => p._id === player.playerId);
+          if (freePlayer) {
+            allPlayers.push({
+              name: freePlayer.name,
+              teamName: 'Free Player',
+              handicap: freePlayer.handicap,
+              player_handicap: freePlayer.player_handicap || 0
+            });
+          }
+        });
+      }
+      
+      // Shuffle players
+      const shuffledPlayers = [...allPlayers].sort(() => Math.random() - 0.5);
+      
+      // Create matches ensuring players from same team don't play against each other
+      const newMatches = [];
+      const usedPlayers = new Set<string>();
+      
+      for (let i = 0; i < shuffledPlayers.length; i++) {
+        if (usedPlayers.has(shuffledPlayers[i].name)) continue;
+        
+        // Find next available player from different team
+        let j = i + 1;
+        while (j < shuffledPlayers.length && 
+               (usedPlayers.has(shuffledPlayers[j].name) || 
+                shuffledPlayers[j].teamName === shuffledPlayers[i].teamName)) {
+          j++;
+        }
+        
+        // If we found a valid opponent
+        if (j < shuffledPlayers.length) {
+          const match = {
+            eventId: params.id,
+            player1: {
+              name: shuffledPlayers[i].name,
+              teamName: shuffledPlayers[i].teamName,
+              score: 0,
+              holeWins: 0,
+              handicap: shuffledPlayers[i].handicap,
+              player_handicap: shuffledPlayers[i].player_handicap
+            },
+            player2: {
+              name: shuffledPlayers[j].name,
+              teamName: shuffledPlayers[j].teamName,
+              score: 0,
+              holeWins: 0,
+              handicap: shuffledPlayers[j].handicap,
+              player_handicap: shuffledPlayers[j].player_handicap
+            },
+            teeTime: new Date().toISOString(),
+            tee: 1,
+            holes: Array(18).fill(null).map((_, index) => ({
+              hole: index + 1,
+              handicap: [13, 11, 9, 17, 1, 15, 7, 5, 3, 12, 2, 14, 18, 4, 8, 6, 16, 10][index],
+              par: [5, 4, 4, 3, 4, 3, 4, 5, 3, 5, 4, 5, 3, 5, 4, 3, 4, 4][index],
+              pace: [15, 15, 15, 12, 15, 12, 15, 17, 12, 17, 15, 17, 12, 17, 15, 12, 15, 15][index],
+              player1Score: 0,
+              player2Score: 0,
+              player1Putt: false,
+              player2Putt: false,
+              winner: 'tie'
+            })),
+            completed: false
+          };
+          
+          newMatches.push(match);
+          usedPlayers.add(shuffledPlayers[i].name);
+          usedPlayers.add(shuffledPlayers[j].name);
+        }
+      }
+      
+      // Delete existing matches
+      for (const match of matches) {
+        await fetch(`/api/matches?id=${match._id}`, {
+          method: 'DELETE'
+        });
+      }
+      
+      // Create new matches
+      for (const match of newMatches) {
+        const response = await fetch('/api/matches', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(match),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create match');
+        }
+      }
+      
+      // Refresh matches
+      await fetchMatches();
+      
+    } catch (error) {
+      console.error('Error randomizing matches:', error);
+      setError(error instanceof Error ? error.message : 'Failed to randomize matches');
+    }
+  };
+
   if (loading) {
     return (
       <main className="p-8">
@@ -699,12 +834,20 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-6 border-b flex justify-between items-center">
               <h3 className="text-lg font-medium text-black">Match List</h3>
-              <Link
-                href={`/events/${params.id}/matches/add`}
-                className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
-              >
-                Add Match
-              </Link>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleRandomizeMatches}
+                  className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                >
+                  Randomize Matches
+                </button>
+                <Link
+                  href={`/events/${params.id}/matches/add`}
+                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                >
+                  Add Match
+                </Link>
+              </div>
             </div>
 
             {matches.length === 0 ? (
