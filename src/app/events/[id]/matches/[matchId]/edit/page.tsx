@@ -124,7 +124,7 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
               name: member.name,
               teamName: team.name,
               handicap: member.handicap,
-              player_handicap: member.player_handicap
+              player_handicap: member.player_handicap || 0
             });
           });
         });
