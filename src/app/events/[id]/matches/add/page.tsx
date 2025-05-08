@@ -33,6 +33,7 @@ interface PlayerOption {
   name: string;
   teamName: string;
   handicap: number;
+  player_handicap: number;
 }
 
 interface HoleScore {
@@ -74,7 +75,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
   }>({
     player1: { name: '', teamName: '', score: 0, holeWins: 0 },
     player2: { name: '', teamName: '', score: 0, holeWins: 0 },
-    teeTime: new Date().toISOString().slice(0, 16), // Initial fallback to current time
+    teeTime: new Date().toISOString().slice(0, 16),
     tee: 1
   });
   
@@ -103,31 +104,30 @@ export default function AddMatch({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        setLoading(true);
+        // Fetch event data
         const response = await fetch(`/api/events?id=${params.id}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        
-        console.log('Event data:', JSON.stringify(data, null, 2));
-        
-        // Ensure the teams array exists
-        if (!data.teams) {
-          data.teams = [];
-        }
-        
         setEvent(data);
         
-        // Create a flat list of all available players from all teams
-        const allPlayers: PlayerOption[] = [];
-        
-        // Fetch all teams data
+        // Fetch teams data
         const teamsResponse = await fetch('/api/teams');
         if (!teamsResponse.ok) {
           throw new Error(`HTTP error! status: ${teamsResponse.status}`);
         }
         const teamsData = await teamsResponse.json();
+        
+        // Fetch free players
+        const playersResponse = await fetch('/api/players');
+        if (!playersResponse.ok) {
+          throw new Error(`HTTP error! status: ${playersResponse.status}`);
+        }
+        const freePlayersData = await playersResponse.json();
+        
+        // Create a map of team members
+        const allPlayers: PlayerOption[] = [];
         
         // Add players from teams
         data.teams.forEach((eventTeam: any) => {
@@ -137,7 +137,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
               allPlayers.push({
                 name: member.name,
                 teamName: teamData.name,
-                handicap: member.handicap
+                handicap: member.handicap,
+                player_handicap: member.player_handicap || 0
               });
             });
           }
@@ -146,11 +147,15 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         // Add free players if they exist
         if (data.freePlayers && Array.isArray(data.freePlayers)) {
           data.freePlayers.forEach((player: any) => {
-            allPlayers.push({
-              name: player.name,
-              teamName: 'Free Player',
-              handicap: player.handicap
-            });
+            const freePlayer = freePlayersData.find((p: any) => p._id === player.playerId);
+            if (freePlayer) {
+              allPlayers.push({
+                name: freePlayer.name,
+                teamName: 'Free Player',
+                handicap: freePlayer.handicap,
+                player_handicap: freePlayer.player_handicap || 0
+              });
+            }
           });
         }
         
@@ -429,11 +434,15 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         eventId: params.id,
         player1: {
           ...newMatch.player1,
-          putts: player1PuttCount
+          putts: player1PuttCount,
+          handicap: playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0,
+          player_handicap: playerOptions.find(p => p.name === newMatch.player1.name)?.player_handicap || 0
         },
         player2: {
           ...newMatch.player2,
-          putts: player2PuttCount
+          putts: player2PuttCount,
+          handicap: playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0,
+          player_handicap: playerOptions.find(p => p.name === newMatch.player2.name)?.player_handicap || 0
         },
         teeTime: newMatch.teeTime,
         tee: newMatch.tee,
@@ -586,8 +595,11 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                       <div className="bg-gray-50 p-4 rounded-md">
                         <h3 className="text-lg font-medium text-black">{newMatch.player1.name}</h3>
                         <p className="text-sm text-gray-500">Team: {newMatch.player1.teamName}</p>
-                        <p className="text-sm text-gray-500">Handicap: {
+                        <p className="text-sm text-gray-500">Playing Handicap: {
                           playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0
+                        }</p>
+                        <p className="text-sm text-gray-500">Handicap: {
+                          playerOptions.find(p => p.name === newMatch.player1.name)?.player_handicap || 0
                         }</p>
                       </div>
                     )}
@@ -597,8 +609,11 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                       <div className="bg-gray-50 p-4 rounded-md">
                         <h3 className="text-lg font-medium text-black">{newMatch.player2.name}</h3>
                         <p className="text-sm text-gray-500">Team: {newMatch.player2.teamName}</p>
-                        <p className="text-sm text-gray-500">Handicap: {
+                        <p className="text-sm text-gray-500">Playing Handicap: {
                           playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0
+                        }</p>
+                        <p className="text-sm text-gray-500">Handicap: {
+                          playerOptions.find(p => p.name === newMatch.player2.name)?.player_handicap || 0
                         }</p>
                       </div>
                     )}

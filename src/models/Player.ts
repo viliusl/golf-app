@@ -8,7 +8,15 @@ const playerSchema = new mongoose.Schema({
   },
   handicap: {
     type: Number,
-    required: [true, 'Handicap is required']
+    required: [true, 'Handicap is required'],
+    get: (v: number) => v === undefined ? 0 : Number(v.toFixed(1)),
+    set: (v: number) => v === undefined ? 0 : Number(v.toFixed(1))
+  },
+  player_handicap: {
+    type: Number,
+    required: [true, 'Player handicap is required'],
+    get: (v: number) => v === undefined ? 0 : Number(v.toFixed(1)),
+    set: (v: number) => v === undefined ? 0 : Number(v.toFixed(1))
   },
   tee: {
     type: String,
@@ -25,6 +33,10 @@ const playerSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Enable getters
+playerSchema.set('toJSON', { getters: true });
+playerSchema.set('toObject', { getters: true });
 
 // Use the correct pattern to handle models in Next.js
 export default mongoose.models.Player || mongoose.model('Player', playerSchema); 

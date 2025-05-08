@@ -6,6 +6,7 @@ interface TeamMember {
   name: string;
   isCaptain: boolean;
   handicap: number;
+  player_handicap: number;
   tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
 }
@@ -18,6 +19,10 @@ const teamSchema = new mongoose.Schema({
   },
   members: {
     type: [{
+      _id: {
+        type: String,
+        default: () => new mongoose.Types.ObjectId().toString()
+      },
       name: {
         type: String,
         required: [true, 'Member name is required']
@@ -28,7 +33,15 @@ const teamSchema = new mongoose.Schema({
       },
       handicap: {
         type: Number,
-        required: [true, 'Handicap is required']
+        required: [true, 'Handicap is required'],
+        get: (v: number) => v === undefined ? 0 : Number(v.toFixed(1)),
+        set: (v: number) => v === undefined ? 0 : Number(v.toFixed(1))
+      },
+      player_handicap: {
+        type: Number,
+        required: [true, 'Player handicap is required'],
+        get: (v: number) => v === undefined ? 0 : Number(v.toFixed(1)),
+        set: (v: number) => v === undefined ? 0 : Number(v.toFixed(1))
       },
       tee: {
         type: String,
@@ -48,5 +61,9 @@ const teamSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Enable getters
+teamSchema.set('toJSON', { getters: true });
+teamSchema.set('toObject', { getters: true });
 
 export default mongoose.models.Team || mongoose.model('Team', teamSchema); 

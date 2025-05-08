@@ -9,6 +9,7 @@ interface Team {
     name: string;
     isCaptain: boolean;
     handicap: number;
+    player_handicap: number;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }[];
@@ -31,6 +32,7 @@ export default function Teams() {
     name: string;
     isCaptain: boolean;
     handicap: number;
+    player_handicap: number;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   } | null>(null);
@@ -40,12 +42,14 @@ export default function Teams() {
     name: string;
     isCaptain: boolean;
     handicap: number;
+    player_handicap: number;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }>({
     name: '',
     isCaptain: false,
     handicap: 0,
+    player_handicap: 0,
     tee: 'W',
     gender: 'Male'
   });
@@ -131,6 +135,7 @@ export default function Teams() {
         name: '',
         isCaptain: false,
         handicap: 0,
+        player_handicap: 0,
         tee: 'W',
         gender: 'Male'
       });
@@ -326,6 +331,9 @@ export default function Teams() {
                           Captain
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Playing Handicap
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Handicap
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -369,6 +377,9 @@ export default function Teams() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-black">{member.handicap}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-black">{member.player_handicap}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-black">
@@ -507,16 +518,40 @@ export default function Teams() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="handicap" className="block text-sm font-medium text-gray-700 mb-1">
+                    Playing Handicap
+                  </label>
+                  <input
+                    type="text"
+                    id="handicap"
+                    value={newMember.handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        const numValue = value === '' || value === '.' ? 0 : parseFloat(value);
+                        setNewMember({ ...newMember, handicap: numValue });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
                     Handicap
                   </label>
                   <input
-                    type="number"
-                    id="handicap"
-                    value={newMember.handicap}
-                    onChange={(e) => setNewMember({ ...newMember, handicap: parseInt(e.target.value) })}
+                    type="text"
+                    id="player_handicap"
+                    value={newMember.player_handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        const numValue = value === '' || value === '.' ? 0 : parseFloat(value);
+                        setNewMember({ ...newMember, player_handicap: numValue });
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
-                    min="0"
                   />
                 </div>
                 <div className="mb-4">
@@ -621,16 +656,40 @@ export default function Teams() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
+                    Playing Handicap
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-handicap"
+                    value={memberToEdit.handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        const numValue = value === '' || value === '.' ? 0 : parseFloat(value);
+                        setMemberToEdit({ ...memberToEdit, handicap: numValue });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
                     Handicap
                   </label>
                   <input
-                    type="number"
-                    id="edit-handicap"
-                    value={memberToEdit.handicap}
-                    onChange={(e) => setMemberToEdit({ ...memberToEdit, handicap: parseInt(e.target.value) })}
+                    type="text"
+                    id="edit-player_handicap"
+                    value={memberToEdit.player_handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        const numValue = value === '' || value === '.' ? 0 : parseFloat(value);
+                        setMemberToEdit({ ...memberToEdit, player_handicap: numValue });
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
-                    min="0"
                   />
                 </div>
                 <div className="mb-4">

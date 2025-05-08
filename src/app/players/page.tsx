@@ -15,23 +15,27 @@ export default function PlayersPage() {
   const [playerToEdit, setPlayerToEdit] = useState<Player | null>(null);
   const [newPlayer, setNewPlayer] = useState<{
     name: string;
-    handicap: number;
+    handicap: number | string;
+    player_handicap: number | string;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }>({
     name: '',
     handicap: 0,
+    player_handicap: 0,
     tee: 'W',
     gender: 'Male'
   });
   const [editedPlayer, setEditedPlayer] = useState<{
     name: string;
-    handicap: number;
+    handicap: number | string;
+    player_handicap: number | string;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }>({
     name: '',
     handicap: 0,
+    player_handicap: 0,
     tee: 'W',
     gender: 'Male'
   });
@@ -78,6 +82,7 @@ export default function PlayersPage() {
       setNewPlayer({
         name: '',
         handicap: 0,
+        player_handicap: 0,
         tee: 'W',
         gender: 'Male'
       });
@@ -96,6 +101,7 @@ export default function PlayersPage() {
     setEditedPlayer({
       name: player.name,
       handicap: player.handicap,
+      player_handicap: player.player_handicap,
       tee: player.tee,
       gender: player.gender
     });
@@ -224,6 +230,9 @@ export default function PlayersPage() {
                       Name
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Playing Handicap
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Handicap
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -250,6 +259,9 @@ export default function PlayersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-black">{player.handicap}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-black">{player.player_handicap}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-black">
@@ -316,17 +328,48 @@ export default function PlayersPage() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="handicap" className="block text-sm font-medium text-gray-700 mb-1">
+                    Playing Handicap
+                  </label>
+                  <input
+                    type="text"
+                    id="handicap"
+                    value={newPlayer.handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        setNewPlayer({ ...newPlayer, handicap: value });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setNewPlayer({ ...newPlayer, handicap: isNaN(numValue) ? 0 : numValue });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
                     Handicap
                   </label>
                   <input
-                    type="number"
-                    id="handicap"
-                    value={newPlayer.handicap}
-                    onChange={(e) => setNewPlayer({ ...newPlayer, handicap: parseInt(e.target.value) })}
+                    type="text"
+                    id="player_handicap"
+                    value={newPlayer.player_handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        setNewPlayer({ ...newPlayer, player_handicap: value });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setNewPlayer({ ...newPlayer, player_handicap: isNaN(numValue) ? 0 : numValue });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
-                    min="0"
-                    max="54"
                   />
                 </div>
                 <div className="mb-4">
@@ -417,17 +460,48 @@ export default function PlayersPage() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
+                    Playing Handicap
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-handicap"
+                    value={editedPlayer.handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        setEditedPlayer({ ...editedPlayer, handicap: value });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setEditedPlayer({ ...editedPlayer, handicap: isNaN(numValue) ? 0 : numValue });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
                     Handicap
                   </label>
                   <input
-                    type="number"
-                    id="edit-handicap"
-                    value={editedPlayer.handicap}
-                    onChange={(e) => setEditedPlayer({ ...editedPlayer, handicap: parseInt(e.target.value) })}
+                    type="text"
+                    id="edit-player_handicap"
+                    value={editedPlayer.player_handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        setEditedPlayer({ ...editedPlayer, player_handicap: value });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setEditedPlayer({ ...editedPlayer, player_handicap: isNaN(numValue) ? 0 : numValue });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
-                    min="0"
-                    max="54"
                   />
                 </div>
                 <div className="mb-4">

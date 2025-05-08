@@ -145,7 +145,14 @@ export async function POST(request: Request) {
     const newTeam = {
       _id: teamData._id.toString(),
       name: teamData.name,
-      members: teamData.members
+      members: teamData.members.map((member: { _id?: string; name: string; isCaptain: boolean; handicap: number; tee: string; gender: string }) => {
+        // Generate a new ID for the member if it doesn't have one
+        const memberId = member._id || new Types.ObjectId().toString();
+        return {
+          playerType: 'team_member' as const,
+          playerId: memberId
+        };
+      })
     };
     console.log('Adding team to event:', newTeam);
     event.teams.push(newTeam);

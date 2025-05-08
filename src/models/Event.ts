@@ -1,11 +1,15 @@
 import mongoose from 'mongoose';
 
 const TeamMemberSchema = new mongoose.Schema({
-  name: String,
-  isCaptain: Boolean,
-  handicap: Number,
-  tee: String,
-  gender: String
+  playerType: {
+    type: String,
+    enum: ['free', 'team_member'],
+    required: true
+  },
+  playerId: {
+    type: String,
+    required: true
+  }
 }, { _id: false });
 
 const TeamSchema = new mongoose.Schema({

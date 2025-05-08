@@ -9,6 +9,16 @@ interface Team {
   _id: string;
   name: string;
   members: {
+    playerType: 'free' | 'team_member';
+    playerId: string;
+  }[];
+}
+
+interface OriginalTeam {
+  _id: string;
+  name: string;
+  members: {
+    _id: string;
     name: string;
     isCaptain: boolean;
     handicap: number;
@@ -26,11 +36,29 @@ interface Event {
   displayInScorecard: boolean;
 }
 
+interface PlayerDetails {
+  name: string;
+  isCaptain: boolean;
+  handicap: number;
+  tee: 'W' | 'Y' | 'B' | 'R';
+  gender: 'Male' | 'Female';
+}
+
+interface TeamMember {
+  _id: string;
+  name: string;
+  isCaptain: boolean;
+  handicap: number;
+  tee: 'W' | 'Y' | 'B' | 'R';
+  gender: 'Male' | 'Female';
+}
+
 export default function EventDetails({ params }: { params: { id: string } }) {
   const [event, setEvent] = useState<Event | null>(null);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<OriginalTeam[]>([]);
   const [freePlayers, setFreePlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<MatchType[]>([]);
+  const [playerDetails, setPlayerDetails] = useState<Record<string, PlayerDetails>>({});
   const [loading, setLoading] = useState(true);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isRenameEventModalOpen, setIsRenameEventModalOpen] = useState(false);
@@ -268,44 +296,29 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   };
 
   const handleAddPlayerToTeam = async (player: Player) => {
-    if (!event || !selectedTeamForPlayer) return;
+    if (!selectedTeamForPlayer || !event) return;
     setError(null);
     
     try {
-      // First find the team in the event
-      const eventTeam = event.teams.find(team => team._id === selectedTeamForPlayer._id);
-      if (!eventTeam) {
-        throw new Error('Team not found in this event');
+      const teamIndex = event.teams.findIndex(team => team._id === selectedTeamForPlayer._id);
+      if (teamIndex === -1) {
+        throw new Error('Team not found in event');
       }
-      
-      // Create a new team member from the free player
+
       const newMember = {
-        name: player.name,
-        isCaptain: false,
-        handicap: player.handicap,
-        tee: player.tee,
-        gender: player.gender
+        playerType: 'free' as const,
+        playerId: player._id
       };
-      
-      // Update the team in the event with the new member
-      const updatedTeams = event.teams.map(team => {
-        if (team._id === selectedTeamForPlayer._id) {
-          return {
-            ...team,
-            members: [...team.members, newMember]
-          };
-        }
-        return team;
-      });
-      
-      // Update the event
+
+      event.teams[teamIndex].members.push(newMember);
+
       const response = await fetch(`/api/events?id=${event._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          teams: updatedTeams
+          teams: event.teams
         }),
       });
 
@@ -314,21 +327,9 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         throw new Error(errorData.details || 'Failed to add player to team');
       }
 
-      const updatedEvent = await response.json();
-      setEvent(updatedEvent);
+      await fetchEvent();
       setIsAddPlayerModalOpen(false);
       setSelectedTeamForPlayer(null);
-      
-      // Optionally remove the player from free players
-      // This would require a DELETE request to /api/players
-      // Uncomment this if you want to remove the player from free players after adding to a team
-      /*
-      await fetch(`/api/players?id=${player._id}`, {
-        method: 'DELETE',
-      });
-      fetchFreePlayers();
-      */
-      
     } catch (error) {
       console.error('Error adding player to team:', error);
       setError(error instanceof Error ? error.message : 'Failed to add player to team');
@@ -439,14 +440,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleEditMemberClick = (teamId: string, index: number, member: {
-    name: string;
-    isCaptain: boolean;
-    handicap: number;
-    tee: 'W' | 'Y' | 'B' | 'R';
-    gender: 'Male' | 'Female';
-  }) => {
-    setMemberToEdit({...member});
+  const handleEditMemberClick = (teamId: string, index: number, details: PlayerDetails) => {
+    setMemberToEdit(details);
     setMemberTeamIdToEdit(teamId);
     setMemberIndexToEdit(index);
     setIsEditMemberModalOpen(true);
@@ -458,37 +453,84 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     setError(null);
     
     try {
-      // Update the member in the team
-      const updatedTeams = event.teams.map(team => {
-        if (team._id === memberTeamIdToEdit) {
-          const updatedMembers = [...team.members];
-          updatedMembers[memberIndexToEdit] = memberToEdit;
-          return {
-            ...team,
-            members: updatedMembers
-          };
-        }
-        return team;
-      });
-      
-      // Submit the update
-      const response = await fetch(`/api/events?id=${event._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          teams: updatedTeams
-        }),
-      });
+      // Find the original member to get its playerType and playerId
+      const team = event.teams.find(t => t._id === memberTeamIdToEdit);
+      if (!team) {
+        throw new Error('Team not found');
+      }
+      const originalMember = team.members[memberIndexToEdit];
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to update member');
+      // Update the original source data based on playerType
+      if (originalMember.playerType === 'free') {
+        // Update free player
+        const response = await fetch(`/api/players?id=${originalMember.playerId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: memberToEdit.name,
+            handicap: memberToEdit.handicap,
+            tee: memberToEdit.tee,
+            gender: memberToEdit.gender
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || 'Failed to update free player');
+        }
+
+        // Refresh free players list
+        await fetchFreePlayers();
+      } else {
+        // Find the original team to get its current members
+        const originalTeam = teams.find(t => t._id === team._id);
+        if (!originalTeam) {
+          throw new Error('Original team not found');
+        }
+
+        // Update the specific member in the team's members array
+        const updatedMembers = originalTeam.members.map(member => {
+          if (member._id === originalMember.playerId) {
+            return {
+              ...member,
+              name: memberToEdit.name,
+              isCaptain: memberToEdit.isCaptain,
+              handicap: memberToEdit.handicap,
+              tee: memberToEdit.tee,
+              gender: memberToEdit.gender
+            };
+          }
+          return member;
+        });
+
+        // Update team with the modified members array
+        const response = await fetch(`/api/teams?id=${team._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            members: updatedMembers
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || 'Failed to update team member');
+        }
+
+        // Refresh teams list
+        await fetchTeams();
       }
 
-      const updatedEvent = await response.json();
-      setEvent(updatedEvent);
+      // Update the player details in the local state
+      setPlayerDetails(prev => ({
+        ...prev,
+        [originalMember.playerId]: memberToEdit
+      }));
+
       setIsEditMemberModalOpen(false);
       setMemberToEdit(null);
       setMemberTeamIdToEdit(null);
@@ -524,6 +566,58 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       setError(error instanceof Error ? error.message : 'Failed to update event');
     }
   };
+
+  // Add function to fetch player details
+  const fetchPlayerDetails = async (playerId: string, playerType: 'free' | 'team_member') => {
+    try {
+      if (playerType === 'free') {
+        const player = freePlayers.find(p => p._id === playerId);
+        if (player) {
+          setPlayerDetails(prev => ({
+            ...prev,
+            [playerId]: {
+              name: player.name,
+              isCaptain: false,
+              handicap: player.handicap,
+              tee: player.tee,
+              gender: player.gender
+            }
+          }));
+        }
+      } else {
+        // For team members, we need to find them in the original teams array
+        for (const team of teams) {
+          const member = team.members.find(m => m._id === playerId);
+          if (member) {
+            setPlayerDetails(prev => ({
+              ...prev,
+              [playerId]: {
+                name: member.name,
+                isCaptain: member.isCaptain,
+                handicap: member.handicap,
+                tee: member.tee as 'W' | 'Y' | 'B' | 'R',
+                gender: member.gender as 'Male' | 'Female'
+              }
+            }));
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching player details:', error);
+    }
+  };
+
+  // Update useEffect to fetch player details when teams or free players change
+  useEffect(() => {
+    if (event) {
+      event.teams.forEach(team => {
+        team.members.forEach(member => {
+          fetchPlayerDetails(member.playerId, member.playerType);
+        });
+      });
+    }
+  }, [event, teams, freePlayers]);
 
   if (loading) {
     return (
@@ -778,7 +872,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                               Captain
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Handicap
+                              Playing Handicap
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Tee
@@ -793,43 +887,48 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {team.members?.length ? (
-                            team.members.map((member, idx) => (
-                              <tr key={idx} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <button
-                                    onClick={() => handleEditMemberClick(team._id, idx, member)}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                                  >
-                                    {member.name}
-                                  </button>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-black">{member.isCaptain ? 'Yes' : 'No'}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-black">{member.handicap}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-black">
-                                    {member.tee === 'W' ? 'White' : 
-                                     member.tee === 'Y' ? 'Yellow' : 
-                                     member.tee === 'B' ? 'Blue' : 
-                                     member.tee === 'R' ? 'Red' : member.tee}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-black">{member.gender}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                  <button
-                                    onClick={() => handleRemoveMemberClick(team._id, idx, member.name)}
-                                    className="text-red-600 hover:text-red-900"
-                                  >
-                                    Remove
-                                  </button>
-                                </td>
-                              </tr>
-                            ))
+                            team.members.map((member, idx) => {
+                              const details = playerDetails[member.playerId];
+                              if (!details) return null;
+                              
+                              return (
+                                <tr key={idx} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <button
+                                      onClick={() => handleEditMemberClick(team._id, idx, details)}
+                                      className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                    >
+                                      {details.name}
+                                    </button>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-black">{details.isCaptain ? 'Yes' : 'No'}</div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-black">{details.handicap}</div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-black">
+                                      {details.tee === 'W' ? 'White' : 
+                                       details.tee === 'Y' ? 'Yellow' : 
+                                       details.tee === 'B' ? 'Blue' : 
+                                       details.tee === 'R' ? 'Red' : details.tee}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-black">{details.gender}</div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button
+                                      onClick={() => handleRemoveMemberClick(team._id, idx, details.name)}
+                                      className="text-red-600 hover:text-red-900"
+                                    >
+                                      Remove
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
                           ) : (
                             <tr>
                               <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
