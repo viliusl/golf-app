@@ -838,6 +838,10 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-center">
                               {
                                 (() => {
+                                  // If either player's score is 0, show Tie
+                                  if (hole.player1Score === 0 || hole.player2Score === 0) {
+                                    return <span className="text-gray-600">Tie</span>;
+                                  }
 
                                   const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
                                   const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
@@ -853,8 +857,6 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                     hole.par
                                   );
 
-
-                                  console.log(`Rendering winner for hole ${hole.hole}: winner=${result}`);
                                   if (result.winner === 'player1') {
                                     return <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]}</span>;
                                   } else if (result.winner === 'player2') {
