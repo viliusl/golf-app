@@ -1,23 +1,26 @@
 /**
- * Calculates a single player's score based on effective handicap, strokes, and one-putt values
+ * Calculates a single player's score based on strokes and one-putt values
  * 
- * @param effectiveHandicap - The effective handicap strokes for the hole
  * @param strokes - The number of strokes taken
  * @param isPutt - Whether a one-putt was made (true/false)
  * @param par - The par value for the hole (default 0, not affecting calculation if not provided)
- * @param strokesValue - Value of each stroke (default 1)
- * @param onePuttValue - Value of a one-putt (default 1)
  * @returns The calculated score
  */
 export const calculatePlayerScore = (
-  effectiveHandicap: number,
   strokes: number,
   isPutt: boolean,
   par: number = 0,
 ): number => {
   let score = 0;
-  let effStroke = strokes - effectiveHandicap;
 
+  if (strokes >= 10) {
+    return 0;
+  }
+
+  if (strokes == 0) {
+    return 0;
+  }    
+  
   if (isPutt) {
     score += 4;
   }
@@ -26,13 +29,13 @@ export const calculatePlayerScore = (
     score += 64;
   }
   
-  if (par - effStroke == 0) {
+  if (par - strokes == 0) {
     score += 4;
-  } else if (par - effStroke == 1) {
+  } else if (par - strokes == 1) {
     score += 8;
-  } else if (par - effStroke == 2) {
+  } else if (par - strokes == 2) {
     score += 16;
-  } else if (par - effStroke == 3) {
+  } else if (par - strokes == 3) {
     score += 64;
   }
 
@@ -49,8 +52,6 @@ export const calculatePlayerScore = (
  * @param player2Strokes - Player 2's strokes for the hole
  * @param player2Putt - Whether player 2 made a one-putt (true/false)
  * @param par - The par value for the hole
- * @param strokesValue - Value of each stroke (default 1)
- * @param onePuttValue - Value of a one-putt (default 1)
  * @returns An object containing player scores and the winner
  */
 export const calculateScore = (
@@ -65,14 +66,12 @@ export const calculateScore = (
   
   // Calculate individual scores
   let player1Score = calculatePlayerScore(
-    player1EffHcp, 
     player1Strokes, 
     player1Putt, 
     par, 
   );
   
   let player2Score = calculatePlayerScore(
-    player2EffHcp, 
     player2Strokes, 
     player2Putt, 
     par, 
@@ -83,19 +82,19 @@ export const calculateScore = (
   const player1EffStrokes = player1Strokes - player1EffHcp;
   const player2EffStrokes = player2Strokes - player2EffHcp;
 
-  if (player1EffStrokes < player2EffStrokes) {
+  if (player1Strokes >= 10 && player2Strokes >= 10) {
+    winner = 'tie';
+  } else if (player1EffStrokes < player2EffStrokes) {
+    player1Score += 16;
     winner = 'player1';
   } else if (player1EffStrokes > player2EffStrokes) {
+    player2Score += 16;
     winner = 'player2';
   } else {
     winner = 'tie';
+    player1Score += 8;
+    player2Score += 8;
   }
   
-  if (winner === 'player1') {
-    player1Score += 16;
-  } else if (winner === 'player2') {
-    player2Score += 16;
-  }
-
   return { player1Score, player2Score, winner };
 };

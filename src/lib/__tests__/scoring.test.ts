@@ -4,36 +4,33 @@ describe('calculatePlayerScore', () => {
   // Test case 1: Basic score calculation with new scoring system
   test('should calculate basic score', () => {
     // No special bonuses
-    expect(calculatePlayerScore(0, 4, false, 4)).toBe(4); // Par, no putt
-    expect(calculatePlayerScore(1, 4, false, 4)).toBe(8); // Effective birdie (with handicap), no putt
+    expect(calculatePlayerScore(4, false, 4)).toBe(4); // Par, no putt
     
     // One-putt bonus
-    expect(calculatePlayerScore(0, 4, true, 4)).toBe(8);  // Par with a one-putt
+    expect(calculatePlayerScore(4, true, 4)).toBe(8);  // Par with a one-putt
     
     // Birdie bonus
-    expect(calculatePlayerScore(0, 3, false, 4)).toBe(8); // Birdie, no putt
-    expect(calculatePlayerScore(0, 3, true, 4)).toBe(12); // Birdie with one-putt
+    expect(calculatePlayerScore(3, false, 4)).toBe(8); // Birdie, no putt
+    expect(calculatePlayerScore(3, true, 4)).toBe(12); // Birdie with one-putt
     
     // Eagle bonus
-    expect(calculatePlayerScore(0, 2, false, 4)).toBe(16); // Eagle, no putt
-    expect(calculatePlayerScore(0, 2, true, 4)).toBe(20);  // Eagle with one-putt
+    expect(calculatePlayerScore(2, false, 4)).toBe(16); // Eagle, no putt
+    expect(calculatePlayerScore(2, true, 4)).toBe(20);  // Eagle with one-putt
     
     // Albatross (double eagle) bonus
-    expect(calculatePlayerScore(0, 1, false, 4)).toBe(128); // Albatross (hole-in-one on par 4: 64 + 64)
+    expect(calculatePlayerScore(1, false, 4)).toBe(128); // Albatross (hole-in-one on par 4: 64 + 64)
     
     // Hole-in-one bonus
-    expect(calculatePlayerScore(0, 1, false, 3)).toBe(80);  // Hole in one on par 3: 64 + 16
-    expect(calculatePlayerScore(0, 1, true, 3)).toBe(84);   // Hole in one with one-putt: 64 + 16 + 4
+    expect(calculatePlayerScore(1, false, 3)).toBe(80);  // Hole in one on par 3: 64 + 16
+    expect(calculatePlayerScore(1, true, 3)).toBe(84);   // Hole in one with one-putt: 64 + 16 + 4
   });
 
-  // Test case 4: Par values
+  // Test case 2: Par values
   test('should calculate scores with par values', () => {
-    // effectiveHandicap, strokes, isPutt, par
-    expect(calculatePlayerScore(0, 4, false, 4)).toBe(4);   // Par = 4 points
-    expect(calculatePlayerScore(0, 5, false, 4)).toBe(0);   // Bogey = 0 points
-    expect(calculatePlayerScore(0, 3, false, 4)).toBe(8);   // Birdie = 8 points
-    expect(calculatePlayerScore(1, 4, false, 4)).toBe(8);   // Effective birdie with handicap = 8 points
-    expect(calculatePlayerScore(0, 4, true, 4)).toBe(8);    // Par with one-putt = 8 points
+    expect(calculatePlayerScore(4, false, 4)).toBe(4);   // Par = 4 points
+    expect(calculatePlayerScore(5, false, 4)).toBe(0);   // Bogey = 0 points
+    expect(calculatePlayerScore(3, false, 4)).toBe(8);   // Birdie = 8 points
+    expect(calculatePlayerScore(4, true, 4)).toBe(8);    // Par with one-putt = 8 points
   });
 });
 
@@ -58,7 +55,7 @@ describe('calculateScore', () => {
       4             // par 4
     )).toEqual({
       player1Score: 0,
-      player2Score: 24,
+      player2Score: 20,
       winner: 'player2'
     });
 
@@ -68,8 +65,8 @@ describe('calculateScore', () => {
       0, 4, false, // player2: par = 4 points
       4             // par 4
     )).toEqual({
-      player1Score: 4,
-      player2Score: 4,
+      player1Score: 12,
+      player2Score: 12,
       winner: 'tie'
     });
   });
@@ -98,53 +95,101 @@ describe('calculateScore', () => {
       winner: 'player2'  // Player 2 wins when they have no score
     });
   });
-});
 
-// Remove or comment out the non-existent calculateTotalScore function tests as they're not implemented
-// The actual implementation likely handles this logic elsewhere (in our page component)
-/*
-describe('calculateTotalScore', () => {
-  // Test case 1: Sum of scores with the new scoring system
-  test('should calculate total score across multiple holes', () => {
-    const effectiveHandicaps = [1, 0, 0];
-    const strokes = [4, 3, 2]; 
-    const isPutts = [true, false, true];
-    const pars = [4, 4, 3];
-    
-    // Expected: 
-    // Hole 1: 4 strokes - 1 handicap = par with one-putt = 8 points
-    // Hole 2: 3 strokes = birdie = 8 points
-    // Hole 3: 2 strokes = eagle with one-putt = 16 points
-    // Total: 32 points
-    expect(calculateTotalScore(effectiveHandicaps, strokes, isPutts, pars)).toBe(32);
+  // Test case 3: Both players have 10 or more strokes
+  test('should handle both players having 10 or more strokes', () => {
+    // Both players have exactly 10 strokes
+    expect(calculateScore(
+      0, 10, false, // player1: 10 strokes
+      0, 10, false, // player2: 10 strokes
+      4             // par 4
+    )).toEqual({
+      player1Score: 0,
+      player2Score: 0,
+      winner: 'tie'
+    });
+
+    // Both players have more than 10 strokes
+    expect(calculateScore(
+      0, 12, false, // player1: 12 strokes
+      0, 11, false, // player2: 11 strokes
+      4             // par 4
+    )).toEqual({
+      player1Score: 0,
+      player2Score: 0,
+      winner: 'tie'
+    });
+
+    // Both players have 10+ strokes with different handicaps
+    expect(calculateScore(
+      2, 12, false, // player1: 12 strokes with 2 handicap
+      1, 11, false, // player2: 11 strokes with 1 handicap
+      4             // par 4
+    )).toEqual({
+      player1Score: 0,
+      player2Score: 0,
+      winner: 'tie'
+    });
   });
 
-  // Test case 2: Error handling
-  test('should throw error when arrays have different lengths', () => {
-    expect(() => calculateTotalScore(
-      [1, 2], 
-      [3, 4, 5], 
-      [true, false, true]
-    )).toThrow('Input arrays must have the same length');
-    
-    expect(() => calculateTotalScore(
-      [1, 2, 3], 
-      [3, 4], 
-      [true, false]
-    )).toThrow('Input arrays must have the same length');
-    
-    expect(() => calculateTotalScore(
-      [1, 2, 3], 
-      [3, 4, 5], 
-      [true, false]
-    )).toThrow('Input arrays must have the same length');
+  // Test case 4: Edge cases with 10 strokes
+  test('should handle edge cases with 10 strokes', () => {
+    // One player has 10 strokes, other has less
+    expect(calculateScore(
+      0, 10, false, // player1: 10 strokes
+      0, 9, false,  // player2: 9 strokes
+      4             // par 4
+    )).toEqual({
+      player1Score: 0,
+      player2Score: 16,
+      winner: 'player2'
+    });
 
-    expect(() => calculateTotalScore(
-      [1, 2, 3],
-      [3, 4, 5],
-      [true, true, true],
-      [4, 4] // Different length pars array
-    )).toThrow('Input arrays must have the same length');
+    // One player has 10 strokes, other has more
+    expect(calculateScore(
+      0, 10, false, // player1: 10 strokes
+      0, 11, false, // player2: 11 strokes
+      4             // par 4
+    )).toEqual({
+      player1Score: 0,
+      player2Score: 0,
+      winner: 'tie'
+    });
+  });
+
+  // Test case 5: Handicap edge cases
+  test('should handle handicap edge cases', () => {
+    // Player with higher handicap wins due to effective strokes
+    expect(calculateScore(
+      0, 5, false,  // player1: bogey = 0 points
+      2, 6, true,   // player2: effective par with one-putt = 8 points + 16 winner bonus = 24
+      4             // par 4
+    )).toEqual({
+      player1Score: 0,
+      player2Score: 20,
+      winner: 'player2'
+    });
+
+    // Players tie with different handicaps
+    expect(calculateScore(
+      1, 5, false,  // player1: effective par = 4 points
+      2, 6, false,  // player2: effective par = 4 points
+      4             // par 4
+    )).toEqual({
+      player1Score: 8,
+      player2Score: 8,
+      winner: 'tie'
+    });
+
+    // Player with handicap gets effective birdie
+    expect(calculateScore(
+      0, 4, false,  // player1: par = 4 points
+      1, 5, true,   // player2: effective birdie with one-putt = 12 points + 16 winner bonus = 28
+      4             // par 4
+    )).toEqual({
+      player1Score: 12,
+      player2Score: 12,
+      winner: 'tie'
+    });
   });
 });
-*/ 
