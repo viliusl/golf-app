@@ -1301,7 +1301,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                           <div>
                             <h3 className="text-sm font-medium text-black">{player.name}</h3>
                             <p className="text-sm text-gray-500">
-                              Handicap: {player.handicap} | Tee: {
+                              Playing Handicap: {player.handicap} | Tee: {
                                 player.tee === 'W' ? 'White' : 
                                 player.tee === 'Y' ? 'Yellow' : 
                                 player.tee === 'B' ? 'Blue' : 
@@ -1580,15 +1580,14 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         {/* Print section */}
         <div className="print-section">
           <div className="p-8">
-            <h1 className="text-2xl font-bold mb-4">{event.name} - Match Cards</h1>
             <div className="space-y-8">
               {matches.map((match) => (
                 <div key={match._id} className="border border-gray-200 rounded-lg p-6 mb-8">
                   <div className="flex justify-between items-center mb-4">
                     <div>
-                      <h2 className="text-xl font-semibold">Match Card</h2>
+                      <h2 className="text-xl font-semibold">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
                       <p className="text-gray-600">Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                      <p className="text-gray-600">Starting Hole: {match.tee}</p>
+                      <p className="text-gray-600 mb-4">Starting Hole: {match.tee}</p>
                     </div>
                   </div>
                   
@@ -1597,7 +1596,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     <div className="border border-gray-200 rounded-lg p-4">
                       <h3 className="font-semibold mb-2">{match.player1.name}</h3>
                       <p className="text-sm text-gray-600">Team: {match.player1.teamName}</p>
-                      <p className="text-sm text-gray-600">Handicap: {match.player1.handicap}</p>
+                      <p className="text-sm text-gray-600">Playing Handicap: {match.player1.handicap}</p>
                       <div className="mt-4">
                         <table className="w-full text-sm">
                           <thead>
@@ -1637,7 +1636,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     <div className="border border-gray-200 rounded-lg p-4">
                       <h3 className="font-semibold mb-2">{match.player2.name}</h3>
                       <p className="text-sm text-gray-600">Team: {match.player2.teamName}</p>
-                      <p className="text-sm text-gray-600">Handicap: {match.player2.handicap}</p>
+                      <p className="text-sm text-gray-600">Playing Handicap: {match.player2.handicap}</p>
                       <div className="mt-4">
                         <table className="w-full text-sm">
                           <thead>
