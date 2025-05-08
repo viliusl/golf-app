@@ -10,6 +10,7 @@ interface TeamMember {
   name: string;
   isCaptain: boolean;
   handicap: number;
+  player_handicap?: number;
   tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
 }
@@ -33,6 +34,7 @@ interface PlayerOption {
   name: string;
   teamName: string;
   handicap: number;
+  player_handicap: number;
 }
 
 interface HoleScore {
@@ -56,6 +58,8 @@ interface Match {
     score: number;
     holeWins?: number;
     putts?: number;
+    handicap?: number;
+    player_handicap?: number;
   };
   player2: {
     name: string;
@@ -63,6 +67,8 @@ interface Match {
     score: number;
     holeWins?: number;
     putts?: number;
+    handicap?: number;
+    player_handicap?: number;
   };
   teeTime: string;
   tee: number;
@@ -117,7 +123,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
             allPlayers.push({
               name: member.name,
               teamName: team.name,
-              handicap: member.handicap
+              handicap: member.handicap,
+              player_handicap: member.handicap
             });
           });
         });
@@ -264,11 +271,15 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
       const matchData = {
         player1: {
           ...match.player1,
-          putts: player1PuttCount
+          putts: player1PuttCount,
+          handicap: match.player1.handicap,
+          player_handicap: match.player1.player_handicap
         },
         player2: {
           ...match.player2,
-          putts: player2PuttCount
+          putts: player2PuttCount,
+          handicap: match.player2.handicap,
+          player_handicap: match.player2.player_handicap
         },
         teeTime: match.teeTime,
         tee: match.tee,
@@ -526,8 +537,11 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h3 className="text-lg font-medium text-black">{match.player1.name}</h3>
                   <p className="text-sm text-gray-500">Team: {match.player1.teamName}</p>
+                  <p className="text-sm text-gray-500">Playing Handicap: {
+                    match.player1.handicap || 0
+                  }</p>
                   <p className="text-sm text-gray-500">Handicap: {
-                    playerOptions.find(p => p.name === match.player1.name)?.handicap || 0
+                    match.player1.player_handicap || 0
                   }</p>
                 </div>
               </div>
@@ -537,8 +551,11 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h3 className="text-lg font-medium text-black">{match.player2.name}</h3>
                   <p className="text-sm text-gray-500">Team: {match.player2.teamName}</p>
+                  <p className="text-sm text-gray-500">Playing Handicap: {
+                    match.player2.handicap || 0
+                  }</p>
                   <p className="text-sm text-gray-500">Handicap: {
-                    playerOptions.find(p => p.name === match.player2.name)?.handicap || 0
+                    match.player2.player_handicap || 0
                   }</p>
                 </div>
               </div>
@@ -795,7 +812,6 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                           <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-center">
                               {
                                 (() => {
-
                                   const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
                                   const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
                                   const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
@@ -809,7 +825,6 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                                     hole.player2Putt,
                                     hole.par
                                   );
-
 
                                   console.log(`Rendering winner for hole ${hole.hole}: winner=${result}`);
                                   if (result.winner === 'player1') {
