@@ -8,8 +8,10 @@ export interface MatchPlayer {
   name: string;
   teamName: string;
   score: number;
-  putts?: number;
   holeWins?: number;
+  putts?: number;
+  handicap: number;
+  player_handicap: number;
 }
 
 export interface HoleScore {

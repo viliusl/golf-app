@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Player } from '@/app/api/players/route';
 import { Match as MatchType, MatchPlayer } from '@/app/api/matches/route';
 import Link from 'next/link';
+import { calculateEffectiveHandicap } from '@/lib/handicap';
 
 interface Team {
   _id: string;
@@ -841,6 +842,12 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 >
                   Randomize Matches
                 </button>
+                <button
+                  onClick={() => window.print()}
+                  className="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition-colors"
+                >
+                  Print Match Cards
+                </button>
                 <Link
                   href={`/events/${params.id}/matches/add`}
                   className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
@@ -1545,6 +1552,132 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             </div>
           </div>
         )}
+
+        {/* Print styles */}
+        <style jsx global>{`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            .print-section, .print-section * {
+              visibility: visible !important;
+            }
+            .print-section {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+            }
+            .print-section table {
+              page-break-inside: avoid;
+            }
+            .print-section tr {
+              page-break-inside: avoid;
+            }
+          }
+        `}</style>
+
+        {/* Print section */}
+        <div className="print-section">
+          <div className="p-8">
+            <h1 className="text-2xl font-bold mb-4">{event.name} - Match Cards</h1>
+            <div className="space-y-8">
+              {matches.map((match) => (
+                <div key={match._id} className="border border-gray-200 rounded-lg p-6 mb-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h2 className="text-xl font-semibold">Match Card</h2>
+                      <p className="text-gray-600">Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      <p className="text-gray-600">Starting Hole: {match.tee}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-8 mb-6">
+                    {/* Player 1 */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold mb-2">{match.player1.name}</h3>
+                      <p className="text-sm text-gray-600">Team: {match.player1.teamName}</p>
+                      <p className="text-sm text-gray-600">Handicap: {match.player1.handicap}</p>
+                      <div className="mt-4">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr>
+                              <th className="text-left">Hole</th>
+                              <th className="text-left">Par</th>
+                              <th className="text-left">Hcp</th>
+                              <th className="text-left">Eff Hcp</th>
+                              <th className="text-left">Score</th>
+                              <th className="text-left">Putt</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {match.holes.map((hole) => {
+                              const [player1EffHcp, _] = calculateEffectiveHandicap(
+                                match.player1.handicap,
+                                match.player2.handicap,
+                                hole.handicap
+                              );
+                              return (
+                                <tr key={hole.hole}>
+                                  <td>{hole.hole}</td>
+                                  <td>{hole.par}</td>
+                                  <td>{hole.handicap}</td>
+                                  <td>{player1EffHcp}</td>
+                                  <td className="border-b border-gray-200"></td>
+                                  <td className="border-b border-gray-200"></td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    
+                    {/* Player 2 */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold mb-2">{match.player2.name}</h3>
+                      <p className="text-sm text-gray-600">Team: {match.player2.teamName}</p>
+                      <p className="text-sm text-gray-600">Handicap: {match.player2.handicap}</p>
+                      <div className="mt-4">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr>
+                              <th className="text-left">Hole</th>
+                              <th className="text-left">Par</th>
+                              <th className="text-left">Hcp</th>
+                              <th className="text-left">Eff Hcp</th>
+                              <th className="text-left">Score</th>
+                              <th className="text-left">Putt</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {match.holes.map((hole) => {
+                              const [_, player2EffHcp] = calculateEffectiveHandicap(
+                                match.player1.handicap,
+                                match.player2.handicap,
+                                hole.handicap
+                              );
+                              return (
+                                <tr key={hole.hole}>
+                                  <td>{hole.hole}</td>
+                                  <td>{hole.par}</td>
+                                  <td>{hole.handicap}</td>
+                                  <td>{player2EffHcp}</td>
+                                  <td className="border-b border-gray-200"></td>
+                                  <td className="border-b border-gray-200"></td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );
