@@ -809,18 +809,33 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             
                             {/* Winner column */}
                             <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-center">
-                              {hole.player1Score > 0 && hole.player2Score > 0 ? (
+                              {
                                 (() => {
-                                  console.log(`Rendering winner for hole ${hole.hole}: winner=${hole.winner}`);
-                                  if (hole.winner === 'player1') {
+
+                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
+                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                  const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+
+                                  const result = calculateScore(
+                                    player1EffHcp, 
+                                    hole.player1Score, 
+                                    hole.player1Putt,
+                                    player2EffHcp, 
+                                    hole.player2Score, 
+                                    hole.player2Putt,
+                                    hole.par
+                                  );
+
+
+                                  console.log(`Rendering winner for hole ${hole.hole}: winner=${result}`);
+                                  if (result.winner === 'player1') {
                                     return <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]}</span>;
-                                  } else if (hole.winner === 'player2') {
+                                  } else if (result.winner === 'player2') {
                                     return <span className="text-green-600">{newMatch.player2.name.split(' ')[0]}</span>;
                                   } else {
                                     return <span className="text-gray-600">Tie</span>;
                                   }
-                                })()
-                              ) : ''}
+                                })()}
                             </td>
                           </tr>
                         ))}
