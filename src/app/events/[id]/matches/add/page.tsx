@@ -110,6 +110,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         }
         const data = await response.json();
         
+        console.log('Event data:', JSON.stringify(data, null, 2));
+        
         // Ensure the teams array exists
         if (!data.teams) {
           data.teams = [];
@@ -119,16 +121,40 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         
         // Create a flat list of all available players from all teams
         const allPlayers: PlayerOption[] = [];
-        data.teams.forEach((team: Team) => {
-          team.members.forEach((member: TeamMember) => {
-            allPlayers.push({
-              name: member.name,
-              teamName: team.name,
-              handicap: member.handicap
+        
+        // Fetch all teams data
+        const teamsResponse = await fetch('/api/teams');
+        if (!teamsResponse.ok) {
+          throw new Error(`HTTP error! status: ${teamsResponse.status}`);
+        }
+        const teamsData = await teamsResponse.json();
+        
+        // Add players from teams
+        data.teams.forEach((eventTeam: any) => {
+          const teamData = teamsData.find((t: any) => t._id === eventTeam._id);
+          if (teamData) {
+            teamData.members.forEach((member: any) => {
+              allPlayers.push({
+                name: member.name,
+                teamName: teamData.name,
+                handicap: member.handicap
+              });
             });
-          });
+          }
         });
         
+        // Add free players if they exist
+        if (data.freePlayers && Array.isArray(data.freePlayers)) {
+          data.freePlayers.forEach((player: any) => {
+            allPlayers.push({
+              name: player.name,
+              teamName: 'Free Player',
+              handicap: player.handicap
+            });
+          });
+        }
+        
+        console.log('All players:', allPlayers);
         setPlayerOptions(allPlayers);
         
         // Now fetch existing matches for this event
@@ -147,6 +173,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         });
         
         const availablePlayers = allPlayers.filter(player => !playersInMatches.has(player.name));
+        console.log('Available players:', availablePlayers);
         setAvailablePlayerOptions(availablePlayers);
         
         // Set the default tee time to event date with current time
