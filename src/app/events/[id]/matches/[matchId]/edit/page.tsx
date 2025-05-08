@@ -124,7 +124,7 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
               name: member.name,
               teamName: team.name,
               handicap: member.handicap,
-              player_handicap: member.handicap
+              player_handicap: member.player_handicap
             });
           });
         });
@@ -174,7 +174,7 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
             if (hole.player1Score === 0 && hole.player2Score === 0) {
               return; // Skip holes where neither player has a score
             }
-            
+
             const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(
               player1Handicap, 
               player2Handicap, 
@@ -333,8 +333,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
     const hole = updatedHoleScores[holeIndex];
     
     // Get player handicaps
-    const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-    const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+    const player1Handicap = match.player1.handicap || 0;
+    const player2Handicap = match.player2.handicap || 0;
     
     // Get effective handicaps
     const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(
@@ -382,8 +382,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
     // If both players have scores, recalculate the winner
     if (hole.player1Score > 0 && hole.player2Score > 0) {
       // Get player handicaps
-      const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-      const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+      const player1Handicap = match.player1.handicap || 0;
+      const player2Handicap = match.player2.handicap || 0;
       
       // Get effective handicaps
       const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(
@@ -421,8 +421,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
   const calculateAndUpdateTotalScores = (updatedHoleScores: HoleScore[]) => {
     if (!match) return;
     
-    const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-    const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+    const player1Handicap = match.player1.handicap || 0;
+    const player2Handicap = match.player2.handicap || 0;
     
     let player1TotalScore = 0;
     let player2TotalScore = 0;
@@ -725,8 +725,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                           </td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-blue-50">
                             {(() => {
-                              const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                              const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                              const player1Handicap = match.player1.handicap || 0;
+                              const player2Handicap = match.player2.handicap || 0;
                               const [player1EffHcp, _] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
                               return player1EffHcp;
                             })()}
@@ -736,8 +736,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                           }`}>
                             {hole.player1Score > 0 ? 
                               (() => {
-                                const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                                const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                                const player1Handicap = match.player1.handicap || 0;
+                                const player2Handicap = match.player2.handicap || 0;
                                 const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
                                 
                                 const result = calculateScore(
@@ -778,8 +778,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                           </td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-green-50">
                             {(() => {
-                              const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                              const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                              const player1Handicap = match.player1.handicap || 0;
+                              const player2Handicap = match.player2.handicap || 0;
                               const [_, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
                               return player2EffHcp;
                             })()}
@@ -789,8 +789,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                           }`}>
                             {hole.player2Score > 0 ? 
                               (() => {
-                                const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                                const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                                const player1Handicap = match.player1.handicap || 0;
+                                const player2Handicap = match.player2.handicap || 0;
                                 const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
                                 
                                 const result = calculateScore(
@@ -812,8 +812,12 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                           <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-center">
                               {
                                 (() => {
-                                  const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                                  const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                                  if (hole.player1Score === 0 || hole.player2Score === 0) {
+                                    return <span className="text-gray-600">Tie</span>;
+                                  }
+
+                                  const player1Handicap = match.player1.handicap || 0;
+                                  const player2Handicap = match.player2.handicap || 0;
                                   const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
 
                                   const result = calculateScore(
@@ -826,7 +830,6 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                                     hole.par
                                   );
 
-                                  console.log(`Rendering winner for hole ${hole.hole}: winner=${result}`);
                                   if (result.winner === 'player1') {
                                     return <span className="text-blue-600">{match.player1.name.split(' ')[0]}</span>;
                                   } else if (result.winner === 'player2') {
@@ -853,8 +856,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                       </td>
                       <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">
                         {(() => {
-                          const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                          const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                          const player1Handicap = match.player1.handicap || 0;
+                          const player2Handicap = match.player2.handicap || 0;
                           
                           // Sum of effective handicaps for player 1 across all holes
                           return holeScores.reduce((total, hole) => {
@@ -876,8 +879,8 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                       </td>
                       <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">
                         {(() => {
-                          const player1Handicap = playerOptions.find(p => p.name === match.player1.name)?.handicap || 0;
-                          const player2Handicap = playerOptions.find(p => p.name === match.player2.name)?.handicap || 0;
+                          const player1Handicap = match.player1.handicap || 0;
+                          const player2Handicap = match.player2.handicap || 0;
                           
                           // Sum of effective handicaps for player 2 across all holes
                           return holeScores.reduce((total, hole) => {
