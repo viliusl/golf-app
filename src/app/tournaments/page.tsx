@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface Event {
   _id: string;
@@ -283,6 +284,12 @@ export default function TournamentsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/scorecard/${tournament._id}`}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Leaderboard
+                          </Link>
                           <button
                             onClick={() => handleEditClick(tournament)}
                             className="text-blue-600 hover:text-blue-900"

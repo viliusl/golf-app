@@ -75,4 +75,35 @@ export async function PUT(
       { status: 500 }
     );
   }
+}
+
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+    if (!mongoose.connection.db) {
+      throw new Error('Database connection not established');
+    }
+
+    const tournament = await mongoose.connection.db.collection('tournaments').findOne({
+      _id: new ObjectId(params.id),
+    });
+
+    if (!tournament) {
+      return NextResponse.json(
+        { error: 'Tournament not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(tournament);
+  } catch (error) {
+    console.error('Error fetching tournament:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch tournament' },
+      { status: 500 }
+    );
+  }
 } 
