@@ -104,22 +104,22 @@ export default function PrintMatchCards() {
         </div>
 
         <div className="print-section">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {matches.map((match, index) => (
-              <div key={match._id} className="bg-white rounded-lg shadow-sm p-2 border border-gray-200">
-                <div className="flex justify-between items-center mb-1">
+              <div key={match._id} className="bg-white rounded-lg shadow-sm p-1.5 border border-gray-200">
+                <div className="flex justify-between items-center mb-0.5">
                   <div>
-                    <h2 className="text-base font-semibold text-black leading-snug">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
+                    <h2 className="text-sm font-semibold text-black leading-snug">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
                     <p className="text-xs text-black leading-snug">Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} | Starting Hole: {match.tee}</p>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 mt-1">
+                <div className="grid grid-cols-2 gap-1.5 mt-0.5">
                   {/* Player 1 */}
-                  <div className="border border-gray-200 rounded-lg p-1.5">
+                  <div className="border border-gray-200 rounded-lg p-1">
                     <h3 className="font-semibold text-xs text-black leading-snug">{match.player1.name}</h3>
                     <p className="text-xs text-black leading-snug">Team: {match.player1.teamName} | Hcp: {match.player1.handicap}</p>
-                    <div className="mt-1">
+                    <div className="mt-0.5">
                       <table className="w-full text-xs">
                         <thead>
                           <tr>
@@ -139,11 +139,11 @@ export default function PrintMatchCards() {
                               hole.handicap
                             );
                             return (
-                              <tr key={hole.hole} className="h-4">
-                                <td className="text-black py-0.5">{hole.hole}</td>
-                                <td className="text-black py-0.5">{hole.par}</td>
-                                <td className="text-black py-0.5">{hole.handicap}</td>
-                                <td className="text-black py-0.5">{player1EffHcp}</td>
+                              <tr key={hole.hole} className="h-3.5">
+                                <td className="text-black py-0.5 border-b border-gray-200">{hole.hole}</td>
+                                <td className="text-black py-0.5 border-b border-gray-200">{hole.par}</td>
+                                <td className="text-black py-0.5 border-b border-gray-200">{hole.handicap}</td>
+                                <td className="text-black py-0.5 border-b border-gray-200">{player1EffHcp}</td>
                                 <td className="border-b border-gray-200 py-0.5"></td>
                                 <td className="border-b border-gray-200 py-0.5"></td>
                               </tr>
@@ -155,10 +155,10 @@ export default function PrintMatchCards() {
                   </div>
                   
                   {/* Player 2 */}
-                  <div className="border border-gray-200 rounded-lg p-1.5">
+                  <div className="border border-gray-200 rounded-lg p-1">
                     <h3 className="font-semibold text-xs text-black leading-snug">{match.player2.name}</h3>
                     <p className="text-xs text-black leading-snug">Team: {match.player2.teamName} | Hcp: {match.player2.handicap}</p>
-                    <div className="mt-1">
+                    <div className="mt-0.5">
                       <table className="w-full text-xs">
                         <thead>
                           <tr>
@@ -178,11 +178,11 @@ export default function PrintMatchCards() {
                               hole.handicap
                             );
                             return (
-                              <tr key={hole.hole} className="h-4">
-                                <td className="text-black py-0.5">{hole.hole}</td>
-                                <td className="text-black py-0.5">{hole.par}</td>
-                                <td className="text-black py-0.5">{hole.handicap}</td>
-                                <td className="text-black py-0.5">{player2EffHcp}</td>
+                              <tr key={hole.hole} className="h-3.5">
+                                <td className="text-black py-0.5 border-b border-gray-200">{hole.hole}</td>
+                                <td className="text-black py-0.5 border-b border-gray-200">{hole.par}</td>
+                                <td className="text-black py-0.5 border-b border-gray-200">{hole.handicap}</td>
+                                <td className="text-black py-0.5 border-b border-gray-200">{player2EffHcp}</td>
                                 <td className="border-b border-gray-200 py-0.5"></td>
                                 <td className="border-b border-gray-200 py-0.5"></td>
                               </tr>
@@ -216,7 +216,7 @@ export default function PrintMatchCards() {
             .print-section > div {
               display: flex;
               flex-direction: column;
-              gap: 0.75rem;
+              gap: 0.5rem;
             }
             .print-section > div > div:nth-child(2n) {
               page-break-after: always;
@@ -232,7 +232,7 @@ export default function PrintMatchCards() {
             }
             @page {
               size: A4;
-              margin: 1cm;
+              margin: 0.75cm;
             }
           }
         `}</style>
