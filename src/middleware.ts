@@ -15,7 +15,17 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/scores/') ||
     // Allow API routes needed for public scorecard
     request.nextUrl.pathname === '/api/events' ||
-    (request.nextUrl.pathname === '/api/matches' && request.nextUrl.search.includes('eventId='))
+    (request.nextUrl.pathname === '/api/matches' && request.nextUrl.search.includes('eventId=')) ||
+    request.nextUrl.pathname === '/' ||
+    request.nextUrl.pathname === '/tournaments' ||
+    request.nextUrl.pathname.startsWith('/tournaments/') ||
+    request.nextUrl.pathname === '/teams' ||
+    request.nextUrl.pathname.startsWith('/teams/') ||
+    request.nextUrl.pathname === '/players' ||
+    request.nextUrl.pathname.startsWith('/players/') ||
+    request.nextUrl.pathname === '/events' ||
+    request.nextUrl.pathname.startsWith('/events/') ||
+    request.nextUrl.pathname.startsWith('/scorecard/')
   ) {
     return NextResponse.next();
   }

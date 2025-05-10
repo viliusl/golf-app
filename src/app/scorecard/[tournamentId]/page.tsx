@@ -393,19 +393,19 @@ export default function TournamentScorecard() {
 
   return (
     <main className="p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <div>
+          <div className="w-full">
             <Link href="/tournaments" className="text-blue-500 hover:text-blue-700 mb-2 inline-block">
               ← Back to Tournaments
             </Link>
-            <h1 className="text-3xl font-bold text-black">{tournament.name} Scorecard</h1>
+            <h1 className="text-3xl font-bold text-black">Leaderboard for {tournament.name}</h1>
           </div>
         </div>
 
         {/* Tournament Summary */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-black">{tournament.name}</h2>
+          <h2 className="text-xl font-semibold mb-4 text-black">Leaderboard for {tournament.name}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-gray-600 mb-2">Events</p>
@@ -413,7 +413,7 @@ export default function TournamentScorecard() {
                 {scorecardEvents.map(event => (
                   <Link
                     key={event._id}
-                    href={`/scorecard/${tournament._id}?eventId=${event._id}`}
+                    href={`/scorecard/${tournament._id}/event/${event._id}`}
                     className="block text-sm text-blue-600 hover:text-blue-800 hover:underline"
                   >
                     {event.name} ({new Date(event.date).toLocaleDateString()})
