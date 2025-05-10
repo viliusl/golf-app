@@ -91,6 +91,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [newEventName, setNewEventName] = useState('');
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isRandomizing, setIsRandomizing] = useState(false);
 
   useEffect(() => {
     // Define fetch functions inside useEffect to properly capture dependencies
@@ -661,6 +662,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const handleRandomizeMatches = async () => {
     if (!event) return;
     setError(null);
+    setIsRandomizing(true);
     
     try {
       // Get all players from teams
@@ -784,6 +786,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     } catch (error) {
       console.error('Error randomizing matches:', error);
       setError(error instanceof Error ? error.message : 'Failed to randomize matches');
+    } finally {
+      setIsRandomizing(false);
     }
   };
 
@@ -844,9 +848,22 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               <div className="flex gap-2">
                 <button
                   onClick={handleRandomizeMatches}
-                  className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                  disabled={isRandomizing}
+                  className={`bg-blue-500 text-white py-2 px-4 rounded-md transition-colors flex items-center gap-2 ${
+                    isRandomizing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+                  }`}
                 >
-                  Randomize Matches
+                  {isRandomizing ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Randomizing...
+                    </>
+                  ) : (
+                    'Randomize Matches'
+                  )}
                 </button>
                 <Link
                   href={`/events/${params.id}/matches/print`}
