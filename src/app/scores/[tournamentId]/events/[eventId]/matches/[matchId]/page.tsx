@@ -253,10 +253,10 @@ export default function PublicMatchView() {
                           {hole.par}
                         </td>
                         {/* Player 1 columns with blue tint */}
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200">
+                        <td className="px-3 py-1 whitespace-nowrap text-center text-gray-600 border-r border-gray-200">
                           {hole.player1Score > 0 ? hole.player1Score : ''}
                         </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200">
+                        <td className="px-3 py-1 whitespace-nowrap text-center text-gray-600 border-r border-gray-200">
                           {hole.player1Putt ? '✓' : ''}
                         </td>
                         <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200">
@@ -269,10 +269,10 @@ export default function PublicMatchView() {
                         </td>
                         
                         {/* Player 2 columns with green tint */}
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200">
+                        <td className="px-3 py-1 whitespace-nowrap text-center text-gray-600 border-r border-gray-200">
                           {hole.player2Score > 0 ? hole.player2Score : ''}
                         </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200">
+                        <td className="px-3 py-1 whitespace-nowrap text-center text-gray-600 border-r border-gray-200">
                           {hole.player2Putt ? '✓' : ''}
                         </td>
                         <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200">

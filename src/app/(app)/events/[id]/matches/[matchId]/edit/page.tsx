@@ -114,7 +114,6 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
         }
         
         setEvent(eventData);
-        setMatch(matchData);
         
         // Create a flat list of all available players from all teams
         const allPlayers: PlayerOption[] = [];
@@ -130,6 +129,22 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
         });
         
         setPlayerOptions(allPlayers);
+
+        // Update match data with correct handicap values
+        const player1Data = allPlayers.find(p => p.name === matchData.player1.name);
+        const player2Data = allPlayers.find(p => p.name === matchData.player2.name);
+
+        if (player1Data) {
+          matchData.player1.handicap = player1Data.handicap;
+          matchData.player1.player_handicap = player1Data.player_handicap;
+        }
+
+        if (player2Data) {
+          matchData.player2.handicap = player2Data.handicap;
+          matchData.player2.player_handicap = player2Data.player_handicap;
+        }
+        
+        setMatch(matchData);
         
         // Set hole scores from match data
         if (matchData.holes && matchData.holes.length > 0) {
