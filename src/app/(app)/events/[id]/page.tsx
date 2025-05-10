@@ -353,13 +353,50 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     setError(null);
     
     try {
+      console.log('Original event teams:', JSON.stringify(event.teams, null, 2));
+      
+      // Filter out the team to remove and ensure all team members have the required fields
+      const updatedTeams = event.teams
+        .filter(team => team._id !== teamId)
+        .map(team => {
+          console.log('Processing team:', team.name);
+          console.log('Team members:', JSON.stringify(team.members, null, 2));
+          
+          // Find the original team data to get member details
+          const originalTeam = teams.find(t => t._id === team._id);
+          if (!originalTeam) {
+            console.error('Original team not found:', team._id);
+            return null;
+          }
+
+          return {
+            _id: team._id,
+            name: team.name,
+            members: team.members.map(member => {
+              console.log('Processing member:', member);
+              // Find the original member to get their details
+              const originalMember = originalTeam.members.find(m => m._id === member.playerId);
+              if (!originalMember) {
+                console.error('Original member not found:', member);
+                return null;
+              }
+              return {
+                playerType: member.playerType,
+                playerId: originalMember._id
+              };
+            }).filter(Boolean)
+          };
+        }).filter(Boolean);
+
+      console.log('Updated teams to send:', JSON.stringify(updatedTeams, null, 2));
+
       const response = await fetch(`/api/events?id=${event._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          teams: event.teams.filter(team => team._id !== teamId).map(team => team._id)
+          teams: updatedTeams
         }),
       });
 
@@ -594,7 +631,28 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     if (event) {
       event.teams.forEach(team => {
         team.members.forEach(member => {
-          fetchPlayerDetails(member.playerId, member.playerType);
+          // For team members in the event, we need to find their details in the teams array
+          if (member.playerType === 'team_member') {
+            const teamData = teams.find(t => t._id === team._id);
+            if (teamData) {
+              const teamMember = teamData.members.find(m => m._id === member.playerId);
+              if (teamMember) {
+                setPlayerDetails(prev => ({
+                  ...prev,
+                  [member.playerId]: {
+                    name: teamMember.name,
+                    isCaptain: teamMember.isCaptain,
+                    handicap: teamMember.handicap,
+                    tee: teamMember.tee as 'W' | 'Y' | 'B' | 'R',
+                    gender: teamMember.gender as 'Male' | 'Female'
+                  }
+                }));
+              }
+            }
+          } else {
+            // For free players, fetch their details directly
+            fetchPlayerDetails(member.playerId, member.playerType);
+          }
         });
       });
     }
@@ -790,12 +848,12 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 >
                   Randomize Matches
                 </button>
-                <button
-                  onClick={() => window.print()}
+                <Link
+                  href={`/events/${params.id}/matches/print`}
                   className="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition-colors"
                 >
                   Print Match Cards
-                </button>
+                </Link>
                 <Link
                   href={`/events/${params.id}/matches/add`}
                   className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
@@ -1500,131 +1558,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             </div>
           </div>
         )}
-
-        {/* Print styles */}
-        <style jsx global>{`
-          @media print {
-            body * {
-              visibility: hidden;
-            }
-            .print-section, .print-section * {
-              visibility: visible !important;
-            }
-            .print-section {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-            }
-            .print-section table {
-              page-break-inside: avoid;
-            }
-            .print-section tr {
-              page-break-inside: avoid;
-            }
-          }
-        `}</style>
-
-        {/* Print section */}
-        <div className="print-section">
-          <div className="p-8">
-            <div className="space-y-8">
-              {matches.map((match) => (
-                <div key={match._id} className="border border-gray-200 rounded-lg p-6 mb-8">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h2 className="text-xl font-semibold">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
-                      <p className="text-gray-600">Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                      <p className="text-gray-600 mb-4">Starting Hole: {match.tee}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-8 mb-6">
-                    {/* Player 1 */}
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="font-semibold mb-2">{match.player1.name}</h3>
-                      <p className="text-sm text-gray-600">Team: {match.player1.teamName}</p>
-                      <p className="text-sm text-gray-600">Playing Handicap: {match.player1.handicap}</p>
-                      <div className="mt-4">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr>
-                              <th className="text-left">Hole</th>
-                              <th className="text-left">Par</th>
-                              <th className="text-left">Hcp</th>
-                              <th className="text-left">Eff Hcp</th>
-                              <th className="text-left">Score</th>
-                              <th className="text-left">Putt</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {match.holes.map((hole) => {
-                              const [player1EffHcp, _] = calculateEffectiveHandicap(
-                                match.player1.handicap,
-                                match.player2.handicap,
-                                hole.handicap
-                              );
-                              return (
-                                <tr key={hole.hole}>
-                                  <td>{hole.hole}</td>
-                                  <td>{hole.par}</td>
-                                  <td>{hole.handicap}</td>
-                                  <td>{player1EffHcp}</td>
-                                  <td className="border-b border-gray-200"></td>
-                                  <td className="border-b border-gray-200"></td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                    
-                    {/* Player 2 */}
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="font-semibold mb-2">{match.player2.name}</h3>
-                      <p className="text-sm text-gray-600">Team: {match.player2.teamName}</p>
-                      <p className="text-sm text-gray-600">Playing Handicap: {match.player2.handicap}</p>
-                      <div className="mt-4">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr>
-                              <th className="text-left">Hole</th>
-                              <th className="text-left">Par</th>
-                              <th className="text-left">Hcp</th>
-                              <th className="text-left">Eff Hcp</th>
-                              <th className="text-left">Score</th>
-                              <th className="text-left">Putt</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {match.holes.map((hole) => {
-                              const [_, player2EffHcp] = calculateEffectiveHandicap(
-                                match.player1.handicap,
-                                match.player2.handicap,
-                                hole.handicap
-                              );
-                              return (
-                                <tr key={hole.hole}>
-                                  <td>{hole.hole}</td>
-                                  <td>{hole.par}</td>
-                                  <td>{hole.handicap}</td>
-                                  <td>{player2EffHcp}</td>
-                                  <td className="border-b border-gray-200"></td>
-                                  <td className="border-b border-gray-200"></td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   );

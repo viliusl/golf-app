@@ -192,10 +192,10 @@ export default function PublicMatchView() {
                     <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r-2 border-gray-300">
                       Par
                     </th>
-                    <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r border-gray-200">
+                    <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                       Strokes
                     </th>
-                    <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r border-gray-200">
+                    <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                       1 Putt
                     </th>
                     <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r border-gray-200">
@@ -204,10 +204,10 @@ export default function PublicMatchView() {
                     <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50 border-r-2 border-gray-300">
                       Score
                     </th>
-                    <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-r border-gray-200">
+                    <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                       Strokes
                     </th>
-                    <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-r border-gray-200">
+                    <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                       1 Putt
                     </th>
                     <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50 border-r border-gray-200">
@@ -253,13 +253,13 @@ export default function PublicMatchView() {
                           {hole.par}
                         </td>
                         {/* Player 1 columns with blue tint */}
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-blue-50">
+                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200">
                           {hole.player1Score > 0 ? hole.player1Score : ''}
                         </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-blue-50">
+                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200">
                           {hole.player1Putt ? '✓' : ''}
                         </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-blue-50">
+                        <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200">
                           {player1EffHcp}
                         </td>
                         <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-blue-50 ${
@@ -269,13 +269,13 @@ export default function PublicMatchView() {
                         </td>
                         
                         {/* Player 2 columns with green tint */}
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-green-50">
+                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200">
                           {hole.player2Score > 0 ? hole.player2Score : ''}
                         </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200 bg-green-50">
+                        <td className="px-3 py-1 whitespace-nowrap text-center border-r border-gray-200">
                           {hole.player2Putt ? '✓' : ''}
                         </td>
-                        <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-green-50">
+                        <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200">
                           {player2EffHcp}
                         </td>
                         <td className={`px-3 py-1 whitespace-nowrap text-xs font-medium text-center border-r-2 border-gray-300 bg-green-50 ${
