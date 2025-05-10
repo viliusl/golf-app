@@ -17,10 +17,8 @@ export default function ScoresLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-white min-h-screen`}>
-        {children}
-      </body>
-    </html>
+    <div className="min-h-screen bg-gray-100">
+      {children}
+    </div>
   );
 } 

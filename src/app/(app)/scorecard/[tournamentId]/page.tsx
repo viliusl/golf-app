@@ -396,9 +396,18 @@ export default function TournamentScorecard() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div className="w-full">
-            <Link href="/tournaments" className="text-blue-500 hover:text-blue-700 mb-2 inline-block">
-              ← Back to Tournaments
-            </Link>
+            <div className="flex justify-between items-center">
+              <Link href="/tournaments" className="text-blue-500 hover:text-blue-700 mb-2 inline-block">
+                ← Back to Tournaments
+              </Link>
+              <Link
+                href={`/scores/${tournamentId}`}
+                target="_blank"
+                className="text-blue-500 hover:text-blue-700 mb-2 inline-block"
+              >
+                Open Public Scorecard ↗
+              </Link>
+            </div>
             <h1 className="text-3xl font-bold text-black">Leaderboard for {tournament.name}</h1>
           </div>
         </div>

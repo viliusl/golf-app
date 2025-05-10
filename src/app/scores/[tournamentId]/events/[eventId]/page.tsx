@@ -356,6 +356,9 @@ export default function PublicEventScorecard() {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Details
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -365,20 +368,20 @@ export default function PublicEventScorecard() {
                       <div className="text-sm font-medium text-black">{match.player1.name}</div>
                       <div className="text-xs text-gray-500">{match.player1.teamName}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-black">{match.player1.score}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm font-medium text-black">{match.player1.score}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="text-sm text-gray-500">vs</div>
+                      <div className="text-sm font-medium text-gray-500">vs</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-black">{match.player2.score}</div>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm font-medium text-black">{match.player2.score}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-black">{match.player2.name}</div>
                       <div className="text-xs text-gray-500">{match.player2.teamName}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         match.completed 
                           ? 'bg-green-100 text-green-800' 
@@ -386,6 +389,14 @@ export default function PublicEventScorecard() {
                       }`}>
                         {match.completed ? 'Completed' : 'In Progress'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <a 
+                        href={`/scores/${tournamentId}/events/${eventId}/matches/${match._id}`}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        View Details →
+                      </a>
                     </td>
                   </tr>
                 ))}
