@@ -103,100 +103,99 @@ export default function PrintMatchCards() {
           </div>
         </div>
 
-        <div className="print-section space-y-8">
-          {matches.map((match) => (
-            <div key={match._id} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h2 className="text-xl font-semibold text-black">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
-                  <p className="text-black">Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                  <p className="text-black mb-4">Starting Hole: {match.tee}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-8 mb-6">
-                {/* Player 1 */}
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold mb-2 text-black">{match.player1.name}</h3>
-                  <p className="text-sm text-black">Team: {match.player1.teamName}</p>
-                  <p className="text-sm text-black">Playing Handicap: {match.player1.handicap}</p>
-                  <div className="mt-4">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr>
-                          <th className="text-left text-black">Hole</th>
-                          <th className="text-left text-black">Par</th>
-                          <th className="text-left text-black">Hcp</th>
-                          <th className="text-left text-black">Eff Hcp</th>
-                          <th className="text-left text-black">Score</th>
-                          <th className="text-left text-black">Putt</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {match.holes.map((hole) => {
-                          const [player1EffHcp, _] = calculateEffectiveHandicap(
-                            match.player1.handicap,
-                            match.player2.handicap,
-                            hole.handicap
-                          );
-                          return (
-                            <tr key={hole.hole}>
-                              <td className="text-black">{hole.hole}</td>
-                              <td className="text-black">{hole.par}</td>
-                              <td className="text-black">{hole.handicap}</td>
-                              <td className="text-black">{player1EffHcp}</td>
-                              <td className="border-b border-gray-200"></td>
-                              <td className="border-b border-gray-200"></td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+        <div className="print-section">
+          <div className="space-y-2">
+            {matches.map((match, index) => (
+              <div key={match._id} className="bg-white rounded-lg shadow-sm p-2 border border-gray-200">
+                <div className="flex justify-between items-center mb-1">
+                  <div>
+                    <h2 className="text-base font-semibold text-black leading-snug">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
+                    <p className="text-xs text-black leading-snug">Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} | Starting Hole: {match.tee}</p>
                   </div>
                 </div>
                 
-                {/* Player 2 */}
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold mb-2 text-black">{match.player2.name}</h3>
-                  <p className="text-sm text-black">Team: {match.player2.teamName}</p>
-                  <p className="text-sm text-black">Playing Handicap: {match.player2.handicap}</p>
-                  <div className="mt-4">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr>
-                          <th className="text-left text-black">Hole</th>
-                          <th className="text-left text-black">Par</th>
-                          <th className="text-left text-black">Hcp</th>
-                          <th className="text-left text-black">Eff Hcp</th>
-                          <th className="text-left text-black">Score</th>
-                          <th className="text-left text-black">Putt</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {match.holes.map((hole) => {
-                          const [_, player2EffHcp] = calculateEffectiveHandicap(
-                            match.player1.handicap,
-                            match.player2.handicap,
-                            hole.handicap
-                          );
-                          return (
-                            <tr key={hole.hole}>
-                              <td className="text-black">{hole.hole}</td>
-                              <td className="text-black">{hole.par}</td>
-                              <td className="text-black">{hole.handicap}</td>
-                              <td className="text-black">{player2EffHcp}</td>
-                              <td className="border-b border-gray-200"></td>
-                              <td className="border-b border-gray-200"></td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {/* Player 1 */}
+                  <div className="border border-gray-200 rounded-lg p-1.5">
+                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player1.name}</h3>
+                    <p className="text-xs text-black leading-snug">Team: {match.player1.teamName} | Hcp: {match.player1.handicap}</p>
+                    <div className="mt-1">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr>
+                            <th className="text-left text-black py-0.5">Hole</th>
+                            <th className="text-left text-black py-0.5">Par</th>
+                            <th className="text-left text-black py-0.5">Hcp</th>
+                            <th className="text-left text-black py-0.5">Eff Hcp</th>
+                            <th className="text-left text-black py-0.5">Score</th>
+                            <th className="text-left text-black py-0.5">Putt</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {match.holes.map((hole) => {
+                            const [player1EffHcp, _] = calculateEffectiveHandicap(
+                              match.player1.handicap,
+                              match.player2.handicap,
+                              hole.handicap
+                            );
+                            return (
+                              <tr key={hole.hole} className="h-4">
+                                <td className="text-black py-0.5">{hole.hole}</td>
+                                <td className="text-black py-0.5">{hole.par}</td>
+                                <td className="text-black py-0.5">{hole.handicap}</td>
+                                <td className="text-black py-0.5">{player1EffHcp}</td>
+                                <td className="border-b border-gray-200 py-0.5"></td>
+                                <td className="border-b border-gray-200 py-0.5"></td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  {/* Player 2 */}
+                  <div className="border border-gray-200 rounded-lg p-1.5">
+                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player2.name}</h3>
+                    <p className="text-xs text-black leading-snug">Team: {match.player2.teamName} | Hcp: {match.player2.handicap}</p>
+                    <div className="mt-1">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr>
+                            <th className="text-left text-black py-0.5">Hole</th>
+                            <th className="text-left text-black py-0.5">Par</th>
+                            <th className="text-left text-black py-0.5">Hcp</th>
+                            <th className="text-left text-black py-0.5">Eff Hcp</th>
+                            <th className="text-left text-black py-0.5">Score</th>
+                            <th className="text-left text-black py-0.5">Putt</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {match.holes.map((hole) => {
+                            const [_, player2EffHcp] = calculateEffectiveHandicap(
+                              match.player1.handicap,
+                              match.player2.handicap,
+                              hole.handicap
+                            );
+                            return (
+                              <tr key={hole.hole} className="h-4">
+                                <td className="text-black py-0.5">{hole.hole}</td>
+                                <td className="text-black py-0.5">{hole.par}</td>
+                                <td className="text-black py-0.5">{hole.handicap}</td>
+                                <td className="text-black py-0.5">{player2EffHcp}</td>
+                                <td className="border-b border-gray-200 py-0.5"></td>
+                                <td className="border-b border-gray-200 py-0.5"></td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Print styles */}
@@ -215,9 +214,14 @@ export default function PrintMatchCards() {
               width: 100%;
             }
             .print-section > div {
+              display: flex;
+              flex-direction: column;
+              gap: 0.75rem;
+            }
+            .print-section > div > div:nth-child(2n) {
               page-break-after: always;
             }
-            .print-section > div:last-child {
+            .print-section > div > div:last-child {
               page-break-after: avoid;
             }
             .print-section table {
@@ -225,6 +229,10 @@ export default function PrintMatchCards() {
             }
             .print-section tr {
               page-break-inside: avoid;
+            }
+            @page {
+              size: A4;
+              margin: 1cm;
             }
           }
         `}</style>
