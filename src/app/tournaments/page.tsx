@@ -275,7 +275,9 @@ export default function TournamentsPage() {
                   {tournaments.map((tournament) => (
                     <tr key={tournament._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">{tournament.name}</div>
+                        <div className="text-sm font-medium text-blue-600 hover:text-blue-900 cursor-pointer" onClick={() => handleEditClick(tournament)}>
+                          {tournament.name}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-black">
@@ -290,12 +292,6 @@ export default function TournamentsPage() {
                           >
                             Leaderboard
                           </Link>
-                          <button
-                            onClick={() => handleEditClick(tournament)}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            Edit
-                          </button>
                           <button
                             onClick={() => handleDeleteClick(tournament)}
                             className="text-red-600 hover:text-red-900"

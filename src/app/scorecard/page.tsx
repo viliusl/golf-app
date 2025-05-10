@@ -27,7 +27,6 @@ interface Event {
     }[];
   }[];
   createdAt: string;
-  displayInScorecard: boolean;
 }
 
 interface EventWithScores extends Event {
@@ -66,20 +65,18 @@ export default function Scorecard() {
         }
         const data = await response.json();
         
-        // Filter events to only show those marked for scorecard display
-        const filteredEvents = data
-          .filter((event: Event) => event.displayInScorecard)
-          .map((event: Event) => ({
-            ...event,
-            teamScores: [],
-            isLoading: true
-          }));
+        // Map all events to include scores
+        const eventsWithScores = data.map((event: Event) => ({
+          ...event,
+          teamScores: [],
+          isLoading: true
+        }));
         
-        setScorecardEvents(filteredEvents);
+        setScorecardEvents(eventsWithScores);
         
         // If there are events, fetch matches for each one
-        if (filteredEvents.length > 0) {
-          filteredEvents.forEach((event: EventWithScores) => {
+        if (eventsWithScores.length > 0) {
+          eventsWithScores.forEach((event: EventWithScores) => {
             fetchMatchesForEvent(event._id);
           });
         }
@@ -384,10 +381,7 @@ export default function Scorecard() {
         
         {scorecardEvents.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <p className="text-gray-500">No events are currently marked for display in scorecard</p>
-            <p className="text-gray-500 mt-2 text-sm">
-              To display an event here, go to an event page and toggle "Display in Scorecard"
-            </p>
+            <p className="text-gray-500">No events available</p>
           </div>
         ) : (
           <>

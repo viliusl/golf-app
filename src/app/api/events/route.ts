@@ -182,7 +182,7 @@ export async function PUT(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const requestBody = await request.json();
-    const { name, date, teams, teamId, memberIndex, displayInScorecard } = requestBody;
+    const { name, date, teams, teamId, memberIndex } = requestBody;
 
     if (!id) {
       return NextResponse.json(
@@ -201,7 +201,6 @@ export async function PUT(request: Request) {
 
     if (name) event.name = name;
     if (date) event.date = date;
-    if (displayInScorecard !== undefined) event.displayInScorecard = displayInScorecard;
     
     // Handle removing a member from a team
     if (teamId !== undefined && memberIndex !== undefined) {
@@ -227,7 +226,7 @@ export async function PUT(request: Request) {
       // Remove the member from the team
       event.teams[teamIndex].members.splice(memberIndex, 1);
       console.log('Removed member at index', memberIndex, 'from team', teamId);
-    } 
+    }
     // Handle team operations with complete team objects (including members)
     else if (teams && Array.isArray(teams) && teams.length > 0 && typeof teams[0] === 'object' && teams[0]._id) {
       console.log('Updating teams with complete team objects');
@@ -278,7 +277,7 @@ export async function PUT(request: Request) {
   } catch (error) {
     console.error('Error updating event:', error);
     return NextResponse.json(
-      { error: 'Failed to update event', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to update event' },
       { status: 500 }
     );
   }

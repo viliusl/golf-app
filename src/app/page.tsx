@@ -18,7 +18,6 @@ interface Event {
       gender: string;
     }[];
   }[];
-  displayInScorecard: boolean;
 }
 
 export default function Home() {
@@ -113,28 +112,6 @@ export default function Home() {
     router.push(`/events/${eventId}`);
   };
 
-  const handleScorecardDisplayToggle = async (eventId: string, displayInScorecard: boolean) => {
-    try {
-      const response = await fetch(`/api/events?id=${eventId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ displayInScorecard }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to update event');
-      }
-
-      fetchEvents();
-    } catch (error) {
-      console.error('Error updating event:', error);
-      setError(error instanceof Error ? error.message : 'Failed to update event');
-    }
-  };
-
   return (
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
@@ -156,7 +133,7 @@ export default function Home() {
 
         {/* Events Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4 text-black">Upcoming Events</h2>
+          <h2 className="text-xl font-semibold mb-4 text-black">Events</h2>
           {loading ? (
             <p className="text-black">Loading events...</p>
           ) : events.length === 0 ? (
@@ -175,9 +152,6 @@ export default function Home() {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Teams
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Scorecard
-                    </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
@@ -189,42 +163,30 @@ export default function Home() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => handleEventClick(event._id)}
-                          className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium"
+                          className="text-blue-600 hover:text-blue-900"
                         >
                           {event.name}
                         </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">
-                          {new Date(event.date).toISOString().split('T')[0]}
+                        <div className="text-sm font-medium text-black">
+                          {new Date(event.date).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">
-                          {event.teams && event.teams.length > 0 
-                            ? event.teams.map(team => team.name).join(', ')
-                            : 'No teams'
-                          }
+                        <div className="text-sm font-medium text-black">
+                          {event.teams.length}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <label className="inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={event.displayInScorecard || false}
-                            onChange={() => handleScorecardDisplayToggle(event._id, !event.displayInScorecard)}
-                            className="sr-only peer"
-                          />
-                          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                        </label>
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => handleDeleteClick(event)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleDeleteClick(event)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

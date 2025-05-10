@@ -54,20 +54,24 @@ export async function PUT(
       );
     }
 
-    const result = await mongoose.connection.db.collection('tournaments').findOneAndUpdate(
+    const result = await mongoose.connection.db.collection('tournaments').updateOne(
       { _id: new ObjectId(params.id) },
-      { $set: { name: tournament.name, eventIds: tournament.eventIds } },
-      { returnDocument: 'after' }
+      { $set: { name: tournament.name, eventIds: tournament.eventIds } }
     );
 
-    if (!result.value) {
+    if (result.matchedCount === 0) {
       return NextResponse.json(
         { error: 'Tournament not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(result.value);
+    // Fetch the updated document
+    const updatedTournament = await mongoose.connection.db.collection('tournaments').findOne({
+      _id: new ObjectId(params.id)
+    });
+
+    return NextResponse.json(updatedTournament);
   } catch (error) {
     console.error('Error updating tournament:', error);
     return NextResponse.json(
