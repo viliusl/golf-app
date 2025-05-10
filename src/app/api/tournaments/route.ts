@@ -5,12 +5,17 @@ import mongoose from 'mongoose';
 export async function GET() {
   try {
     await connectDB();
+    
+    if (!mongoose.connection.db) {
+      throw new Error('Database connection not established');
+    }
+    
     const tournaments = await mongoose.connection.db.collection('tournaments').find({}).toArray();
     return NextResponse.json(tournaments);
   } catch (error) {
     console.error('Error fetching tournaments:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch tournaments' },
+      { error: 'Failed to fetch tournaments', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -18,33 +23,33 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await connectDB();
-    const tournament = await request.json();
-
-    // Validate required fields
-    if (!tournament.name) {
+    const body = await request.json();
+    
+    if (!body.name || !body.eventIds) {
       return NextResponse.json(
-        { error: 'Tournament name is required' },
+        { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Add created timestamp
-    const tournamentWithTimestamp = {
-      ...tournament,
-      createdAt: new Date(),
-    };
-
-    const result = await mongoose.connection.db.collection('tournaments').insertOne(tournamentWithTimestamp);
+    await connectDB();
     
-    return NextResponse.json({
-      ...tournamentWithTimestamp,
-      _id: result.insertedId,
+    if (!mongoose.connection.db) {
+      throw new Error('Database connection not established');
+    }
+    
+    // Create a new tournament
+    const tournament = await mongoose.connection.db.collection('tournaments').insertOne({
+      name: body.name,
+      eventIds: body.eventIds,
+      createdAt: new Date()
     });
+    
+    return NextResponse.json(tournament, { status: 201 });
   } catch (error) {
     console.error('Error creating tournament:', error);
     return NextResponse.json(
-      { error: 'Failed to create tournament' },
+      { error: 'Failed to create tournament', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

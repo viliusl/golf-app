@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Player } from '../api/players/route';
+import { Player } from '@/app/api/players/route';
 
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
