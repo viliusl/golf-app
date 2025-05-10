@@ -16,6 +16,7 @@ export function middleware(request: NextRequest) {
     // Allow API routes needed for public scorecard
     request.nextUrl.pathname === '/api/events' ||
     (request.nextUrl.pathname === '/api/matches' && request.nextUrl.search.includes('eventId=')) ||
+    request.nextUrl.pathname.startsWith('/api/tournaments/') ||
     request.nextUrl.pathname === '/' ||
     request.nextUrl.pathname === '/tournaments' ||
     request.nextUrl.pathname.startsWith('/tournaments/') ||
