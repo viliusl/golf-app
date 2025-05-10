@@ -136,7 +136,7 @@ export default function TournamentsPage() {
   };
 
   const getSelectedEvents = (tournament: Tournament) => {
-    return events.filter(event => tournament.eventIds.includes(event._id));
+    return events.filter(event => tournament.eventIds?.includes(event._id));
   };
 
   const filteredEvents = events

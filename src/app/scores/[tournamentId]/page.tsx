@@ -89,7 +89,7 @@ export default function PublicTournamentScorecard() {
         
         // Filter events to only show those in this tournament
         const tournamentEvents = allEvents
-          .filter((event: Event) => tournamentData.eventIds.includes(event._id))
+          .filter((event: Event) => tournamentData.eventIds?.includes(event._id))
           .map((event: Event) => ({
             ...event,
             teamScores: [],
