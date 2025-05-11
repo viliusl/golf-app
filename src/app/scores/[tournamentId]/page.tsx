@@ -165,6 +165,8 @@ export default function PublicTournamentScorecard() {
     });
     
     matches.forEach(match => {
+      if (!match.completed) return; // Skip incomplete matches
+
       const team1 = teamScoreMap.get(match.player1.teamName);
       if (team1) {
         team1.totalScore += match.player1.score;
@@ -307,17 +309,6 @@ export default function PublicTournamentScorecard() {
       return { completed: 0, total: 0, percent: 0, registered: 0 };
     }
 
-    // Count total players across all events
-    let totalPlayers = 0;
-    scorecardEvents.forEach(event => {
-      event.teams.forEach(team => {
-        totalPlayers += team.members.length;
-      });
-    });
-
-    // Calculate the total possible matches (total players divided by 2)
-    const totalPossibleMatches = Math.floor(totalPlayers / 2);
-
     // Count registered and completed matches
     let registeredMatches = 0;
     let completedMatches = 0;
@@ -332,14 +323,14 @@ export default function PublicTournamentScorecard() {
       }
     });
 
-    // Calculate percentage based on total possible matches
-    const percentComplete = totalPossibleMatches > 0 
-      ? Math.min(100, Math.round((completedMatches / totalPossibleMatches) * 100))
+    // Calculate percentage based on registered matches
+    const percentComplete = registeredMatches > 0 
+      ? Math.min(100, Math.round((completedMatches / registeredMatches) * 100))
       : 0;
 
     return {
       completed: completedMatches,
-      total: totalPossibleMatches,
+      total: registeredMatches,
       percent: percentComplete,
       registered: registeredMatches
     };
