@@ -482,10 +482,10 @@ export default function PublicTournamentScorecard() {
                     Player
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Team
+                    Total Score
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Score
+                    Team
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Matches Played
@@ -502,10 +502,10 @@ export default function PublicTournamentScorecard() {
                       <div className="text-sm font-medium text-black">{player.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-black">{player.teamName}</div>
+                      <div className="text-sm text-black">{player.totalScore}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-black">{player.totalScore}</div>
+                      <div className="text-sm text-black">{player.teamName}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-black">{player.matchCount}</div>
