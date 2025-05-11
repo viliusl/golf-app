@@ -260,7 +260,7 @@ export default function PublicEventScorecard() {
             </a>
             <div className="bg-white rounded-lg shadow-md p-6">
               <h1 className="text-3xl font-bold text-black mb-2">Leaderboard for {event.name}</h1>
-              <p className="text-gray-600">{new Date(event.date).toLocaleDateString()}</p>
+              <p className="text-gray-600">{new Date(event.date).toISOString().split('T')[0]}</p>
             </div>
           </div>
         </div>
