@@ -358,7 +358,12 @@ export default function PublicEventScorecard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {event.matches?.map((match) => (
+                  {event.matches?.sort((a, b) => {
+                    // Sort completed matches first
+                    if (a.completed && !b.completed) return -1;
+                    if (!a.completed && b.completed) return 1;
+                    return 0;
+                  }).map((match) => (
                     <tr key={match._id} className={match.completed ? 'bg-green-50' : 'bg-gray-50'}>
                       <td className="px-3 sm:px-6 py-4">
                         <div className="space-y-2">
