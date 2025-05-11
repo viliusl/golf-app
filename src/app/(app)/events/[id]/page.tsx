@@ -44,8 +44,8 @@ interface Event {
 interface PlayerDetails {
   name: string;
   isCaptain: boolean;
-  handicap: number;
-  player_handicap?: number;
+  handicap: number | string;
+  player_handicap: number | string;
   tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
 }
@@ -82,7 +82,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [memberToEdit, setMemberToEdit] = useState<{
     name: string;
     isCaptain: boolean;
-    handicap: number;
+    handicap: number | string;
+    player_handicap: number | string;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   } | null>(null);
@@ -515,7 +516,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           },
           body: JSON.stringify({
             name: memberToEdit.name,
-            handicap: memberToEdit.handicap,
+            handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap,
+            player_handicap: typeof memberToEdit.player_handicap === 'string' ? parseFloat(memberToEdit.player_handicap) || 0 : memberToEdit.player_handicap,
             tee: memberToEdit.tee,
             gender: memberToEdit.gender
           }),
@@ -542,7 +544,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               ...member,
               name: memberToEdit.name,
               isCaptain: memberToEdit.isCaptain,
-              handicap: memberToEdit.handicap,
+              handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap,
+              player_handicap: typeof memberToEdit.player_handicap === 'string' ? parseFloat(memberToEdit.player_handicap) || 0 : memberToEdit.player_handicap,
               tee: memberToEdit.tee,
               gender: memberToEdit.gender
             };
@@ -598,6 +601,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               name: player.name,
               isCaptain: false,
               handicap: player.handicap,
+              player_handicap: player.player_handicap || 0,
               tee: player.tee,
               gender: player.gender
             }
@@ -614,6 +618,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 name: member.name,
                 isCaptain: member.isCaptain,
                 handicap: member.handicap,
+                player_handicap: member.player_handicap || 0,
                 tee: member.tee as 'W' | 'Y' | 'B' | 'R',
                 gender: member.gender as 'Male' | 'Female'
               }
@@ -644,6 +649,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     name: teamMember.name,
                     isCaptain: teamMember.isCaptain,
                     handicap: teamMember.handicap,
+                    player_handicap: teamMember.player_handicap || 0,
                     tee: teamMember.tee as 'W' | 'Y' | 'B' | 'R',
                     gender: teamMember.gender as 'Male' | 'Female'
                   }
@@ -1428,17 +1434,48 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
+                    Playing Handicap
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-handicap"
+                    value={memberToEdit.handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        setMemberToEdit({...memberToEdit, handicap: value});
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setMemberToEdit({...memberToEdit, handicap: isNaN(numValue) ? 0 : numValue});
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
                     Handicap
                   </label>
                   <input
-                    type="number"
-                    id="edit-handicap"
-                    value={memberToEdit.handicap}
-                    onChange={(e) => setMemberToEdit({...memberToEdit, handicap: parseInt(e.target.value)})}
+                    type="text"
+                    id="edit-player_handicap"
+                    value={memberToEdit.player_handicap}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
+                        setMemberToEdit({...memberToEdit, player_handicap: value});
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setMemberToEdit({...memberToEdit, player_handicap: isNaN(numValue) ? 0 : numValue});
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
-                    min="0"
-                    max="54"
                   />
                 </div>
                 <div className="mb-4">
