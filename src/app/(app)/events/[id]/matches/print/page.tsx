@@ -118,17 +118,17 @@ export default function PrintMatchCards() {
                   {/* Player 1 */}
                   <div className="border border-gray-200 rounded-lg p-1">
                     <h3 className="font-semibold text-xs text-black leading-snug">{match.player1.name}</h3>
-                    <p className="text-xs text-black leading-snug">Team: {match.player1.teamName} | Hcp: {match.player1.handicap}</p>
+                    <p className="text-xs text-black leading-snug">Team: {match.player1.teamName} | P_HCP: {match.player1.handicap}</p>
                     <div className="mt-0.5">
                       <table className="w-full text-xs">
                         <thead>
                           <tr>
-                            <th className="text-left text-black py-0.5">Hole</th>
-                            <th className="text-left text-black py-0.5">Par</th>
-                            <th className="text-left text-black py-0.5">Hcp</th>
-                            <th className="text-left text-black py-0.5">Eff Hcp</th>
+                            <th className="text-left text-black py-0.5">HOLE</th>
+                            <th className="text-left text-black py-0.5">PAR</th>
+                            <th className="text-left text-black py-0.5">HCP</th>
+                            <th className="text-left text-black py-0.5">EFF HCP</th>
                             <th className="text-left text-black py-0.5">Score</th>
-                            <th className="text-left text-black py-0.5">Putt</th>
+                            <th className="text-left text-black py-0.5">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -157,17 +157,17 @@ export default function PrintMatchCards() {
                   {/* Player 2 */}
                   <div className="border border-gray-200 rounded-lg p-1">
                     <h3 className="font-semibold text-xs text-black leading-snug">{match.player2.name}</h3>
-                    <p className="text-xs text-black leading-snug">Team: {match.player2.teamName} | Hcp: {match.player2.handicap}</p>
+                    <p className="text-xs text-black leading-snug">Team: {match.player2.teamName} | P_HCP: {match.player2.handicap}</p>
                     <div className="mt-0.5">
                       <table className="w-full text-xs">
                         <thead>
                           <tr>
-                            <th className="text-left text-black py-0.5">Hole</th>
-                            <th className="text-left text-black py-0.5">Par</th>
-                            <th className="text-left text-black py-0.5">Hcp</th>
-                            <th className="text-left text-black py-0.5">Eff Hcp</th>
+                            <th className="text-left text-black py-0.5">HOLE</th>
+                            <th className="text-left text-black py-0.5">PAR</th>
+                            <th className="text-left text-black py-0.5">HCP</th>
+                            <th className="text-left text-black py-0.5">EFF HCP</th>
                             <th className="text-left text-black py-0.5">Score</th>
-                            <th className="text-left text-black py-0.5">Putt</th>
+                            <th className="text-left text-black py-0.5">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
