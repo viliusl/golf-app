@@ -987,54 +987,63 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {matches.map((match) => (
-                      <tr key={match._id} className="group hover:bg-gray-50">
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <div className="text-sm font-medium text-black">{match.player1.name}</div>
-                          <div className="text-xs text-gray-500">{match.player1.teamName}</div>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-center">
-                          <div className="text-sm font-bold text-black">{match.player1.score}</div>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-center">
-                          <div className="text-xs font-medium text-gray-500">vs</div>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-center">
-                          <div className="text-sm font-bold text-black">{match.player2.score}</div>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <div className="text-sm font-medium text-black">{match.player2.name}</div>
-                          <div className="text-xs text-gray-500">{match.player2.teamName}</div>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-center">
-                          <div className="text-sm text-black">
-                            {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-center">
-                          <div className="text-sm text-black">{match.tee}</div>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-center">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${match.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                            {match.completed ? 'Completed' : 'In Progress'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white border-l group-hover:bg-gray-50">
-                          <Link
-                            href={`/events/${params.id}/matches/${match._id}/edit`}
-                            className="text-blue-600 hover:text-blue-900 mr-3"
-                          >
-                            Edit
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteMatchClick(match)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {[...matches]
+                      .sort((a, b) => {
+                        // First sort by completion status (incomplete first)
+                        if (a.completed !== b.completed) {
+                          return a.completed ? 1 : -1;
+                        }
+                        // Then sort by tee time
+                        return new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
+                      })
+                      .map((match) => (
+                        <tr key={match._id} className="group hover:bg-gray-50">
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="text-sm font-medium text-black">{match.player1.name}</div>
+                            <div className="text-xs text-gray-500">{match.player1.teamName}</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-center">
+                            <div className="text-sm font-bold text-black">{match.player1.score}</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-center">
+                            <div className="text-xs font-medium text-gray-500">vs</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-center">
+                            <div className="text-sm font-bold text-black">{match.player2.score}</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="text-sm font-medium text-black">{match.player2.name}</div>
+                            <div className="text-xs text-gray-500">{match.player2.teamName}</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-center">
+                            <div className="text-sm text-black">
+                              {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-center">
+                            <div className="text-sm text-black">{match.tee}</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-center">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${match.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                              {match.completed ? 'Completed' : 'In Progress'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white border-l group-hover:bg-gray-50">
+                            <Link
+                              href={`/events/${params.id}/matches/${match._id}/edit`}
+                              className="text-blue-600 hover:text-blue-900 mr-3"
+                            >
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteMatchClick(match)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
