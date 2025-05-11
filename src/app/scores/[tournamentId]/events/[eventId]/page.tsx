@@ -52,6 +52,7 @@ export default function PublicEventScorecard() {
   const [event, setEvent] = useState<EventWithScores | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchFilter, setSearchFilter] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -202,6 +203,17 @@ export default function PublicEventScorecard() {
     return playerScoresArray;
   };
 
+  const filteredMatches = event?.matches?.filter(match => {
+    if (!searchFilter) return true;
+    const searchLower = searchFilter.toLowerCase();
+    return (
+      match.player1.name.toLowerCase().includes(searchLower) ||
+      match.player2.name.toLowerCase().includes(searchLower) ||
+      match.player1.teamName.toLowerCase().includes(searchLower) ||
+      match.player2.teamName.toLowerCase().includes(searchLower)
+    );
+  });
+
   if (loading) {
     return (
       <main className="p-8">
@@ -340,7 +352,18 @@ export default function PublicEventScorecard() {
 
         {/* Matches */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-black">Matches</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+            <h2 className="text-xl font-semibold text-black">Matches</h2>
+            <div className="w-full sm:w-64">
+              <input
+                type="text"
+                placeholder="Search players..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
           <div className="overflow-x-auto -mx-4 sm:mx-0">
             <div className="inline-block min-w-full align-middle">
               <table className="min-w-full divide-y divide-gray-200">
@@ -358,7 +381,7 @@ export default function PublicEventScorecard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {event.matches?.sort((a, b) => {
+                  {filteredMatches?.sort((a, b) => {
                     // Sort completed matches first
                     if (a.completed && !b.completed) return -1;
                     if (!a.completed && b.completed) return 1;
