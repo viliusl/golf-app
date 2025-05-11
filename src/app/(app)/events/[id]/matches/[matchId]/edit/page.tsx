@@ -584,13 +584,21 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                   Tee Time
                 </label>
                 <input
-                  type="datetime-local"
+                  type="time"
                   id="teeTime"
-                  value={match.teeTime?.slice(0, 16) || ''}
-                  onChange={(e) => setMatch({
-                    ...match,
-                    teeTime: e.target.value
-                  })}
+                  value={match.teeTime ? new Date(match.teeTime).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''}
+                  onChange={(e) => {
+                    if (event?.date) {
+                      const eventDate = new Date(event.date);
+                      const [hours, minutes] = e.target.value.split(':');
+                      eventDate.setHours(parseInt(hours));
+                      eventDate.setMinutes(parseInt(minutes));
+                      setMatch({
+                        ...match,
+                        teeTime: eventDate.toISOString()
+                      });
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                 />
               </div>
