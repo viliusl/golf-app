@@ -115,6 +115,8 @@ export default function PublicEventScorecard() {
     });
     
     matches.forEach(match => {
+      if (!match.completed) return; // Skip incomplete matches
+
       const team1 = teamScoreMap.get(match.player1.teamName);
       if (team1) {
         team1.totalScore += match.player1.score;
