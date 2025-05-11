@@ -94,6 +94,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [isRandomizing, setIsRandomizing] = useState(false);
   const [isDeleteAllMatchesModalOpen, setIsDeleteAllMatchesModalOpen] = useState(false);
+  const [isMatchMenuOpen, setIsMatchMenuOpen] = useState(false);
 
   useEffect(() => {
     // Define fetch functions inside useEffect to properly capture dependencies
@@ -865,37 +866,73 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             <div className="p-6 border-b flex justify-between items-center">
               <h3 className="text-lg font-medium text-black">Match List</h3>
               <div className="flex gap-2">
-                <button
-                  onClick={handleRandomizeMatches}
-                  disabled={isRandomizing}
-                  className={`bg-blue-500 text-white py-2 px-4 rounded-md transition-colors flex items-center gap-2 ${
-                    isRandomizing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
-                  }`}
-                >
-                  {isRandomizing ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Generating Matches...
-                    </>
-                  ) : (
-                    'Generate Random Matches'
+                <div className="relative">
+                  <button
+                    onClick={() => setIsMatchMenuOpen(!isMatchMenuOpen)}
+                    className="bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors flex items-center gap-2"
+                  >
+                    <span>Match Actions</span>
+                    <svg 
+                      className={`w-4 h-4 transition-transform ${isMatchMenuOpen ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {isMatchMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <div className="py-1" role="menu" aria-orientation="vertical">
+                        <button
+                          onClick={() => {
+                            handleRandomizeMatches();
+                            setIsMatchMenuOpen(false);
+                          }}
+                          disabled={isRandomizing}
+                          className={`w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 ${
+                            isRandomizing ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                          role="menuitem"
+                        >
+                          {isRandomizing ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Generating Matches...
+                            </>
+                          ) : (
+                            'Generate Random Matches'
+                          )}
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            setIsDeleteAllMatchesModalOpen(true);
+                            setIsMatchMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          Delete All Matches
+                        </button>
+                        
+                        <Link
+                          href={`/events/${params.id}/matches/print`}
+                          onClick={() => setIsMatchMenuOpen(false)}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          Print Match Cards
+                        </Link>
+                      </div>
+                    </div>
                   )}
-                </button>
-                <button
-                  onClick={() => setIsDeleteAllMatchesModalOpen(true)}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
-                >
-                  Delete All Matches
-                </button>
-                <Link
-                  href={`/events/${params.id}/matches/print`}
-                  className="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition-colors"
-                >
-                  Print Match Cards
-                </Link>
+                </div>
+                
                 <Link
                   href={`/events/${params.id}/matches/add`}
                   className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
@@ -920,31 +957,31 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 <table className="min-w-full divide-y divide-gray-200 table-fixed">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Player 1
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Score
                       </th>
-                      <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         vs
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Score
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Player 2
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Time
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Tee
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 shadow-md">
+                      <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 shadow-md">
                         Actions
                       </th>
                     </tr>
@@ -952,40 +989,40 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {matches.map((match) => (
                       <tr key={match._id} className="group hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="text-sm font-medium text-black">{match.player1.name}</div>
                           <div className="text-xs text-gray-500">{match.player1.teamName}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-3 py-2 whitespace-nowrap text-center">
                           <div className="text-sm font-bold text-black">{match.player1.score}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-3 py-2 whitespace-nowrap text-center">
                           <div className="text-xs font-medium text-gray-500">vs</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-3 py-2 whitespace-nowrap text-center">
                           <div className="text-sm font-bold text-black">{match.player2.score}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="text-sm font-medium text-black">{match.player2.name}</div>
                           <div className="text-xs text-gray-500">{match.player2.teamName}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap text-center">
                           <div className="text-sm text-black">
                             {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap text-center">
                           <div className="text-sm text-black">{match.tee}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap text-center">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${match.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                             {match.completed ? 'Completed' : 'In Progress'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white border-l group-hover:bg-gray-50">
+                        <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white border-l group-hover:bg-gray-50">
                           <Link
                             href={`/events/${params.id}/matches/${match._id}/edit`}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
+                            className="text-blue-600 hover:text-blue-900 mr-3"
                           >
                             Edit
                           </Link>
