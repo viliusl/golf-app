@@ -71,7 +71,7 @@ interface Match {
     player_handicap?: number;
   };
   teeTime: string;
-  tee: number;
+  tee?: number;
   holes: HoleScore[];
   completed: boolean;
   createdAt: string;
@@ -613,10 +613,10 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
                   id="tee"
                   min="1"
                   max="18"
-                  value={match.tee || 1}
+                  value={match.tee || ''}
                   onChange={(e) => setMatch({
                     ...match,
-                    tee: parseInt(e.target.value) || 1
+                    tee: e.target.value === '' ? undefined : parseInt(e.target.value)
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                 />

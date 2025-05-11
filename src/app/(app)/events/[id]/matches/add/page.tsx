@@ -71,7 +71,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       holeWins?: number;
     };
     teeTime: string;
-    tee: number;
+    tee?: number;
   }>({
     player1: { name: '', teamName: '', score: 0, holeWins: 0 },
     player2: { name: '', teamName: '', score: 0, holeWins: 0 },
@@ -650,10 +650,10 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                     id="tee"
                     min="1"
                     max="18"
-                    value={newMatch.tee}
+                    value={newMatch.tee || ''}
                     onChange={(e) => setNewMatch({
                       ...newMatch,
-                      tee: parseInt(e.target.value) || 1
+                      tee: e.target.value === '' ? undefined : parseInt(e.target.value)
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                   />
