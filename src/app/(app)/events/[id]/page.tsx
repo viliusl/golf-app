@@ -692,12 +692,22 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   player_handicap: teamMember.player_handicap || 0
                 });
               }
+            } else if (eventMember.playerType === 'free') {
+              const freePlayer = freePlayers.find(p => p._id === eventMember.playerId);
+              if (freePlayer) {
+                allPlayers.push({
+                  name: freePlayer.name,
+                  teamName: team.name,
+                  handicap: freePlayer.handicap,
+                  player_handicap: freePlayer.player_handicap || 0
+                });
+              }
             }
           });
         }
       });
       
-      // Add free players
+      // Add free players that are not part of any team
       if (event.freePlayers && Array.isArray(event.freePlayers)) {
         event.freePlayers.forEach((player) => {
           const freePlayer = freePlayers.find(p => p._id === player.playerId);
@@ -720,10 +730,13 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       const usedPlayers = new Set<string>();
       
       for (let i = 0; i < shuffledPlayers.length; i++) {
+        if (usedPlayers.has(shuffledPlayers[i].name)) continue;
+        
         // Find next available player from different team
         let j = i + 1;
         while (j < shuffledPlayers.length && 
-               shuffledPlayers[j].teamName === shuffledPlayers[i].teamName) {
+               (shuffledPlayers[j].teamName === shuffledPlayers[i].teamName || 
+                usedPlayers.has(shuffledPlayers[j].name))) {
           j++;
         }
         
@@ -764,6 +777,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           };
           
           newMatches.push(match);
+          usedPlayers.add(shuffledPlayers[i].name);
+          usedPlayers.add(shuffledPlayers[j].name);
         }
       }
       
