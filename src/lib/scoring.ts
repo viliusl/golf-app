@@ -13,23 +13,17 @@ export const calculatePlayerScore = (
 ): number => {
   let score = 0;
 
-  if (strokes >= 10) {
+  if ((strokes >= 10) || (strokes == 0)) {
     return 0;
   }
 
-  if (strokes == 0) {
-    return 0;
-  }    
-  
   if (isPutt) {
     score += 4;
   }
 
   if (strokes == 1) {
     score += 64;
-  }
-  
-  if (par - strokes == 0) {
+  } else if (par - strokes == 0) {
     score += 4;
   } else if (par - strokes == 1) {
     score += 8;
