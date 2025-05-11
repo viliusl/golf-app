@@ -31,8 +31,8 @@ export default function Teams() {
   const [memberToEdit, setMemberToEdit] = useState<{
     name: string;
     isCaptain: boolean;
-    handicap: number;
-    player_handicap: number;
+    handicap: number | string;
+    player_handicap: number | string;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   } | null>(null);
@@ -41,8 +41,8 @@ export default function Teams() {
   const [newMember, setNewMember] = useState<{
     name: string;
     isCaptain: boolean;
-    handicap: number;
-    player_handicap: number;
+    handicap: number | string;
+    player_handicap: number | string;
     tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }>({
@@ -112,7 +112,11 @@ export default function Teams() {
     setError(null);
     
     try {
-      const updatedMembers = [...teamToAddMember.members, newMember];
+      const updatedMembers = [...teamToAddMember.members, {
+        ...newMember,
+        handicap: typeof newMember.handicap === 'string' ? parseFloat(newMember.handicap) || 0 : newMember.handicap,
+        player_handicap: typeof newMember.player_handicap === 'string' ? parseFloat(newMember.player_handicap) || 0 : newMember.player_handicap
+      }];
       const response = await fetch(`/api/teams?id=${teamToAddMember._id}`, {
         method: 'PUT',
         headers: {
@@ -154,7 +158,11 @@ export default function Teams() {
     
     try {
       const updatedMembers = [...teamToEditMember.members];
-      updatedMembers[memberIndexToEdit] = memberToEdit;
+      updatedMembers[memberIndexToEdit] = {
+        ...memberToEdit,
+        handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap,
+        player_handicap: typeof memberToEdit.player_handicap === 'string' ? parseFloat(memberToEdit.player_handicap) || 0 : memberToEdit.player_handicap
+      };
       
       const response = await fetch(`/api/teams?id=${teamToEditMember._id}`, {
         method: 'PUT',
@@ -527,9 +535,13 @@ export default function Teams() {
                     onChange={(e) => {
                       const value = e.target.value.replace(',', '.');
                       if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        const numValue = value === '' || value === '.' ? 0 : parseFloat(value);
-                        setNewMember({ ...newMember, handicap: numValue });
+                        setNewMember({ ...newMember, handicap: value });
                       }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setNewMember({ ...newMember, handicap: isNaN(numValue) ? 0 : numValue });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
@@ -546,9 +558,13 @@ export default function Teams() {
                     onChange={(e) => {
                       const value = e.target.value.replace(',', '.');
                       if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        const numValue = value === '' || value === '.' ? 0 : parseFloat(value);
-                        setNewMember({ ...newMember, player_handicap: numValue });
+                        setNewMember({ ...newMember, player_handicap: value });
                       }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setNewMember({ ...newMember, player_handicap: isNaN(numValue) ? 0 : numValue });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
@@ -665,9 +681,13 @@ export default function Teams() {
                     onChange={(e) => {
                       const value = e.target.value.replace(',', '.');
                       if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        const numValue = value === '' || value === '.' ? 0 : parseFloat(value);
-                        setMemberToEdit({ ...memberToEdit, handicap: numValue });
+                        setMemberToEdit({ ...memberToEdit, handicap: value });
                       }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setMemberToEdit({ ...memberToEdit, handicap: isNaN(numValue) ? 0 : numValue });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
@@ -684,9 +704,13 @@ export default function Teams() {
                     onChange={(e) => {
                       const value = e.target.value.replace(',', '.');
                       if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        const numValue = value === '' || value === '.' ? 0 : parseFloat(value);
-                        setMemberToEdit({ ...memberToEdit, player_handicap: numValue });
+                        setMemberToEdit({ ...memberToEdit, player_handicap: value });
                       }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.replace(',', '.');
+                      const numValue = parseFloat(value);
+                      setMemberToEdit({ ...memberToEdit, player_handicap: isNaN(numValue) ? 0 : numValue });
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
