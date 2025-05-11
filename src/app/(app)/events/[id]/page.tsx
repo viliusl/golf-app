@@ -93,6 +93,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isRandomizing, setIsRandomizing] = useState(false);
+  const [isDeleteAllMatchesModalOpen, setIsDeleteAllMatchesModalOpen] = useState(false);
 
   useEffect(() => {
     // Define fetch functions inside useEffect to properly capture dependencies
@@ -712,13 +713,10 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       const usedPlayers = new Set<string>();
       
       for (let i = 0; i < shuffledPlayers.length; i++) {
-        if (usedPlayers.has(shuffledPlayers[i].name)) continue;
-        
         // Find next available player from different team
         let j = i + 1;
         while (j < shuffledPlayers.length && 
-               (usedPlayers.has(shuffledPlayers[j].name) || 
-                shuffledPlayers[j].teamName === shuffledPlayers[i].teamName)) {
+               shuffledPlayers[j].teamName === shuffledPlayers[i].teamName) {
           j++;
         }
         
@@ -759,16 +757,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           };
           
           newMatches.push(match);
-          usedPlayers.add(shuffledPlayers[i].name);
-          usedPlayers.add(shuffledPlayers[j].name);
         }
-      }
-      
-      // Delete existing matches
-      for (const match of matches) {
-        await fetch(`/api/matches?id=${match._id}`, {
-          method: 'DELETE'
-        });
       }
       
       // Create new matches
@@ -794,6 +783,30 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       setError(error instanceof Error ? error.message : 'Failed to randomize matches');
     } finally {
       setIsRandomizing(false);
+    }
+  };
+
+  const handleDeleteAllMatches = async () => {
+    if (!event) return;
+    setError(null);
+    
+    try {
+      // Delete all matches for this event
+      for (const match of matches) {
+        const response = await fetch(`/api/matches?id=${match._id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete match');
+        }
+      }
+
+      await fetchMatches();
+      setIsDeleteAllMatchesModalOpen(false);
+    } catch (error) {
+      console.error('Error deleting all matches:', error);
+      setError(error instanceof Error ? error.message : 'Failed to delete all matches');
     }
   };
 
@@ -865,11 +878,17 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Randomizing...
+                      Generating Matches...
                     </>
                   ) : (
-                    'Randomize Matches'
+                    'Generate Random Matches'
                   )}
+                </button>
+                <button
+                  onClick={() => setIsDeleteAllMatchesModalOpen(true)}
+                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                >
+                  Delete All Matches
                 </button>
                 <Link
                   href={`/events/${params.id}/matches/print`}
@@ -1607,6 +1626,49 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
                 >
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete All Matches Confirmation Modal */}
+        {isDeleteAllMatchesModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Delete All Matches</h2>
+                <button
+                  onClick={() => {
+                    setIsDeleteAllMatchesModalOpen(false);
+                    setError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+                <p className="text-gray-700">
+                  You are about to delete all {matches.length} matches from this event. This action cannot be undone.
+                </p>
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setIsDeleteAllMatchesModalOpen(false);
+                  }}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAllMatches}
+                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                >
+                  Delete All Matches
                 </button>
               </div>
             </div>
