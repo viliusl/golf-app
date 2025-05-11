@@ -680,13 +680,19 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       event.teams.forEach((eventTeam) => {
         const team = teams.find(t => t._id === eventTeam._id);
         if (team) {
-          team.members.forEach((member) => {
-            allPlayers.push({
-              name: member.name,
-              teamName: team.name,
-              handicap: member.handicap,
-              player_handicap: member.player_handicap || 0
-            });
+          // Only add players that are explicitly in the event's team members list
+          eventTeam.members.forEach((eventMember) => {
+            if (eventMember.playerType === 'team_member') {
+              const teamMember = team.members.find(m => m._id === eventMember.playerId);
+              if (teamMember) {
+                allPlayers.push({
+                  name: teamMember.name,
+                  teamName: team.name,
+                  handicap: teamMember.handicap,
+                  player_handicap: teamMember.player_handicap || 0
+                });
+              }
+            }
           });
         }
       });

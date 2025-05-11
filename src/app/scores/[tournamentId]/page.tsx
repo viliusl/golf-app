@@ -398,7 +398,7 @@ export default function PublicTournamentScorecard() {
                   <div>
                     <h3 className="text-base font-medium text-black">{event.name}</h3>
                     <p className="text-xs text-gray-600">
-                      {new Date(event.date).toLocaleDateString()}
+                      {new Date(event.date).toISOString().split('T')[0]}
                     </p>
                   </div>
                   <div className="flex items-center text-blue-600">
