@@ -359,38 +359,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     try {
       console.log('Original event teams:', JSON.stringify(event.teams, null, 2));
       
-      // Filter out the team to remove and ensure all team members have the required fields
-      const updatedTeams = event.teams
-        .filter(team => team._id !== teamId)
-        .map(team => {
-          console.log('Processing team:', team.name);
-          console.log('Team members:', JSON.stringify(team.members, null, 2));
-          
-          // Find the original team data to get member details
-          const originalTeam = teams.find(t => t._id === team._id);
-          if (!originalTeam) {
-            console.error('Original team not found:', team._id);
-            return null;
-          }
-
-          return {
-            _id: team._id,
-            name: team.name,
-            members: team.members.map(member => {
-              console.log('Processing member:', member);
-              // Find the original member to get their details
-              const originalMember = originalTeam.members.find(m => m._id === member.playerId);
-              if (!originalMember) {
-                console.error('Original member not found:', member);
-                return null;
-              }
-              return {
-                playerType: member.playerType,
-                playerId: originalMember._id
-              };
-            }).filter(Boolean)
-          };
-        }).filter(Boolean);
+      // Simply filter out the team to remove, preserving the current state of other teams
+      const updatedTeams = event.teams.filter(team => team._id !== teamId);
 
       console.log('Updated teams to send:', JSON.stringify(updatedTeams, null, 2));
 
