@@ -92,7 +92,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     { hole: 9, handicap: 3, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
     { hole: 10, handicap: 12, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
     { hole: 11, handicap: 2, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-    { hole: 12, handicap: 14, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
+    { hole: 12, handicap: 14, par: 4, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
     { hole: 13, handicap: 18, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
     { hole: 14, handicap: 4, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
     { hole: 15, handicap: 8, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
