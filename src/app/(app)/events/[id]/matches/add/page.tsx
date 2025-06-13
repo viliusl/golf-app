@@ -128,18 +128,38 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         
         // Create a map of team members
         const allPlayers: PlayerOption[] = [];
+        const processedPlayerIds = new Set<string>();
         
         // Add players from teams
         data.teams.forEach((eventTeam: any) => {
           const teamData = teamsData.find((t: any) => t._id === eventTeam._id);
           if (teamData) {
-            teamData.members.forEach((member: any) => {
-              allPlayers.push({
-                name: member.name,
-                teamName: teamData.name,
-                handicap: member.handicap,
-                player_handicap: member.player_handicap || 0
-              });
+            eventTeam.members.forEach((member: any) => {
+              if (member.playerType === 'team_member') {
+                // Handle team members
+                const teamMember = teamData.members.find((m: any) => m._id === member.playerId);
+                if (teamMember && !processedPlayerIds.has(teamMember._id)) {
+                  allPlayers.push({
+                    name: teamMember.name,
+                    teamName: teamData.name,
+                    handicap: teamMember.handicap,
+                    player_handicap: teamMember.player_handicap || 0
+                  });
+                  processedPlayerIds.add(teamMember._id);
+                }
+              } else if (member.playerType === 'free') {
+                // Handle free players in teams
+                const freePlayer = freePlayersData.find((p: any) => p._id === member.playerId);
+                if (freePlayer && !processedPlayerIds.has(freePlayer._id)) {
+                  allPlayers.push({
+                    name: freePlayer.name,
+                    teamName: teamData.name,
+                    handicap: freePlayer.handicap,
+                    player_handicap: freePlayer.player_handicap || 0
+                  });
+                  processedPlayerIds.add(freePlayer._id);
+                }
+              }
             });
           }
         });
@@ -148,13 +168,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         if (data.freePlayers && Array.isArray(data.freePlayers)) {
           data.freePlayers.forEach((player: any) => {
             const freePlayer = freePlayersData.find((p: any) => p._id === player.playerId);
-            if (freePlayer) {
+            if (freePlayer && !processedPlayerIds.has(freePlayer._id)) {
               allPlayers.push({
                 name: freePlayer.name,
                 teamName: 'Free Player',
                 handicap: freePlayer.handicap,
                 player_handicap: freePlayer.player_handicap || 0
               });
+              processedPlayerIds.add(freePlayer._id);
             }
           });
         }
