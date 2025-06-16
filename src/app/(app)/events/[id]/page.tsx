@@ -735,7 +735,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             holes: Array(18).fill(null).map((_, index) => ({
               hole: index + 1,
               handicap: [13, 11, 9, 17, 1, 15, 7, 5, 3, 12, 2, 14, 18, 4, 8, 6, 16, 10][index],
-              par: [5, 4, 4, 3, 4, 3, 4, 5, 3, 5, 4, 5, 3, 5, 4, 3, 4, 4][index],
+              par: [5, 4, 4, 3, 4, 3, 4, 5, 3, 5, 4, 4, 3, 5, 4, 3, 4, 4][index],
               pace: [15, 15, 15, 12, 15, 12, 15, 17, 12, 17, 15, 17, 12, 17, 15, 12, 15, 15][index],
               player1Score: 0,
               player2Score: 0,
@@ -1709,7 +1709,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     setIsDeleteMatchModalOpen(false);
                     setMatchToDelete(null);
                     setMatchToDeleteDetails(null);
-                    setError(null);
                   }}
                   className="text-gray-500 hover:text-gray-700"
                 >
