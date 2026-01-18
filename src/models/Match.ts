@@ -111,7 +111,7 @@ const matchSchema = new mongoose.Schema({
 // Ensure virtual properties are included when converting to JSON
 matchSchema.set('toJSON', {
   virtuals: true,
-  transform: (doc, ret: Record<string, unknown>) => {
+  transform: (doc, ret) => {
     ret.id = ret._id;
     return ret;
   }
