@@ -41,7 +41,7 @@ const eventSchema = new mongoose.Schema({
 // Ensure virtual properties are included when converting to JSON
 eventSchema.set('toJSON', {
   virtuals: true,
-  transform: (doc, ret) => {
+  transform: (doc, ret: Record<string, unknown>) => {
     ret.id = ret._id;
     return ret;
   }
