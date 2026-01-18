@@ -98,6 +98,28 @@ export default function SidebarWrapper() {
               Free Players
             </Link>
           </li>
+          <li>
+            <Link
+              href="/courses"
+              className="flex items-center p-2 rounded-md hover:bg-gray-700 transition-colors"
+            >
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
+                />
+              </svg>
+              Courses
+            </Link>
+          </li>
         </ul>
       </nav>
     </div>
