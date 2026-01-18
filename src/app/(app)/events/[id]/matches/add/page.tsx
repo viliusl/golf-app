@@ -273,23 +273,30 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       hole.handicap
     );
     
-    // Calculate scores and determine winner
-    const result = calculateScore(
-      player1EffHcp, 
-      hole.player1Score, 
-      hole.player1Putt,
-      player2EffHcp, 
-      hole.player2Score, 
-      hole.player2Putt,
-      hole.par
-    );
-    
-    // Update the winner
-    hole.winner = result.winner;
-    
-    console.log(`handleHoleScoreChange - Hole ${holeIndex+1}: Set winner to ${result.winner}`);
-    console.log(`P1: ${hole.player1Score} (${player1EffHcp}), P2: ${hole.player2Score} (${player2EffHcp})`);
-    console.log(`Result scores - P1: ${result.player1Score}, P2: ${result.player2Score}`);
+    // Only calculate winner if both players have scores
+    if (hole.player1Score > 0 && hole.player2Score > 0) {
+      // Calculate scores and determine winner
+      const result = calculateScore(
+        player1EffHcp, 
+        hole.player1Score, 
+        hole.player1Putt,
+        player2EffHcp, 
+        hole.player2Score, 
+        hole.player2Putt,
+        hole.par
+      );
+      
+      // Update the winner
+      hole.winner = result.winner;
+      
+      console.log(`handleHoleScoreChange - Hole ${holeIndex+1}: Set winner to ${result.winner}`);
+      console.log(`P1: ${hole.player1Score} (${player1EffHcp}), P2: ${hole.player2Score} (${player2EffHcp})`);
+      console.log(`Result scores - P1: ${result.player1Score}, P2: ${result.player2Score}`);
+    } else {
+      // Reset winner to tie if not both players have scores
+      hole.winner = 'tie';
+      console.log(`handleHoleScoreChange - Hole ${holeIndex+1}: Reset winner to tie (incomplete scores)`);
+    }
     
     setHoleScores(updatedHoleScores);
     
@@ -355,33 +362,32 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     
     // Calculate scores for each hole and sum them up
     updatedHoleScores.forEach(hole => {
-      if (hole.player1Score === 0 && hole.player2Score === 0) {
-        return; // Skip holes where neither player has a score
+      // Only calculate scores for holes where both players have scores
+      if (hole.player1Score > 0 && hole.player2Score > 0) {
+        const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(
+          player1Handicap, 
+          player2Handicap, 
+          hole.handicap
+        );
+        
+        const result = calculateScore(
+          player1EffHcp, 
+          hole.player1Score, 
+          hole.player1Putt,
+          player2EffHcp, 
+          hole.player2Score, 
+          hole.player2Putt,
+          hole.par
+        );
+        
+        player1TotalScore += result.player1Score;
+        player2TotalScore += result.player2Score;
       }
-      
-      const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(
-        player1Handicap, 
-        player2Handicap, 
-        hole.handicap
-      );
-      
-      const result = calculateScore(
-        player1EffHcp, 
-        hole.player1Score, 
-        hole.player1Putt,
-        player2EffHcp, 
-        hole.player2Score, 
-        hole.player2Putt,
-        hole.par
-      );
-      
-      player1TotalScore += result.player1Score;
-      player2TotalScore += result.player2Score;
     });
     
-    // Count hole wins for each player
-    const player1Wins = updatedHoleScores.filter(h => h.winner === 'player1').length;
-    const player2Wins = updatedHoleScores.filter(h => h.winner === 'player2').length;
+    // Count hole wins for each player (only count holes where both players have scores)
+    const player1Wins = updatedHoleScores.filter(h => h.winner === 'player1' && h.player1Score > 0 && h.player2Score > 0).length;
+    const player2Wins = updatedHoleScores.filter(h => h.winner === 'player2' && h.player1Score > 0 && h.player2Score > 0).length;
     
     // Add 32 points for the player who won more holes
     if (player1Wins > player2Wins) {
