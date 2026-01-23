@@ -44,7 +44,7 @@ async function main() {
     // Update all events that don't have a course
     const result = await mongoose.connection.db.collection('events').updateMany(
       { course: { $exists: false } },
-      { $set: { course: courseSnapshot } }
+      { $set: { course: courseSnapshot, handicapAllowance: 100 } }
     );
 
     console.log(`Updated ${result.modifiedCount} events with course "${course.name}"`);
@@ -52,10 +52,18 @@ async function main() {
     // Also update events that have null course
     const result2 = await mongoose.connection.db.collection('events').updateMany(
       { course: null },
-      { $set: { course: courseSnapshot } }
+      { $set: { course: courseSnapshot, handicapAllowance: 100 } }
     );
 
     console.log(`Updated ${result2.modifiedCount} additional events with null course`);
+
+    // Set handicapAllowance for events that don't have it
+    const result3 = await mongoose.connection.db.collection('events').updateMany(
+      { handicapAllowance: { $exists: false } },
+      { $set: { handicapAllowance: 100 } }
+    );
+
+    console.log(`Updated ${result3.modifiedCount} events with default handicapAllowance`);
 
     console.log('Migration complete!');
   } catch (error) {

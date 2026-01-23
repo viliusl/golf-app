@@ -100,6 +100,13 @@ const eventSchema = new mongoose.Schema({
     type: CourseSnapshotSchema,
     required: [true, 'Course is required']
   },
+  handicapAllowance: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 100,
+    default: 100
+  },
   teams: {
     type: [TeamSchema],
     default: []

@@ -57,6 +57,7 @@ interface Event {
   name: string;
   date: string;
   course?: CourseSnapshot;
+  handicapAllowance?: number;
   teams: Team[];
   createdAt: string;
   freePlayers?: {
@@ -874,6 +875,11 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   >
                     {event.course.name}
                   </button>
+                </p>
+              )}
+              {event?.handicapAllowance !== undefined && (
+                <p className="text-lg text-gray-600 mt-1">
+                  Handicap Allowance: {event.handicapAllowance}%
                 </p>
               )}
             </div>
