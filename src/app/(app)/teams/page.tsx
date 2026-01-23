@@ -9,8 +9,6 @@ interface Team {
     name: string;
     isCaptain: boolean;
     handicap: number;
-    player_handicap: number;
-    tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }[];
   createdAt: string;
@@ -32,8 +30,6 @@ export default function Teams() {
     name: string;
     isCaptain: boolean;
     handicap: number | string;
-    player_handicap: number | string;
-    tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   } | null>(null);
   const [memberIndexToEdit, setMemberIndexToEdit] = useState<number | null>(null);
@@ -42,15 +38,11 @@ export default function Teams() {
     name: string;
     isCaptain: boolean;
     handicap: number | string;
-    player_handicap: number | string;
-    tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }>({
     name: '',
     isCaptain: false,
     handicap: 0,
-    player_handicap: 0,
-    tee: 'W',
     gender: 'Male'
   });
   const [renamedTeamName, setRenamedTeamName] = useState('');
@@ -114,8 +106,7 @@ export default function Teams() {
     try {
       const updatedMembers = [...teamToAddMember.members, {
         ...newMember,
-        handicap: typeof newMember.handicap === 'string' ? parseFloat(newMember.handicap) || 0 : newMember.handicap,
-        player_handicap: typeof newMember.player_handicap === 'string' ? parseFloat(newMember.player_handicap) || 0 : newMember.player_handicap
+        handicap: typeof newMember.handicap === 'string' ? parseFloat(newMember.handicap) || 0 : newMember.handicap
       }];
       const response = await fetch(`/api/teams?id=${teamToAddMember._id}`, {
         method: 'PUT',
@@ -139,8 +130,6 @@ export default function Teams() {
         name: '',
         isCaptain: false,
         handicap: 0,
-        player_handicap: 0,
-        tee: 'W',
         gender: 'Male'
       });
       setIsAddMemberModalOpen(false);
@@ -160,8 +149,7 @@ export default function Teams() {
       const updatedMembers = [...teamToEditMember.members];
       updatedMembers[memberIndexToEdit] = {
         ...memberToEdit,
-        handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap,
-        player_handicap: typeof memberToEdit.player_handicap === 'string' ? parseFloat(memberToEdit.player_handicap) || 0 : memberToEdit.player_handicap
+        handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap
       };
       
       const response = await fetch(`/api/teams?id=${teamToEditMember._id}`, {
@@ -339,13 +327,7 @@ export default function Teams() {
                           Captain
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Playing Handicap
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Handicap
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tee
+                          Handicap Index
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Gender
@@ -358,7 +340,7 @@ export default function Teams() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {team.members.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                          <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                             No members yet
                           </td>
                         </tr>
@@ -385,16 +367,6 @@ export default function Teams() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-black">{member.handicap}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">{member.player_handicap}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">
-                                {member.tee === 'W' ? 'White' : 
-                                 member.tee === 'Y' ? 'Yellow' : 
-                                 member.tee === 'B' ? 'Blue' : 'Red'}
-                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-black">{member.gender}</div>
@@ -526,7 +498,7 @@ export default function Teams() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Playing Handicap
+                    Handicap Index
                   </label>
                   <input
                     type="text"
@@ -546,46 +518,6 @@ export default function Teams() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap
-                  </label>
-                  <input
-                    type="text"
-                    id="player_handicap"
-                    value={newMember.player_handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setNewMember({ ...newMember, player_handicap: value });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setNewMember({ ...newMember, player_handicap: isNaN(numValue) ? 0 : numValue });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="tee" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tee
-                  </label>
-                  <select
-                    id="tee"
-                    value={newMember.tee}
-                    onChange={(e) => setNewMember({ ...newMember, tee: e.target.value as 'W' | 'Y' | 'B' | 'R' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  >
-                    <option value="W">White</option>
-                    <option value="Y">Yellow</option>
-                    <option value="B">Blue</option>
-                    <option value="R">Red</option>
-                  </select>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
@@ -672,7 +604,7 @@ export default function Teams() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Playing Handicap
+                    Handicap Index
                   </label>
                   <input
                     type="text"
@@ -692,46 +624,6 @@ export default function Teams() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-player_handicap"
-                    value={memberToEdit.player_handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setMemberToEdit({ ...memberToEdit, player_handicap: value });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setMemberToEdit({ ...memberToEdit, player_handicap: isNaN(numValue) ? 0 : numValue });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-tee" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tee
-                  </label>
-                  <select
-                    id="edit-tee"
-                    value={memberToEdit.tee}
-                    onChange={(e) => setMemberToEdit({ ...memberToEdit, tee: e.target.value as 'W' | 'Y' | 'B' | 'R' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  >
-                    <option value="W">White</option>
-                    <option value="Y">Yellow</option>
-                    <option value="B">Blue</option>
-                    <option value="R">Red</option>
-                  </select>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-700 mb-1">

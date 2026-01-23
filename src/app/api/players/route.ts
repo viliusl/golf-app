@@ -6,8 +6,6 @@ export interface Player {
   _id: string;
   name: string;
   handicap: number;
-  player_handicap: number;
-  tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
   createdAt: string;
 }
@@ -49,7 +47,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    if (!body.name || body.handicap === undefined || body.player_handicap === undefined || !body.tee || !body.gender) {
+    if (!body.name || body.handicap === undefined || !body.gender) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -62,8 +60,6 @@ export async function POST(request: Request) {
     const player = await Player.create({
       name: body.name,
       handicap: body.handicap,
-      player_handicap: body.player_handicap,
-      tee: body.tee,
       gender: body.gender,
       createdAt: new Date()
     });
@@ -92,7 +88,7 @@ export async function PUT(request: Request) {
 
     const body = await request.json();
     
-    if (!body.name || body.handicap === undefined || body.player_handicap === undefined || !body.tee || !body.gender) {
+    if (!body.name || body.handicap === undefined || !body.gender) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -107,8 +103,6 @@ export async function PUT(request: Request) {
       {
         name: body.name,
         handicap: body.handicap,
-        player_handicap: body.player_handicap,
-        tee: body.tee,
         gender: body.gender
       },
       { new: true, runValidators: true }

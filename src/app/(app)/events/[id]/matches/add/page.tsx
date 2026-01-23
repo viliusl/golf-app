@@ -3,15 +3,26 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { calculateEffectiveHandicap } from '@/lib/handicap';
+import { calculateEffectiveHandicap, calculatePlayingHandicap } from '@/lib/handicap';
 import { calculateScore } from '@/lib/scoring';
 
 interface TeamMember {
   name: string;
   isCaptain: boolean;
   handicap: number;
-  tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
+}
+
+interface EventTeamMember {
+  playerType: 'free' | 'team_member';
+  playerId: string;
+  tee?: string;
+}
+
+interface EventTeam {
+  _id: string;
+  name: string;
+  members: EventTeamMember[];
 }
 
 interface Team {
@@ -26,11 +37,18 @@ interface CourseHole {
   par: number;
 }
 
+interface CourseTee {
+  name: string;
+  cr: number;
+  slope: number;
+}
+
 interface Event {
   _id: string;
   name: string;
   date: string;
-  teams: Team[];
+  teams: EventTeam[];
+  handicapAllowance?: number;
   createdAt: string;
   displayInScorecard: boolean;
   course?: {
@@ -38,14 +56,18 @@ interface Event {
     name: string;
     address: string;
     holes: CourseHole[];
+    menTees?: CourseTee[];
+    womenTees?: CourseTee[];
   };
 }
 
 interface PlayerOption {
   name: string;
   teamName: string;
-  handicap: number;
-  player_handicap: number;
+  handicapIndex: number;
+  playingHandicap: number;
+  gender: 'Male' | 'Female';
+  tee?: string;
 }
 
 interface HoleScore {
@@ -135,36 +157,67 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         }
         const freePlayersData = await playersResponse.json();
         
+        // Helper function to calculate playing handicap
+        const getPlayingHandicap = (
+          handicapIndex: number,
+          gender: 'Male' | 'Female',
+          teeName?: string
+        ): number => {
+          if (!teeName || !data.course) return handicapIndex; // Fallback to HI if no tee
+          
+          const tees = gender === 'Female' ? data.course.womenTees : data.course.menTees;
+          const tee = tees?.find((t: CourseTee) => t.name === teeName);
+          
+          if (!tee) return handicapIndex; // Fallback if tee not found
+          
+          // Calculate course par from holes
+          const coursePar = data.course.holes?.reduce((sum: number, h: CourseHole) => sum + h.par, 0) || 72;
+          
+          return calculatePlayingHandicap(
+            handicapIndex,
+            tee.slope,
+            tee.cr,
+            coursePar,
+            data.handicapAllowance || 100
+          );
+        };
+        
         // Create a map of team members
         const allPlayers: PlayerOption[] = [];
         const processedPlayerIds = new Set<string>();
         
         // Add players from teams
-        data.teams.forEach((eventTeam: any) => {
-          const teamData = teamsData.find((t: any) => t._id === eventTeam._id);
+        data.teams.forEach((eventTeam: EventTeam) => {
+          const teamData = teamsData.find((t: Team) => t._id === eventTeam._id);
           if (teamData) {
-            eventTeam.members.forEach((member: any) => {
+            eventTeam.members.forEach((member: EventTeamMember) => {
               if (member.playerType === 'team_member') {
                 // Handle team members
-                const teamMember = teamData.members.find((m: any) => m._id === member.playerId);
-                if (teamMember && !processedPlayerIds.has(teamMember._id)) {
+                const teamMember = teamData.members.find((m: TeamMember & { _id: string }) => m._id === member.playerId);
+                if (teamMember && !processedPlayerIds.has(member.playerId)) {
+                  const playingHcp = getPlayingHandicap(teamMember.handicap, teamMember.gender, member.tee);
                   allPlayers.push({
                     name: teamMember.name,
                     teamName: teamData.name,
-                    handicap: teamMember.handicap,
-                    player_handicap: teamMember.player_handicap || 0
+                    handicapIndex: teamMember.handicap,
+                    playingHandicap: playingHcp,
+                    gender: teamMember.gender,
+                    tee: member.tee
                   });
-                  processedPlayerIds.add(teamMember._id);
+                  processedPlayerIds.add(member.playerId);
                 }
               } else if (member.playerType === 'free') {
                 // Handle free players in teams
                 const freePlayer = freePlayersData.find((p: any) => p._id === member.playerId);
                 if (freePlayer && !processedPlayerIds.has(freePlayer._id)) {
+                  const playingHcp = getPlayingHandicap(freePlayer.handicap, freePlayer.gender, member.tee);
                   allPlayers.push({
                     name: freePlayer.name,
                     teamName: teamData.name,
-                    handicap: freePlayer.handicap,
-                    player_handicap: freePlayer.player_handicap || 0
+                    handicapIndex: freePlayer.handicap,
+                    playingHandicap: playingHcp,
+                    gender: freePlayer.gender,
+                    tee: member.tee
                   });
                   processedPlayerIds.add(freePlayer._id);
                 }
@@ -178,11 +231,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
           data.freePlayers.forEach((player: any) => {
             const freePlayer = freePlayersData.find((p: any) => p._id === player.playerId);
             if (freePlayer && !processedPlayerIds.has(freePlayer._id)) {
+              const playingHcp = getPlayingHandicap(freePlayer.handicap, freePlayer.gender, player.tee);
               allPlayers.push({
                 name: freePlayer.name,
                 teamName: 'Free Player',
-                handicap: freePlayer.handicap,
-                player_handicap: freePlayer.player_handicap || 0
+                handicapIndex: freePlayer.handicap,
+                playingHandicap: playingHcp,
+                gender: freePlayer.gender,
+                tee: player.tee
               });
               processedPlayerIds.add(freePlayer._id);
             }
@@ -200,7 +256,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         const matchesData = await matchesResponse.json();
         setExistingMatches(matchesData);
         
-        // Use all players for the dropdown options
+        // Show all players in dropdown (eligibility check done in the dropdown)
         setAvailablePlayerOptions(allPlayers);
         
         // Set the default tee time to event date with current time
@@ -271,9 +327,9 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     // Get the hole and update its data
     const hole = updatedHoleScores[holeIndex];
     
-    // Get player handicaps
-    const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-    const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+    // Get player playing handicaps
+    const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+    const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
     
     // Get effective handicaps
     const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(
@@ -326,8 +382,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     // If both players have scores, recalculate the winner
     if (hole.player1Score > 0 && hole.player2Score > 0) {
       // Get player handicaps
-      const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-      const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+      const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+      const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
       
       // Get effective handicaps
       const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(
@@ -363,8 +419,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
 
   // Helper function to calculate and update total scores
   const calculateAndUpdateTotalScores = (updatedHoleScores: HoleScore[]) => {
-    const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-    const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+    const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+    const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
     
     let player1TotalScore = 0;
     let player2TotalScore = 0;
@@ -463,14 +519,12 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         player1: {
           ...newMatch.player1,
           putts: player1PuttCount,
-          handicap: playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0,
-          player_handicap: playerOptions.find(p => p.name === newMatch.player1.name)?.player_handicap || 0
+          handicap: playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0
         },
         player2: {
           ...newMatch.player2,
           putts: player2PuttCount,
-          handicap: playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0,
-          player_handicap: playerOptions.find(p => p.name === newMatch.player2.name)?.player_handicap || 0
+          handicap: playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0
         },
         teeTime: newMatch.teeTime,
         tee: newMatch.tee,
@@ -560,6 +614,25 @@ export default function AddMatch({ params }: { params: { id: string } }) {
               </Link>
             </div>
           </div>
+        ) : availablePlayerOptions.filter(p => p.tee && p.tee.trim() !== '').length < 2 ? (
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <p className="text-gray-600 mb-4">
+              You need at least two players with Tee set to create a match.
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              {availablePlayerOptions.length} player(s) in event, {availablePlayerOptions.filter(p => p.tee && p.tee.trim() !== '').length} with tee set.
+              <br />
+              Please set Tee for players in the event page.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <Link
+                href={`/events/${params.id}`}
+                className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition-colors"
+              >
+                Back to Event
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm p-8">
             <form onSubmit={handleAddMatch}>
@@ -577,15 +650,19 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                     required
                   >
                     <option value="">Select Player 1</option>
-                    {availablePlayerOptions.map((player, idx) => (
-                      <option 
-                        key={`p1-${idx}`} 
-                        value={player.name}
-                        disabled={player.name === newMatch.player2.name}
-                      >
-                        {player.name} ({player.teamName})
-                      </option>
-                    ))}
+                    {availablePlayerOptions.map((player, idx) => {
+                      const hasTee = player.tee && player.tee.trim() !== '';
+                      const isOtherPlayer = player.name === newMatch.player2.name;
+                      return (
+                        <option 
+                          key={`p1-${idx}`} 
+                          value={player.name}
+                          disabled={!hasTee || isOtherPlayer}
+                        >
+                          {player.name} ({player.teamName}){!hasTee ? ' - No tee set' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 
@@ -602,15 +679,19 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                     required
                   >
                     <option value="">Select Player 2</option>
-                    {availablePlayerOptions.map((player, idx) => (
-                      <option 
-                        key={`p2-${idx}`} 
-                        value={player.name}
-                        disabled={player.name === newMatch.player1.name}
-                      >
-                        {player.name} ({player.teamName})
-                      </option>
-                    ))}
+                    {availablePlayerOptions.map((player, idx) => {
+                      const hasTee = player.tee && player.tee.trim() !== '';
+                      const isOtherPlayer = player.name === newMatch.player1.name;
+                      return (
+                        <option 
+                          key={`p2-${idx}`} 
+                          value={player.name}
+                          disabled={!hasTee || isOtherPlayer}
+                        >
+                          {player.name} ({player.teamName}){!hasTee ? ' - No tee set' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
@@ -623,11 +704,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                       <div className="bg-gray-50 p-4 rounded-md">
                         <h3 className="text-lg font-medium text-black">{newMatch.player1.name}</h3>
                         <p className="text-sm text-gray-500">Team: {newMatch.player1.teamName}</p>
-                        <p className="text-sm text-gray-500">Playing Handicap: {
-                          playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0
+                        <p className="text-sm text-gray-500">Handicap Index: {
+                          playerOptions.find(p => p.name === newMatch.player1.name)?.handicapIndex || 0
                         }</p>
-                        <p className="text-sm text-gray-500">Handicap: {
-                          playerOptions.find(p => p.name === newMatch.player1.name)?.player_handicap || 0
+                        <p className="text-sm text-gray-500">Tee: {
+                          playerOptions.find(p => p.name === newMatch.player1.name)?.tee || 'Not set'
+                        }</p>
+                        <p className="text-sm font-medium text-gray-700">Playing Handicap: {
+                          playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0
                         }</p>
                       </div>
                     )}
@@ -637,11 +721,14 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                       <div className="bg-gray-50 p-4 rounded-md">
                         <h3 className="text-lg font-medium text-black">{newMatch.player2.name}</h3>
                         <p className="text-sm text-gray-500">Team: {newMatch.player2.teamName}</p>
-                        <p className="text-sm text-gray-500">Playing Handicap: {
-                          playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0
+                        <p className="text-sm text-gray-500">Handicap Index: {
+                          playerOptions.find(p => p.name === newMatch.player2.name)?.handicapIndex || 0
                         }</p>
-                        <p className="text-sm text-gray-500">Handicap: {
-                          playerOptions.find(p => p.name === newMatch.player2.name)?.player_handicap || 0
+                        <p className="text-sm text-gray-500">Tee: {
+                          playerOptions.find(p => p.name === newMatch.player2.name)?.tee || 'Not set'
+                        }</p>
+                        <p className="text-sm font-medium text-gray-700">Playing Handicap: {
+                          playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0
                         }</p>
                       </div>
                     )}
@@ -802,8 +889,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             </td>
                             <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-blue-50">
                               {(() => {
-                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
                                 const [player1EffHcp, _] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
                                 return player1EffHcp;
                               })()}
@@ -813,8 +900,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             }`}>
                               {hole.player1Score > 0 ? 
                                 (() => {
-                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
                                   const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
                                   
                                   const result = calculateScore(
@@ -855,8 +942,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             </td>
                             <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-green-50">
                               {(() => {
-                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
                                 const [_, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
                                 return player2EffHcp;
                               })()}
@@ -866,8 +953,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             }`}>
                               {hole.player2Score > 0 ? 
                                 (() => {
-                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
                                   const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
                                   
                                   const result = calculateScore(
@@ -894,8 +981,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                     return <span className="text-gray-600">Tie</span>;
                                   }
 
-                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
                                   const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
 
                                   const result = calculateScore(
@@ -933,8 +1020,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           </td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">
                             {(() => {
-                              const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                              const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                              const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+                              const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
                               
                               // Sum of effective handicaps for player 1 across all holes
                               return holeScores.reduce((total, hole) => {
@@ -956,8 +1043,8 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                           </td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">
                             {(() => {
-                              const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.handicap || 0;
-                              const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.handicap || 0;
+                              const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+                              const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
                               
                               // Sum of effective handicaps for player 2 across all holes
                               return holeScores.reduce((total, hole) => {

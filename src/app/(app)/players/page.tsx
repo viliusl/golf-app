@@ -16,27 +16,19 @@ export default function PlayersPage() {
   const [newPlayer, setNewPlayer] = useState<{
     name: string;
     handicap: number | string;
-    player_handicap: number | string;
-    tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }>({
     name: '',
     handicap: 0,
-    player_handicap: 0,
-    tee: 'W',
     gender: 'Male'
   });
   const [editedPlayer, setEditedPlayer] = useState<{
     name: string;
     handicap: number | string;
-    player_handicap: number | string;
-    tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }>({
     name: '',
     handicap: 0,
-    player_handicap: 0,
-    tee: 'W',
     gender: 'Male'
   });
 
@@ -82,8 +74,6 @@ export default function PlayersPage() {
       setNewPlayer({
         name: '',
         handicap: 0,
-        player_handicap: 0,
-        tee: 'W',
         gender: 'Male'
       });
       setIsAddModalOpen(false);
@@ -101,8 +91,6 @@ export default function PlayersPage() {
     setEditedPlayer({
       name: player.name,
       handicap: player.handicap,
-      player_handicap: player.player_handicap,
-      tee: player.tee,
       gender: player.gender
     });
     setIsEditModalOpen(true);
@@ -230,13 +218,7 @@ export default function PlayersPage() {
                       Name
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Playing Handicap
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Handicap
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tee
+                      Handicap Index
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Gender
@@ -259,17 +241,6 @@ export default function PlayersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-black">{player.handicap}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{player.player_handicap}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">
-                          {player.tee === 'W' ? 'White' : 
-                           player.tee === 'Y' ? 'Yellow' : 
-                           player.tee === 'B' ? 'Blue' : 
-                           player.tee === 'R' ? 'Red' : player.tee}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-black">{player.gender}</div>
@@ -328,7 +299,7 @@ export default function PlayersPage() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Playing Handicap
+                    Handicap Index
                   </label>
                   <input
                     type="text"
@@ -348,46 +319,6 @@ export default function PlayersPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap
-                  </label>
-                  <input
-                    type="text"
-                    id="player_handicap"
-                    value={newPlayer.player_handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setNewPlayer({ ...newPlayer, player_handicap: value });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setNewPlayer({ ...newPlayer, player_handicap: isNaN(numValue) ? 0 : numValue });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="tee" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tee
-                  </label>
-                  <select
-                    id="tee"
-                    value={newPlayer.tee}
-                    onChange={(e) => setNewPlayer({ ...newPlayer, tee: e.target.value as 'W' | 'Y' | 'B' | 'R' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  >
-                    <option value="W">White</option>
-                    <option value="Y">Yellow</option>
-                    <option value="B">Blue</option>
-                    <option value="R">Red</option>
-                  </select>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
@@ -460,7 +391,7 @@ export default function PlayersPage() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Playing Handicap
+                    Handicap Index
                   </label>
                   <input
                     type="text"
@@ -480,46 +411,6 @@ export default function PlayersPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-player_handicap"
-                    value={editedPlayer.player_handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setEditedPlayer({ ...editedPlayer, player_handicap: value });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setEditedPlayer({ ...editedPlayer, player_handicap: isNaN(numValue) ? 0 : numValue });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-tee" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tee
-                  </label>
-                  <select
-                    id="edit-tee"
-                    value={editedPlayer.tee}
-                    onChange={(e) => setEditedPlayer({ ...editedPlayer, tee: e.target.value as 'W' | 'Y' | 'B' | 'R' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  >
-                    <option value="W">White</option>
-                    <option value="Y">Yellow</option>
-                    <option value="B">Blue</option>
-                    <option value="R">Red</option>
-                  </select>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-700 mb-1">
