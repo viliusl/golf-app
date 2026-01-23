@@ -72,6 +72,10 @@ const TeamMemberSchema = new mongoose.Schema({
   playerId: {
     type: String,
     required: true
+  },
+  tee: {
+    type: String,
+    trim: true
   }
 }, { _id: false });
 

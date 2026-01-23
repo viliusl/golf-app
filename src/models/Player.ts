@@ -12,17 +12,6 @@ const playerSchema = new mongoose.Schema({
     get: (v: number) => v === undefined ? 0 : Number(v.toFixed(1)),
     set: (v: number) => v === undefined ? 0 : Number(v.toFixed(1))
   },
-  player_handicap: {
-    type: Number,
-    required: [true, 'Player handicap is required'],
-    get: (v: number) => v === undefined ? 0 : Number(v.toFixed(1)),
-    set: (v: number) => v === undefined ? 0 : Number(v.toFixed(1))
-  },
-  tee: {
-    type: String,
-    enum: ['W', 'Y', 'B', 'R'],
-    required: [true, 'Tee selection is required']
-  },
   gender: {
     type: String,
     enum: ['Male', 'Female'],

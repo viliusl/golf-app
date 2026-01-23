@@ -13,10 +13,6 @@ const playerSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  player_handicap: {
-    type: Number,
-    default: 0
-  },
   score: {
     type: Number,
     default: 0

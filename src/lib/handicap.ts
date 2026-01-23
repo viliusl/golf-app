@@ -1,4 +1,30 @@
 /**
+ * Calculates the playing handicap based on handicap index, course data, and allowance.
+ * 
+ * Formula:
+ * - Course Handicap = HI × (Slope / 113) + (Course Rating - Par)
+ * - Playing Handicap = Course Handicap × Handicap Allowance
+ * 
+ * @param handicapIndex - The player's handicap index (HI)
+ * @param slope - The slope rating of the tee being played
+ * @param courseRating - The course rating (CR) of the tee being played
+ * @param par - The par of the course
+ * @param handicapAllowance - The handicap allowance percentage (e.g., 95 for 95%)
+ * @returns The playing handicap rounded to nearest whole number
+ */
+export function calculatePlayingHandicap(
+  handicapIndex: number,
+  slope: number,
+  courseRating: number,
+  par: number,
+  handicapAllowance: number
+): number {
+  const courseHandicap = handicapIndex * (slope / 113) + (courseRating - par);
+  const playingHandicap = courseHandicap * (handicapAllowance / 100);
+  return Math.round(playingHandicap);
+}
+
+/**
  * Calculates the effective handicap strokes for two players on a specific hole.
  * 
  * @param player1Handicap - The handicap of player 1

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Player } from '@/app/api/players/route';
 import { Match as MatchType, MatchPlayer } from '@/app/api/matches/route';
 import Link from 'next/link';
-import { calculateEffectiveHandicap } from '@/lib/handicap';
+import { calculateEffectiveHandicap, calculatePlayingHandicap } from '@/lib/handicap';
 import { useParams } from 'next/navigation';
 import CourseView from '@/components/CourseView';
 
@@ -14,6 +14,7 @@ interface Team {
   members: {
     playerType: 'free' | 'team_member';
     playerId: string;
+    tee?: string;
   }[];
 }
 
@@ -25,8 +26,6 @@ interface OriginalTeam {
     name: string;
     isCaptain: boolean;
     handicap: number;
-    player_handicap?: number;
-    tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
   }[];
 }
@@ -69,8 +68,6 @@ interface PlayerDetails {
   name: string;
   isCaptain: boolean;
   handicap: number | string;
-  player_handicap: number | string;
-  tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
 }
 
@@ -79,8 +76,6 @@ interface TeamMember {
   name: string;
   isCaptain: boolean;
   handicap: number;
-  player_handicap?: number;
-  tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
 }
 
@@ -107,10 +102,10 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     name: string;
     isCaptain: boolean;
     handicap: number | string;
-    player_handicap: number | string;
-    tee: 'W' | 'Y' | 'B' | 'R';
     gender: 'Male' | 'Female';
+    tee?: string;
   } | null>(null);
+  const [memberEventTee, setMemberEventTee] = useState<string>('');
   const [memberTeamIdToEdit, setMemberTeamIdToEdit] = useState<string | null>(null);
   const [memberIndexToEdit, setMemberIndexToEdit] = useState<number | null>(null);
   const [newEventName, setNewEventName] = useState('');
@@ -120,6 +115,24 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [isDeleteAllMatchesModalOpen, setIsDeleteAllMatchesModalOpen] = useState(false);
   const [isMatchMenuOpen, setIsMatchMenuOpen] = useState(false);
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+  const [isUpdateHandicapModalOpen, setIsUpdateHandicapModalOpen] = useState(false);
+  const [handicapToUpdate, setHandicapToUpdate] = useState<{
+    playerId: string;
+    playerType: 'free' | 'team_member';
+    teamId: string;
+    name: string;
+    currentHandicap: number;
+    newHandicap: string;
+  } | null>(null);
+  const [isUpdateTeeModalOpen, setIsUpdateTeeModalOpen] = useState(false);
+  const [teeToUpdate, setTeeToUpdate] = useState<{
+    teamId: string;
+    memberIndex: number;
+    name: string;
+    currentTee: string;
+    newTee: string;
+    availableTees: Array<{ name: string; cr: number; slope: number }>;
+  } | null>(null);
 
   useEffect(() => {
     // Define fetch functions inside useEffect to properly capture dependencies
@@ -483,11 +496,156 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleEditMemberClick = (teamId: string, index: number, details: PlayerDetails) => {
+  const handleEditMemberClick = (teamId: string, index: number, details: PlayerDetails, eventTee?: string) => {
     setMemberToEdit(details);
     setMemberTeamIdToEdit(teamId);
     setMemberIndexToEdit(index);
+    setMemberEventTee(eventTee || '');
     setIsEditMemberModalOpen(true);
+  };
+
+  const handleUpdateHandicapClick = (
+    playerId: string,
+    playerType: 'free' | 'team_member',
+    teamId: string,
+    name: string,
+    currentHandicap: number
+  ) => {
+    setHandicapToUpdate({
+      playerId,
+      playerType,
+      teamId,
+      name,
+      currentHandicap,
+      newHandicap: currentHandicap.toString()
+    });
+    setIsUpdateHandicapModalOpen(true);
+  };
+
+  const handleUpdateHandicap = async () => {
+    if (!handicapToUpdate) return;
+    setError(null);
+
+    const newHandicapValue = parseFloat(handicapToUpdate.newHandicap.replace(',', '.'));
+    if (isNaN(newHandicapValue)) {
+      setError('Please enter a valid handicap value');
+      return;
+    }
+
+    try {
+      if (handicapToUpdate.playerType === 'free') {
+        // Update free player
+        const response = await fetch(`/api/players?id=${handicapToUpdate.playerId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: handicapToUpdate.name,
+            handicap: newHandicapValue,
+            gender: playerDetails[handicapToUpdate.playerId]?.gender || 'Male'
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update player handicap');
+        }
+
+        await fetchFreePlayers();
+      } else {
+        // Update team member
+        const originalTeam = teams.find(t => t._id === handicapToUpdate.teamId);
+        if (!originalTeam) {
+          throw new Error('Team not found');
+        }
+
+        const updatedMembers = originalTeam.members.map(member => {
+          if (member._id === handicapToUpdate.playerId) {
+            return { ...member, handicap: newHandicapValue };
+          }
+          return member;
+        });
+
+        const response = await fetch(`/api/teams?id=${handicapToUpdate.teamId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ members: updatedMembers }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update team member handicap');
+        }
+
+        await fetchTeams();
+      }
+
+      // Update local player details
+      setPlayerDetails(prev => ({
+        ...prev,
+        [handicapToUpdate.playerId]: {
+          ...prev[handicapToUpdate.playerId],
+          handicap: newHandicapValue
+        }
+      }));
+
+      setIsUpdateHandicapModalOpen(false);
+      setHandicapToUpdate(null);
+    } catch (error) {
+      console.error('Error updating handicap:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update handicap');
+    }
+  };
+
+  const handleUpdateTeeClick = (
+    teamId: string,
+    memberIndex: number,
+    name: string,
+    currentTee: string,
+    availableTees: Array<{ name: string; cr: number; slope: number }>
+  ) => {
+    setTeeToUpdate({
+      teamId,
+      memberIndex,
+      name,
+      currentTee,
+      newTee: currentTee,
+      availableTees
+    });
+    setIsUpdateTeeModalOpen(true);
+  };
+
+  const handleUpdateTee = async () => {
+    if (!teeToUpdate || !event) return;
+    setError(null);
+
+    try {
+      const updatedTeams = event.teams.map(t => {
+        if (t._id === teeToUpdate.teamId) {
+          const updatedMembers = [...t.members];
+          updatedMembers[teeToUpdate.memberIndex] = { 
+            ...updatedMembers[teeToUpdate.memberIndex], 
+            tee: teeToUpdate.newTee 
+          };
+          return { ...t, members: updatedMembers };
+        }
+        return t;
+      });
+
+      const response = await fetch(`/api/events?id=${event._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teams: updatedTeams }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update tee');
+      }
+
+      await fetchEvent();
+      setIsUpdateTeeModalOpen(false);
+      setTeeToUpdate(null);
+    } catch (error) {
+      console.error('Error updating tee:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update tee');
+    }
   };
 
   const handleEditMember = async (e: React.FormEvent) => {
@@ -505,7 +663,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
 
       // Update the original source data based on playerType
       if (originalMember.playerType === 'free') {
-        // Update free player
+        // Update free player (only name, handicap, gender - no tee)
         const response = await fetch(`/api/players?id=${originalMember.playerId}`, {
           method: 'PUT',
           headers: {
@@ -514,8 +672,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           body: JSON.stringify({
             name: memberToEdit.name,
             handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap,
-            player_handicap: typeof memberToEdit.player_handicap === 'string' ? parseFloat(memberToEdit.player_handicap) || 0 : memberToEdit.player_handicap,
-            tee: memberToEdit.tee,
             gender: memberToEdit.gender
           }),
         });
@@ -534,7 +690,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           throw new Error('Original team not found');
         }
 
-        // Update the specific member in the team's members array
+        // Update the specific member in the team's members array (only name, handicap, gender - no tee)
         const updatedMembers = originalTeam.members.map(member => {
           if (member._id === originalMember.playerId) {
             return {
@@ -542,8 +698,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               name: memberToEdit.name,
               isCaptain: memberToEdit.isCaptain,
               handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap,
-              player_handicap: typeof memberToEdit.player_handicap === 'string' ? parseFloat(memberToEdit.player_handicap) || 0 : memberToEdit.player_handicap,
-              tee: memberToEdit.tee,
               gender: memberToEdit.gender
             };
           }
@@ -570,6 +724,36 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         await fetchTeams();
       }
 
+      // Update tee in event member if changed
+      if (memberEventTee !== originalMember.tee) {
+        const updatedTeams = event.teams.map(t => {
+          if (t._id === memberTeamIdToEdit) {
+            const updatedMembers = [...t.members];
+            updatedMembers[memberIndexToEdit] = {
+              ...updatedMembers[memberIndexToEdit],
+              tee: memberEventTee
+            };
+            return { ...t, members: updatedMembers };
+          }
+          return t;
+        });
+
+        const eventResponse = await fetch(`/api/events?id=${event._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ teams: updatedTeams }),
+        });
+
+        if (!eventResponse.ok) {
+          const errorData = await eventResponse.json();
+          throw new Error(errorData.details || 'Failed to update event tee');
+        }
+
+        await fetchEvent();
+      }
+
       // Update the player details in the local state
       setPlayerDetails(prev => ({
         ...prev,
@@ -580,6 +764,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       setMemberToEdit(null);
       setMemberTeamIdToEdit(null);
       setMemberIndexToEdit(null);
+      setMemberEventTee('');
     } catch (error) {
       console.error('Error updating member:', error);
       setError(error instanceof Error ? error.message : 'Failed to update member');
@@ -598,8 +783,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               name: player.name,
               isCaptain: false,
               handicap: player.handicap,
-              player_handicap: player.player_handicap || 0,
-              tee: player.tee,
               gender: player.gender
             }
           }));
@@ -615,8 +798,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 name: member.name,
                 isCaptain: member.isCaptain,
                 handicap: member.handicap,
-                player_handicap: member.player_handicap || 0,
-                tee: member.tee as 'W' | 'Y' | 'B' | 'R',
                 gender: member.gender as 'Male' | 'Female'
               }
             }));
@@ -646,8 +827,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     name: teamMember.name,
                     isCaptain: teamMember.isCaptain,
                     handicap: teamMember.handicap,
-                    player_handicap: teamMember.player_handicap || 0,
-                    tee: teamMember.tee as 'W' | 'Y' | 'B' | 'R',
                     gender: teamMember.gender as 'Male' | 'Female'
                   }
                 }));
@@ -669,7 +848,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     
     try {
       // Get all players from teams
-      const allPlayers: { name: string; teamName: string; handicap: number; player_handicap: number }[] = [];
+      const allPlayers: { name: string; teamName: string; handicap: number }[] = [];
       
       // Add players from teams
       event.teams.forEach((eventTeam) => {
@@ -683,8 +862,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 allPlayers.push({
                   name: teamMember.name,
                   teamName: team.name,
-                  handicap: teamMember.handicap,
-                  player_handicap: teamMember.player_handicap || 0
+                  handicap: teamMember.handicap
                 });
               }
             } else if (eventMember.playerType === 'free') {
@@ -693,8 +871,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 allPlayers.push({
                   name: freePlayer.name,
                   teamName: team.name,
-                  handicap: freePlayer.handicap,
-                  player_handicap: freePlayer.player_handicap || 0
+                  handicap: freePlayer.handicap
                 });
               }
             }
@@ -710,8 +887,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             allPlayers.push({
               name: freePlayer.name,
               teamName: 'Free Player',
-              handicap: freePlayer.handicap,
-              player_handicap: freePlayer.player_handicap || 0
+              handicap: freePlayer.handicap
             });
           }
         });
@@ -744,16 +920,14 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               teamName: shuffledPlayers[i].teamName,
               score: 0,
               holeWins: 0,
-              handicap: shuffledPlayers[i].handicap,
-              player_handicap: shuffledPlayers[i].player_handicap
+              handicap: shuffledPlayers[i].handicap
             },
             player2: {
               name: shuffledPlayers[j].name,
               teamName: shuffledPlayers[j].teamName,
               score: 0,
               holeWins: 0,
-              handicap: shuffledPlayers[j].handicap,
-              player_handicap: shuffledPlayers[j].player_handicap
+              handicap: shuffledPlayers[j].handicap
             },
             teeTime: new Date().toISOString(),
             tee: 1,
@@ -878,7 +1052,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   </>
                 )}
                 {event?.handicapAllowance !== undefined && (
-                  <> · HCP: {event.handicapAllowance}%</>
+                  <> · Allowance: {event.handicapAllowance}%</>
                 )}
               </p>
             </div>
@@ -1249,10 +1423,13 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                               Captain
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Playing Handicap
+                              HCP
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Tee
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              P_HCP
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Gender
@@ -1268,29 +1445,80 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                               const details = playerDetails[member.playerId];
                               if (!details) return null;
                               
+                              // Get available tees based on gender
+                              const availableTees = details.gender === 'Female' 
+                                ? event?.course?.womenTees || []
+                                : event?.course?.menTees || [];
+                              
                               return (
                                 <tr key={idx} className="hover:bg-gray-50">
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    <button
-                                      onClick={() => handleEditMemberClick(team._id, idx, details)}
-                                      className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                                    >
+                                    <span className="text-sm font-medium text-gray-900">
                                       {details.name}
-                                    </button>
+                                    </span>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm text-black">{details.isCaptain ? 'Yes' : 'No'}</div>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-black">{details.handicap}</div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm text-black">{details.handicap}</span>
+                                      <button
+                                        onClick={() => handleUpdateHandicapClick(
+                                          member.playerId,
+                                          member.playerType,
+                                          team._id,
+                                          details.name,
+                                          typeof details.handicap === 'string' ? parseFloat(details.handicap) || 0 : details.handicap
+                                        )}
+                                        className="text-gray-400 hover:text-blue-600 transition-colors"
+                                        title="Edit handicap index"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                      </button>
+                                    </div>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-black">
-                                      {details.tee === 'W' ? 'White' : 
-                                       details.tee === 'Y' ? 'Yellow' : 
-                                       details.tee === 'B' ? 'Blue' : 
-                                       details.tee === 'R' ? 'Red' : details.tee}
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm text-black">{member.tee || 'Not set'}</span>
+                                      <button
+                                        onClick={() => handleUpdateTeeClick(
+                                          team._id,
+                                          idx,
+                                          details.name,
+                                          member.tee || '',
+                                          availableTees
+                                        )}
+                                        className="text-gray-400 hover:text-blue-600 transition-colors"
+                                        title="Edit tee"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                      </button>
                                     </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {(() => {
+                                      const selectedTee = availableTees.find(t => t.name === member.tee);
+                                      const coursePar = event?.course?.holes?.reduce((sum, hole) => sum + hole.par, 0) || 0;
+                                      if (!selectedTee || !coursePar || !event?.handicapAllowance) {
+                                        return <span className="text-sm text-gray-400">-</span>;
+                                      }
+                                      const handicapIndex = typeof details.handicap === 'string' 
+                                        ? parseFloat(details.handicap) || 0 
+                                        : details.handicap;
+                                      const playingHcp = calculatePlayingHandicap(
+                                        handicapIndex,
+                                        selectedTee.slope,
+                                        selectedTee.cr,
+                                        coursePar,
+                                        event.handicapAllowance
+                                      );
+                                      return <span className="text-sm font-medium text-black">{playingHcp}</span>;
+                                    })()}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm text-black">{details.gender}</div>
@@ -1308,7 +1536,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             })
                           ) : (
                             <tr>
-                              <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                              <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
                                 No members in this team
                               </td>
                             </tr>
@@ -1528,12 +1756,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                           <div>
                             <h3 className="text-sm font-medium text-black">{player.name}</h3>
                             <p className="text-sm text-gray-500">
-                              Playing Handicap: {player.handicap} | Tee: {
-                                player.tee === 'W' ? 'White' : 
-                                player.tee === 'Y' ? 'Yellow' : 
-                                player.tee === 'B' ? 'Blue' : 
-                                player.tee === 'R' ? 'Red' : player.tee
-                              } | {player.gender}
+                              HCP Index: {player.handicap} | {player.gender}
                             </p>
                           </div>
                           <button
@@ -1609,6 +1832,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     setMemberToEdit(null);
                     setMemberTeamIdToEdit(null);
                     setMemberIndexToEdit(null);
+                    setMemberEventTee('');
                     setError(null);
                   }}
                   className="text-gray-500 hover:text-gray-700"
@@ -1632,7 +1856,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Playing Handicap
+                    Handicap Index
                   </label>
                   <input
                     type="text"
@@ -1654,46 +1878,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="edit-player_handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-player_handicap"
-                    value={memberToEdit.player_handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setMemberToEdit({...memberToEdit, player_handicap: value});
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setMemberToEdit({...memberToEdit, player_handicap: isNaN(numValue) ? 0 : numValue});
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-tee" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tee
-                  </label>
-                  <select
-                    id="edit-tee"
-                    value={memberToEdit.tee}
-                    onChange={(e) => setMemberToEdit({...memberToEdit, tee: e.target.value as 'W' | 'Y' | 'B' | 'R'})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  >
-                    <option value="W">White</option>
-                    <option value="Y">Yellow</option>
-                    <option value="B">Blue</option>
-                    <option value="R">Red</option>
-                  </select>
-                </div>
-                <div className="mb-4">
                   <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-700 mb-1">
                     Gender
                   </label>
@@ -1706,6 +1890,25 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="edit-tee" className="block text-sm font-medium text-gray-700 mb-1">
+                    Tee (for this event)
+                  </label>
+                  <select
+                    id="edit-tee"
+                    value={memberEventTee}
+                    onChange={(e) => setMemberEventTee(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                  >
+                    <option value="">Select Tee</option>
+                    {(memberToEdit.gender === 'Female' 
+                      ? event?.course?.womenTees || []
+                      : event?.course?.menTees || []
+                    ).map((tee) => (
+                      <option key={tee.name} value={tee.name}>{tee.name} (CR: {tee.cr}, Slope: {tee.slope})</option>
+                    ))}
                   </select>
                 </div>
                 <div className="mb-4">
@@ -1727,6 +1930,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                       setMemberToEdit(null);
                       setMemberTeamIdToEdit(null);
                       setMemberIndexToEdit(null);
+                      setMemberEventTee('');
                       setError(null);
                     }}
                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
@@ -1868,6 +2072,122 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Update Handicap Modal */}
+        {isUpdateHandicapModalOpen && handicapToUpdate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Update Handicap Index
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Updating handicap for <span className="font-medium">{handicapToUpdate.name}</span>
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Handicap Index
+                </label>
+                <input
+                  type="text"
+                  value={handicapToUpdate.newHandicap}
+                  onChange={(e) => setHandicapToUpdate({
+                    ...handicapToUpdate,
+                    newHandicap: e.target.value
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  placeholder="Enter handicap index"
+                  autoFocus
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Current: {handicapToUpdate.currentHandicap}
+                </p>
+              </div>
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setIsUpdateHandicapModalOpen(false);
+                    setHandicapToUpdate(null);
+                    setError(null);
+                  }}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateHandicap}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Update Tee Modal */}
+        {isUpdateTeeModalOpen && teeToUpdate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Update Tee
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Updating tee for <span className="font-medium">{teeToUpdate.name}</span>
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tee
+                </label>
+                <select
+                  value={teeToUpdate.newTee}
+                  onChange={(e) => setTeeToUpdate({
+                    ...teeToUpdate,
+                    newTee: e.target.value
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                >
+                  <option value="">Select Tee</option>
+                  {teeToUpdate.availableTees.map((tee) => (
+                    <option key={tee.name} value={tee.name}>{tee.name}</option>
+                  ))}
+                </select>
+                {teeToUpdate.currentTee && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Current: {teeToUpdate.currentTee}
+                  </p>
+                )}
+              </div>
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setIsUpdateTeeModalOpen(false);
+                    setTeeToUpdate(null);
+                    setError(null);
+                  }}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateTee}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Save
                 </button>
               </div>
             </div>

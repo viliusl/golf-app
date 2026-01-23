@@ -125,8 +125,7 @@ export default function PublicMatchView() {
               <div className="bg-gray-50 p-4 rounded-md">
                 <h3 className="text-lg font-medium text-black">{match.player1.name}</h3>
                 <p className="text-sm text-gray-500">Team: {match.player1.teamName}</p>
-                <p className="text-sm text-gray-500">Playing Handicap: {match.player1.handicap || 0}</p>
-                <p className="text-sm text-gray-500">Handicap: {match.player1.player_handicap || 0}</p>
+                <p className="text-sm font-medium text-gray-700">Playing Handicap: {match.player1.handicap || 0}</p>
               </div>
             </div>
             
@@ -135,8 +134,7 @@ export default function PublicMatchView() {
               <div className="bg-gray-50 p-4 rounded-md">
                 <h3 className="text-lg font-medium text-black">{match.player2.name}</h3>
                 <p className="text-sm text-gray-500">Team: {match.player2.teamName}</p>
-                <p className="text-sm text-gray-500">Playing Handicap: {match.player2.handicap || 0}</p>
-                <p className="text-sm text-gray-500">Handicap: {match.player2.player_handicap || 0}</p>
+                <p className="text-sm font-medium text-gray-700">Playing Handicap: {match.player2.handicap || 0}</p>
               </div>
             </div>
           </div>

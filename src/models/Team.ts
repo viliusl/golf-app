@@ -6,8 +6,6 @@ interface TeamMember {
   name: string;
   isCaptain: boolean;
   handicap: number;
-  player_handicap: number;
-  tee: 'W' | 'Y' | 'B' | 'R';
   gender: 'Male' | 'Female';
 }
 
@@ -36,17 +34,6 @@ const teamSchema = new mongoose.Schema({
         required: [true, 'Handicap is required'],
         get: (v: number) => v === undefined ? 0 : Number(v.toFixed(1)),
         set: (v: number) => v === undefined ? 0 : Number(v.toFixed(1))
-      },
-      player_handicap: {
-        type: Number,
-        required: [true, 'Player handicap is required'],
-        get: (v: number) => v === undefined ? 0 : Number(v.toFixed(1)),
-        set: (v: number) => v === undefined ? 0 : Number(v.toFixed(1))
-      },
-      tee: {
-        type: String,
-        enum: ['W', 'Y', 'B', 'R'],
-        required: [true, 'Tee selection is required']
       },
       gender: {
         type: String,

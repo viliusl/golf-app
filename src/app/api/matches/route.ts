@@ -11,7 +11,6 @@ export interface MatchPlayer {
   holeWins?: number;
   putts?: number;
   handicap: number;
-  player_handicap: number;
 }
 
 export interface HoleScore {
