@@ -3,10 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+interface Course {
+  _id: string;
+  name: string;
+  address: string;
+}
+
 interface Event {
   _id: string;
   name: string;
   date: string;
+  course?: {
+    _id: string;
+    name: string;
+  };
   teams: {
     _id: string;
     name: string;
@@ -22,16 +32,18 @@ interface Event {
 
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-  const [newEvent, setNewEvent] = useState({ name: '', date: '' });
+  const [newEvent, setNewEvent] = useState({ name: '', date: '', courseId: '' });
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     fetchEvents();
+    fetchCourses();
   }, []);
 
   const fetchEvents = async () => {
@@ -47,6 +59,19 @@ export default function Home() {
       setError('Failed to load events');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch('/api/courses');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setCourses(data);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
     }
   };
 
@@ -72,7 +97,7 @@ export default function Home() {
       const createdEvent = await response.json();
       console.log('Event created successfully:', createdEvent);
       
-      setNewEvent({ name: '', date: '' });
+      setNewEvent({ name: '', date: '', courseId: '' });
       setIsModalOpen(false);
       fetchEvents();
     } catch (error) {
@@ -150,6 +175,9 @@ export default function Home() {
                       Date
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Course
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Teams
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -171,6 +199,11 @@ export default function Home() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-black">
                           {new Date(event.date).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-black">
+                          {event.course?.name || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -238,6 +271,25 @@ export default function Home() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="courseId" className="block text-sm font-medium text-gray-700 mb-1">
+                    Course
+                  </label>
+                  <select
+                    id="courseId"
+                    value={newEvent.courseId}
+                    onChange={(e) => setNewEvent({ ...newEvent, courseId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  >
+                    <option value="">Select a course</option>
+                    {courses.map((course) => (
+                      <option key={course._id} value={course._id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex justify-end gap-2">
                   <button

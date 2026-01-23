@@ -1,5 +1,73 @@
 import mongoose from 'mongoose';
 
+// Course snapshot schemas (embedded copy of course data)
+const HoleSnapshotSchema = new mongoose.Schema({
+  number: {
+    type: Number,
+    required: true,
+    min: 1
+  },
+  handicap: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 18
+  },
+  par: {
+    type: Number,
+    required: true,
+    min: 3,
+    max: 6
+  }
+}, { _id: false });
+
+const TeeSnapshotSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  cr: {
+    type: Number,
+    required: true
+  },
+  slope: {
+    type: Number,
+    required: true,
+    min: 55,
+    max: 155
+  }
+}, { _id: false });
+
+const CourseSnapshotSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    required: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  address: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  holes: {
+    type: [HoleSnapshotSchema],
+    default: []
+  },
+  menTees: {
+    type: [TeeSnapshotSchema],
+    default: []
+  },
+  womenTees: {
+    type: [TeeSnapshotSchema],
+    default: []
+  }
+}, { _id: false });
+
 const TeamMemberSchema = new mongoose.Schema({
   playerType: {
     type: String,
@@ -27,6 +95,10 @@ const eventSchema = new mongoose.Schema({
   date: {
     type: Date,
     required: [true, 'Event date is required']
+  },
+  course: {
+    type: CourseSnapshotSchema,
+    required: [true, 'Course is required']
   },
   teams: {
     type: [TeamSchema],
