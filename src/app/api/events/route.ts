@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     // If no ID is provided, we're creating a new event
     if (!id) {
       console.log('Creating new event:', body);
-      const { name, date, courseId } = body;
+      const { name, date, courseId, handicapAllowance = 100 } = body;
       
       if (!name || !date || !courseId) {
         return NextResponse.json(
@@ -101,6 +101,7 @@ export async function POST(request: Request) {
         name,
         date,
         course: courseSnapshot,
+        handicapAllowance: Math.min(100, Math.max(0, parseInt(handicapAllowance) || 100)),
         teams: []
       });
       

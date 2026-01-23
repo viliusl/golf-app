@@ -17,6 +17,7 @@ interface Event {
     _id: string;
     name: string;
   };
+  handicapAllowance?: number;
   teams: {
     _id: string;
     name: string;
@@ -37,7 +38,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-  const [newEvent, setNewEvent] = useState({ name: '', date: '', courseId: '' });
+  const [newEvent, setNewEvent] = useState({ name: '', date: '', courseId: '', handicapAllowance: 100 });
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -97,7 +98,7 @@ export default function Home() {
       const createdEvent = await response.json();
       console.log('Event created successfully:', createdEvent);
       
-      setNewEvent({ name: '', date: '', courseId: '' });
+      setNewEvent({ name: '', date: '', courseId: '', handicapAllowance: 100 });
       setIsModalOpen(false);
       fetchEvents();
     } catch (error) {
@@ -175,9 +176,6 @@ export default function Home() {
                       Date
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Course
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Teams
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -188,22 +186,27 @@ export default function Home() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {events.map((event) => (
                     <tr key={event._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <button
                           onClick={() => handleEventClick(event._id)}
                           className="text-blue-600 hover:text-blue-900"
                         >
                           {event.name}
                         </button>
+                        {event.course && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {event.course.name}
+                          </div>
+                        )}
+                        {event.handicapAllowance !== undefined && (
+                          <div className="text-xs text-gray-500">
+                            HCP: {event.handicapAllowance}%
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-black">
                           {new Date(event.date).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">
-                          {event.course?.name || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -290,6 +293,21 @@ export default function Home() {
                       </option>
                     ))}
                   </select>
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="handicapAllowance" className="block text-sm font-medium text-gray-700 mb-1">
+                    Handicap Allowance (%)
+                  </label>
+                  <input
+                    type="number"
+                    id="handicapAllowance"
+                    value={newEvent.handicapAllowance}
+                    onChange={(e) => setNewEvent({ ...newEvent, handicapAllowance: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    min="0"
+                    max="100"
+                    required
+                  />
                 </div>
                 <div className="flex justify-end gap-2">
                   <button

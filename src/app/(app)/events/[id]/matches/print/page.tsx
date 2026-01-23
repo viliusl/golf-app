@@ -10,6 +10,10 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  course?: {
+    _id: string;
+    name: string;
+  };
 }
 
 export default function PrintMatchCards() {
@@ -110,7 +114,10 @@ export default function PrintMatchCards() {
                 <div className="flex justify-between items-center mb-0.5">
                   <div>
                     <h2 className="text-sm font-semibold text-black leading-snug">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
-                    <p className="text-xs text-black leading-snug">Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} | Starting Hole: {match.tee}</p>
+                    <p className="text-xs text-black leading-snug">
+                      {event.course && <>{event.course.name} | </>}
+                      Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} | Starting Hole: {match.tee}
+                    </p>
                   </div>
                 </div>
                 
