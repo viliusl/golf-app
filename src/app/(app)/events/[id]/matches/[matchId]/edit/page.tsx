@@ -21,6 +21,12 @@ interface Team {
   members: TeamMember[];
 }
 
+interface CourseHole {
+  number: number;
+  handicap: number;
+  par: number;
+}
+
 interface Event {
   _id: string;
   name: string;
@@ -28,6 +34,12 @@ interface Event {
   teams: Team[];
   createdAt: string;
   displayInScorecard: boolean;
+  course?: {
+    _id: string;
+    name: string;
+    address: string;
+    holes: CourseHole[];
+  };
 }
 
 interface PlayerOption {
@@ -226,28 +238,20 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
           matchData.player1.holeWins = player1Wins;
           matchData.player2.score = player2TotalScore;
           matchData.player2.holeWins = player2Wins;
-        } else {
-          // Default hole data if not available
-          setHoleScores([
-            { hole: 1, handicap: 13, par: 5, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 2, handicap: 11, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 3, handicap: 9, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 4, handicap: 17, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 5, handicap: 1, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 6, handicap: 15, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 7, handicap: 7, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 8, handicap: 5, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 9, handicap: 3, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 10, handicap: 12, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 11, handicap: 2, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 12, handicap: 14, par: 4, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 13, handicap: 18, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 14, handicap: 4, par: 5, pace: 17, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 15, handicap: 8, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 16, handicap: 6, par: 3, pace: 12, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 17, handicap: 16, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-            { hole: 18, handicap: 10, par: 4, pace: 15, player1Score: 0, player2Score: 0, player1Putt: false, player2Putt: false, winner: 'tie' },
-          ]);
+        } else if (eventData.course?.holes && eventData.course.holes.length > 0) {
+          // Initialize hole scores from event course data
+          const courseHoles = eventData.course.holes.map((hole: CourseHole) => ({
+            hole: hole.number,
+            handicap: hole.handicap,
+            par: hole.par,
+            pace: hole.par === 3 ? 12 : hole.par === 5 ? 17 : 15,
+            player1Score: 0,
+            player2Score: 0,
+            player1Putt: false,
+            player2Putt: false,
+            winner: 'tie'
+          }));
+          setHoleScores(courseHoles);
         }
       } catch (error) {
         console.error('Error fetching data:', error);

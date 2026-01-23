@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     }
 
     // Fetch all events
-    const events = await Event.find({}).sort({ date: 1 });
+    const events = await Event.find({}).sort({ date: -1 });
 
     return NextResponse.json(events);
   } catch (error) {
@@ -79,13 +79,16 @@ export async function POST(request: Request) {
       }
       
       // Fetch the course to create a snapshot
-      const courseData = await Course.findById(courseId);
-      if (!courseData) {
+      const courseDoc = await Course.findById(courseId);
+      if (!courseDoc) {
         return NextResponse.json(
           { error: 'Course not found' },
           { status: 404 }
         );
       }
+      
+      // Convert to plain object to ensure all nested data is included
+      const courseData = courseDoc.toObject();
       
       // Create course snapshot
       const courseSnapshot = {
@@ -97,16 +100,20 @@ export async function POST(request: Request) {
         womenTees: courseData.womenTees || []
       };
       
+      const handicapValue = typeof handicapAllowance === 'number' 
+        ? handicapAllowance 
+        : parseInt(handicapAllowance) || 100;
+      
       const newEvent = new Event({
         name,
         date,
         course: courseSnapshot,
-        handicapAllowance: Math.min(100, Math.max(0, parseInt(handicapAllowance) || 100)),
+        handicapAllowance: Math.min(100, Math.max(0, handicapValue)),
         teams: []
       });
       
       await newEvent.save();
-      console.log('Event created successfully:', newEvent);
+      console.log('Event created successfully:', newEvent._id);
       return NextResponse.json(newEvent);
     }
     
@@ -153,7 +160,6 @@ export async function POST(request: Request) {
     }
 
     // Check if team is already in the event
-    // @ts-expect-error - Mongoose types issue
     const teamExists = event.teams.some((team) => (team as unknown as EventTeam)._id === teamId);
     if (teamExists) {
       console.log('Error: Team is already in the event');
@@ -227,7 +233,6 @@ export async function PUT(request: Request) {
     // Handle removing a member from a team
     if (teamId !== undefined && memberIndex !== undefined) {
       // Find the team in the event
-      // @ts-expect-error - Mongoose types issue
       const teamIndex = event.teams.findIndex((team) => (team as unknown as EventTeam)._id === teamId);
       
       if (teamIndex === -1) {
@@ -277,7 +282,6 @@ export async function PUT(request: Request) {
         }
       } else {
         // When removing a team, just filter the array
-        // @ts-expect-error - Mongoose types issue
         event.teams = new Types.DocumentArray(event.teams.filter((team) => teams.includes((team as unknown as TeamData)._id)));
       }
     }
