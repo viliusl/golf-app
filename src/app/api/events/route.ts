@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Event from '@/models/Event';
 import Team from '@/models/Team';
+import Course from '@/models/Course';
 import { Types } from 'mongoose';
 
 interface TeamData {
@@ -68,18 +69,38 @@ export async function POST(request: Request) {
     // If no ID is provided, we're creating a new event
     if (!id) {
       console.log('Creating new event:', body);
-      const { name, date } = body;
+      const { name, date, courseId } = body;
       
-      if (!name || !date) {
+      if (!name || !date || !courseId) {
         return NextResponse.json(
-          { error: 'Event name and date are required' },
+          { error: 'Event name, date, and course are required' },
           { status: 400 }
         );
       }
       
+      // Fetch the course to create a snapshot
+      const courseData = await Course.findById(courseId);
+      if (!courseData) {
+        return NextResponse.json(
+          { error: 'Course not found' },
+          { status: 404 }
+        );
+      }
+      
+      // Create course snapshot
+      const courseSnapshot = {
+        _id: courseData._id.toString(),
+        name: courseData.name,
+        address: courseData.address,
+        holes: courseData.holes || [],
+        menTees: courseData.menTees || [],
+        womenTees: courseData.womenTees || []
+      };
+      
       const newEvent = new Event({
         name,
         date,
+        course: courseSnapshot,
         teams: []
       });
       

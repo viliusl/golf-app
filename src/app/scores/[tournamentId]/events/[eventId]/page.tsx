@@ -15,6 +15,10 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  course?: {
+    _id: string;
+    name: string;
+  };
   teams: {
     _id: string;
     name: string;
@@ -260,7 +264,17 @@ export default function PublicEventScorecard() {
             </a>
             <div className="bg-white rounded-lg shadow-md p-6">
               <h1 className="text-3xl font-bold text-black mb-2">Leaderboard for {event.name}</h1>
-              <p className="text-gray-600">{new Date(event.date).toISOString().split('T')[0]}</p>
+              <p className="text-lg text-gray-600">
+                {new Date(event.date).toLocaleDateString(undefined, { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+              {event.course && (
+                <p className="text-lg text-gray-600">{event.course.name}</p>
+              )}
             </div>
           </div>
         </div>

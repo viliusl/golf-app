@@ -6,6 +6,7 @@ import { Match as MatchType, MatchPlayer } from '@/app/api/matches/route';
 import Link from 'next/link';
 import { calculateEffectiveHandicap } from '@/lib/handicap';
 import { useParams } from 'next/navigation';
+import CourseView from '@/components/CourseView';
 
 interface Team {
   _id: string;
@@ -30,10 +31,32 @@ interface OriginalTeam {
   }[];
 }
 
+interface CourseSnapshot {
+  _id: string;
+  name: string;
+  address: string;
+  holes?: {
+    number: number;
+    handicap: number;
+    par: number;
+  }[];
+  menTees?: {
+    name: string;
+    cr: number;
+    slope: number;
+  }[];
+  womenTees?: {
+    name: string;
+    cr: number;
+    slope: number;
+  }[];
+}
+
 interface Event {
   _id: string;
   name: string;
   date: string;
+  course?: CourseSnapshot;
   teams: Team[];
   createdAt: string;
   freePlayers?: {
@@ -95,6 +118,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [isRandomizing, setIsRandomizing] = useState(false);
   const [isDeleteAllMatchesModalOpen, setIsDeleteAllMatchesModalOpen] = useState(false);
   const [isMatchMenuOpen, setIsMatchMenuOpen] = useState(false);
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
 
   useEffect(() => {
     // Define fetch functions inside useEffect to properly capture dependencies
@@ -834,6 +858,24 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-black">{event?.name}</h1>
+              <p className="text-lg text-gray-600 mt-2">
+                {event?.date && new Date(event.date).toLocaleDateString(undefined, { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+              {event?.course && (
+                <p className="text-lg text-gray-600 mt-1">
+                  <button
+                    onClick={() => setIsCourseModalOpen(true)}
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {event.course.name}
+                  </button>
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {/* Remove scorecard toggle */}
@@ -1800,6 +1842,27 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
                 >
                   Delete All Matches
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Course Snapshot Modal */}
+        {isCourseModalOpen && event?.course && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+              <CourseView
+                course={event.course}
+                title="Event Course (Snapshot)"
+                onClose={() => setIsCourseModalOpen(false)}
+              />
+              <div className="mt-4 pt-4 border-t border-gray-200 flex justify-end">
+                <button
+                  onClick={() => setIsCourseModalOpen(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                >
+                  Close
                 </button>
               </div>
             </div>

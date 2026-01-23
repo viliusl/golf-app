@@ -15,6 +15,10 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  course?: {
+    _id: string;
+    name: string;
+  };
   teams: {
     _id: string;
     name: string;
@@ -398,7 +402,13 @@ export default function PublicTournamentScorecard() {
                   <div>
                     <h3 className="text-base font-medium text-black">{event.name}</h3>
                     <p className="text-xs text-gray-600">
-                      {new Date(event.date).toISOString().split('T')[0]}
+                      {new Date(event.date).toLocaleDateString(undefined, { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                      {event.course && ` · ${event.course.name}`}
                     </p>
                   </div>
                   <div className="flex items-center text-blue-600">
