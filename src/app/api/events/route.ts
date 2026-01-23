@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     }
 
     // Fetch all events
-    const events = await Event.find({}).sort({ date: 1 });
+    const events = await Event.find({}).sort({ date: -1 });
 
     return NextResponse.json(events);
   } catch (error) {
