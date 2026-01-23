@@ -866,22 +866,21 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   month: 'long', 
                   day: 'numeric' 
                 })}
+                {event?.course && (
+                  <>
+                    {' · '}
+                    <button
+                      onClick={() => setIsCourseModalOpen(true)}
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {event.course.name}
+                    </button>
+                  </>
+                )}
+                {event?.handicapAllowance !== undefined && (
+                  <> · HCP: {event.handicapAllowance}%</>
+                )}
               </p>
-              {event?.course && (
-                <p className="text-lg text-gray-600 mt-1">
-                  <button
-                    onClick={() => setIsCourseModalOpen(true)}
-                    className="text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    {event.course.name}
-                  </button>
-                </p>
-              )}
-              {event?.handicapAllowance !== undefined && (
-                <p className="text-lg text-gray-600 mt-1">
-                  Handicap Allowance: {event.handicapAllowance}%
-                </p>
-              )}
             </div>
             <div className="flex items-center gap-2">
               {/* Remove scorecard toggle */}
