@@ -24,18 +24,13 @@ const HoleSnapshotSchema = new mongoose.Schema({
 const TeeSnapshotSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
     trim: true
   },
   cr: {
-    type: Number,
-    required: true
+    type: Number
   },
   slope: {
-    type: Number,
-    required: true,
-    min: 55,
-    max: 155
+    type: Number
   }
 }, { _id: false });
 
@@ -126,7 +121,11 @@ eventSchema.set('toJSON', {
   }
 });
 
-// Use this pattern to avoid model recompilation errors
-const Event = mongoose.models.Event || mongoose.model('Event', eventSchema);
+// Delete cached model if it exists to ensure schema updates are applied
+if (mongoose.models.Event) {
+  delete mongoose.models.Event;
+}
+
+const Event = mongoose.model('Event', eventSchema);
 
 export default Event; 

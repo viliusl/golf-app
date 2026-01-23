@@ -79,13 +79,16 @@ export async function POST(request: Request) {
       }
       
       // Fetch the course to create a snapshot
-      const courseData = await Course.findById(courseId);
-      if (!courseData) {
+      const courseDoc = await Course.findById(courseId);
+      if (!courseDoc) {
         return NextResponse.json(
           { error: 'Course not found' },
           { status: 404 }
         );
       }
+      
+      // Convert to plain object to ensure all nested data is included
+      const courseData = courseDoc.toObject();
       
       // Create course snapshot
       const courseSnapshot = {
@@ -97,16 +100,20 @@ export async function POST(request: Request) {
         womenTees: courseData.womenTees || []
       };
       
+      const handicapValue = typeof handicapAllowance === 'number' 
+        ? handicapAllowance 
+        : parseInt(handicapAllowance) || 100;
+      
       const newEvent = new Event({
         name,
         date,
         course: courseSnapshot,
-        handicapAllowance: Math.min(100, Math.max(0, parseInt(handicapAllowance) || 100)),
+        handicapAllowance: Math.min(100, Math.max(0, handicapValue)),
         teams: []
       });
       
       await newEvent.save();
-      console.log('Event created successfully:', newEvent);
+      console.log('Event created successfully:', newEvent._id);
       return NextResponse.json(newEvent);
     }
     
