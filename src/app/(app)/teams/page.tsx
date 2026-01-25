@@ -22,6 +22,15 @@ interface Team {
   createdAt: string;
 }
 
+interface FutureEvent {
+  _id: string;
+  name: string;
+  date: string;
+  teamId: string;
+  teamName: string;
+  memberIndex: number;
+}
+
 export default function Teams() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -46,6 +55,9 @@ export default function Teams() {
     currentHandicap: number;
     newHandicap: string;
   } | null>(null);
+  const [futureEvents, setFutureEvents] = useState<FutureEvent[]>([]);
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   useEffect(() => {
     fetchTeams();
@@ -227,15 +239,59 @@ export default function Teams() {
     }
   };
 
-  const handleUpdateHandicapClick = (member: TeamMember) => {
+  const handleUpdateHandicapClick = async (member: TeamMember) => {
     if (!member.playerId) return;
+    const playerId = member.playerId._id;
+    
     setHandicapToUpdate({
-      playerId: member.playerId._id,
+      playerId: playerId,
       name: member.playerId.name,
       currentHandicap: member.playerId.handicap,
       newHandicap: String(member.playerId.handicap)
     });
+    setFutureEvents([]);
+    setSelectedEventIds(new Set());
+    setLoadingEvents(true);
     setIsHandicapModalOpen(true);
+
+    // Fetch future events containing this player
+    try {
+      const response = await fetch('/api/events');
+      if (response.ok) {
+        const events = await response.json();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const playerFutureEvents: FutureEvent[] = [];
+        events.forEach((event: { _id: string; name: string; date: string; teams: { _id: string; name: string; members: { playerId: string }[] }[] }) => {
+          const eventDate = new Date(event.date);
+          if (eventDate >= today) {
+            event.teams?.forEach(team => {
+              team.members?.forEach((m, memberIndex) => {
+                if (m.playerId === playerId) {
+                  playerFutureEvents.push({
+                    _id: event._id,
+                    name: event.name,
+                    date: event.date,
+                    teamId: team._id,
+                    teamName: team.name,
+                    memberIndex
+                  });
+                }
+              });
+            });
+          }
+        });
+
+        setFutureEvents(playerFutureEvents);
+        // Pre-select all future events
+        setSelectedEventIds(new Set(playerFutureEvents.map(e => `${e._id}-${e.teamId}-${e.memberIndex}`)));
+      }
+    } catch (err) {
+      console.error('Error fetching future events:', err);
+    } finally {
+      setLoadingEvents(false);
+    }
   };
 
   const handleUpdateHandicap = async () => {
@@ -249,6 +305,7 @@ export default function Teams() {
     }
 
     try {
+      // Update global player handicap
       const response = await fetch(`/api/players?id=${handicapToUpdate.playerId}`, {
         method: 'PUT',
         headers: {
@@ -261,13 +318,62 @@ export default function Teams() {
         throw new Error('Failed to update handicap');
       }
 
+      // Update selected future events
+      for (const futureEvent of futureEvents) {
+        const eventKey = `${futureEvent._id}-${futureEvent.teamId}-${futureEvent.memberIndex}`;
+        if (selectedEventIds.has(eventKey)) {
+          // Fetch current event data
+          const eventResponse = await fetch(`/api/events?id=${futureEvent._id}`);
+          if (eventResponse.ok) {
+            const eventData = await eventResponse.json();
+            
+            // Update the specific member's handicap
+            const updatedTeams = eventData.teams.map((team: { _id: string; members: { handicap?: number }[] }) => {
+              if (team._id === futureEvent.teamId) {
+                return {
+                  ...team,
+                  members: team.members.map((m: { handicap?: number }, idx: number) => {
+                    if (idx === futureEvent.memberIndex) {
+                      return { ...m, handicap: newHandicapValue };
+                    }
+                    return m;
+                  })
+                };
+              }
+              return team;
+            });
+
+            // Save updated event
+            await fetch(`/api/events?id=${futureEvent._id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ teams: updatedTeams }),
+            });
+          }
+        }
+      }
+
       setIsHandicapModalOpen(false);
       setHandicapToUpdate(null);
+      setFutureEvents([]);
+      setSelectedEventIds(new Set());
       fetchTeams();
-    } catch (error) {
-      console.error('Error updating handicap:', error);
-      setError(error instanceof Error ? error.message : 'Failed to update handicap');
+    } catch (err) {
+      console.error('Error updating handicap:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update handicap');
     }
+  };
+
+  const toggleEventSelection = (eventKey: string) => {
+    setSelectedEventIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventKey)) {
+        newSet.delete(eventKey);
+      } else {
+        newSet.add(eventKey);
+      }
+      return newSet;
+    });
   };
 
   const handleDeleteClick = (team: Team) => {
@@ -798,7 +904,7 @@ export default function Teams() {
         {/* Update Handicap Modal */}
         {isHandicapModalOpen && handicapToUpdate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white rounded-lg p-6 w-full max-w-lg">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Update Handicap Index</h2>
               <p className="text-sm text-gray-600 mb-4">
                 Updating handicap for <span className="font-medium">{handicapToUpdate.name}</span>
@@ -809,23 +915,80 @@ export default function Teams() {
                   type="text"
                   value={handicapToUpdate.newHandicap}
                   onChange={(e) => setHandicapToUpdate({ ...handicapToUpdate, newHandicap: e.target.value })}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateHandicap(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !loadingEvents) handleUpdateHandicap(); }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
                 <p className="mt-1 text-xs text-gray-500">Current: {handicapToUpdate.currentHandicap}</p>
               </div>
+
+              {/* Future Events Section */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Update handicap in future events
+                </label>
+                {loadingEvents ? (
+                  <p className="text-sm text-gray-500">Loading events...</p>
+                ) : futureEvents.length === 0 ? (
+                  <p className="text-sm text-gray-500">No future events found for this player</p>
+                ) : (
+                  <div className="border border-gray-200 rounded-md max-h-48 overflow-y-auto">
+                    {futureEvents.map((event) => {
+                      const eventKey = `${event._id}-${event.teamId}-${event.memberIndex}`;
+                      return (
+                        <label
+                          key={eventKey}
+                          className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedEventIds.has(eventKey)}
+                            onChange={() => toggleEventSelection(eventKey)}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900">{event.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(event.date).toLocaleDateString()} • Team: {event.teamName}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                {futureEvents.length > 0 && (
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEventIds(new Set(futureEvents.map(e => `${e._id}-${e.teamId}-${e.memberIndex}`)))}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEventIds(new Set())}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
               <div className="flex justify-end gap-3">
                 <button
-                  onClick={() => { setIsHandicapModalOpen(false); setHandicapToUpdate(null); setError(null); }}
+                  onClick={() => { setIsHandicapModalOpen(false); setHandicapToUpdate(null); setFutureEvents([]); setSelectedEventIds(new Set()); setError(null); }}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleUpdateHandicap}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  disabled={loadingEvents}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                 >
                   Save
                 </button>
