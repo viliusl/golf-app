@@ -199,7 +199,7 @@ export default function Home() {
                         )}
                         {event.handicapAllowance !== undefined && (
                           <div className="text-xs text-gray-500">
-                            HCP: {event.handicapAllowance}%
+                            HCP Allowance: {event.handicapAllowance}%
                           </div>
                         )}
                       </td>
@@ -295,7 +295,7 @@ export default function Home() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="handicapAllowance" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap Allowance (%)
+                    HCP Allowance (%)
                   </label>
                   <input
                     type="number"

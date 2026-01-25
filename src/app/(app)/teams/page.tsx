@@ -29,14 +29,10 @@ export default function Teams() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
-  const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
   const [isRenameTeamModalOpen, setIsRenameTeamModalOpen] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
   const [teamToAddMember, setTeamToAddMember] = useState<Team | null>(null);
-  const [teamToEditMember, setTeamToEditMember] = useState<Team | null>(null);
   const [teamToRename, setTeamToRename] = useState<Team | null>(null);
-  const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
-  const [memberIndexToEdit, setMemberIndexToEdit] = useState<number | null>(null);
   const [newTeam, setNewTeam] = useState({ name: '' });
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
   const [newMemberIsCaptain, setNewMemberIsCaptain] = useState(false);
@@ -162,43 +158,6 @@ export default function Teams() {
     }
   };
 
-  const handleEditMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!teamToEditMember || !memberToEdit || memberIndexToEdit === null) return;
-    setError(null);
-    
-    try {
-      const updatedMembers = teamToEditMember.members.map((m, idx) => ({
-        playerId: m.playerId?._id,
-        isCaptain: idx === memberIndexToEdit ? memberToEdit.isCaptain : m.isCaptain
-      }));
-      
-      const response = await fetch(`/api/teams?id=${teamToEditMember._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          members: updatedMembers
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to update member');
-      }
-
-      setMemberToEdit(null);
-      setMemberIndexToEdit(null);
-      setIsEditMemberModalOpen(false);
-      setTeamToEditMember(null);
-      fetchTeams();
-    } catch (error) {
-      console.error('Error updating member:', error);
-      setError(error instanceof Error ? error.message : 'Failed to update member');
-    }
-  };
-
   const handleRemoveMember = async (team: Team, index: number) => {
     try {
       const updatedMembers = team.members
@@ -226,6 +185,38 @@ export default function Teams() {
     } catch (error) {
       console.error('Error removing member:', error);
       setError(error instanceof Error ? error.message : 'Failed to remove member');
+    }
+  };
+
+  const handleToggleCaptain = async (team: Team, memberIndex: number) => {
+    try {
+      const currentMember = team.members[memberIndex];
+      const newCaptainStatus = !currentMember.isCaptain;
+      
+      // Update members: if setting as captain, remove captain from others
+      const updatedMembers = team.members.map((m, idx) => ({
+        playerId: m.playerId?._id,
+        isCaptain: idx === memberIndex ? newCaptainStatus : (newCaptainStatus ? false : m.isCaptain)
+      }));
+      
+      const response = await fetch(`/api/teams?id=${team._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          members: updatedMembers
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update captain');
+      }
+
+      fetchTeams();
+    } catch (error) {
+      console.error('Error updating captain:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update captain');
     }
   };
 
@@ -405,22 +396,15 @@ export default function Teams() {
                         team.members.map((member, index) => (
                           <tr key={index} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <Link
-                                href="/players"
-                                className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium"
-                              >
+                              <span className="text-sm font-medium text-gray-900">
                                 {member.playerId?.name || 'Unknown Player'}
-                              </Link>
+                              </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <button
-                                onClick={() => {
-                                  setTeamToEditMember(team);
-                                  setMemberToEdit(member);
-                                  setMemberIndexToEdit(index);
-                                  setIsEditMemberModalOpen(true);
-                                }}
+                                onClick={() => handleToggleCaptain(team, index)}
                                 className={`text-sm ${member.isCaptain ? 'text-green-600 font-medium' : 'text-gray-500'} hover:underline`}
+                                title={member.isCaptain ? 'Click to remove captain' : 'Click to make captain'}
                               >
                                 {member.isCaptain ? 'Yes' : 'No'}
                               </button>
@@ -632,77 +616,6 @@ export default function Teams() {
                     }`}
                   >
                     Add Member
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Edit Member Modal - Only isCaptain toggle */}
-        {isEditMemberModalOpen && teamToEditMember && memberToEdit && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Edit Team Member</h2>
-                <button
-                  onClick={() => {
-                    setIsEditMemberModalOpen(false);
-                    setTeamToEditMember(null);
-                    setMemberToEdit(null);
-                    setMemberIndexToEdit(null);
-                    setError(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              <form onSubmit={handleEditMember}>
-                <div className="mb-4 p-4 bg-gray-50 rounded-md">
-                  <div className="text-sm font-medium text-black">{memberToEdit.playerId?.name}</div>
-                  <div className="text-xs text-gray-500">
-                    HCP: {memberToEdit.playerId?.handicap} | {memberToEdit.playerId?.gender}
-                  </div>
-                  <Link 
-                    href="/players" 
-                    className="text-xs text-blue-600 hover:text-blue-800 mt-1 inline-block"
-                  >
-                    Edit player details in Players page
-                  </Link>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={memberToEdit.isCaptain}
-                      onChange={(e) => setMemberToEdit({ ...memberToEdit, isCaptain: e.target.checked })}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Team Captain</span>
-                  </label>
-                </div>
-                
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditMemberModalOpen(false);
-                      setTeamToEditMember(null);
-                      setMemberToEdit(null);
-                      setMemberIndexToEdit(null);
-                      setError(null);
-                    }}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
-                  >
-                    Save Changes
                   </button>
                 </div>
               </form>
