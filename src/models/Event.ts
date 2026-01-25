@@ -64,14 +64,13 @@ const CourseSnapshotSchema = new mongoose.Schema({
 }, { _id: false });
 
 const TeamMemberSchema = new mongoose.Schema({
-  playerType: {
-    type: String,
-    enum: ['free', 'team_member'],
-    required: true
-  },
   playerId: {
     type: String,
     required: true
+  },
+  isCaptain: {
+    type: Boolean,
+    default: false
   },
   tee: {
     type: String,

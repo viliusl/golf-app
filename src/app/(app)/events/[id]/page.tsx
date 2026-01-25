@@ -2,32 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { Player } from '@/app/api/players/route';
-import { Match as MatchType, MatchPlayer } from '@/app/api/matches/route';
+import { Match as MatchType } from '@/app/api/matches/route';
 import Link from 'next/link';
-import { calculateEffectiveHandicap, calculatePlayingHandicap } from '@/lib/handicap';
-import { useParams } from 'next/navigation';
+import { calculatePlayingHandicap } from '@/lib/handicap';
 import CourseView from '@/components/CourseView';
 
-interface Team {
-  _id: string;
-  name: string;
-  members: {
-    playerType: 'free' | 'team_member';
-    playerId: string;
-    tee?: string;
-  }[];
+// Event team member - references Player collection
+interface EventTeamMember {
+  playerId: string;
+  isCaptain: boolean;
+  tee?: string;
 }
 
-interface OriginalTeam {
+interface EventTeam {
   _id: string;
   name: string;
-  members: {
-    _id: string;
-    name: string;
-    isCaptain: boolean;
-    handicap: number;
-    gender: 'Male' | 'Female';
-  }[];
+  members: EventTeamMember[];
 }
 
 interface CourseSnapshot {
@@ -57,57 +47,44 @@ interface Event {
   date: string;
   course?: CourseSnapshot;
   handicapAllowance?: number;
-  teams: Team[];
+  teams: EventTeam[];
   createdAt: string;
-  freePlayers?: {
-    playerId: string;
-  }[];
 }
 
-interface PlayerDetails {
-  name: string;
+// Team from Teams collection (with populated player data)
+interface PopulatedTeamMember {
+  playerId: {
+    _id: string;
+    name: string;
+    handicap: number;
+    gender: 'Male' | 'Female';
+  } | null;
   isCaptain: boolean;
-  handicap: number | string;
-  gender: 'Male' | 'Female';
 }
 
-interface TeamMember {
+interface PopulatedTeam {
   _id: string;
   name: string;
-  isCaptain: boolean;
-  handicap: number;
-  gender: 'Male' | 'Female';
+  members: PopulatedTeamMember[];
 }
 
 export default function EventDetails({ params }: { params: { id: string } }) {
   const [event, setEvent] = useState<Event | null>(null);
-  const [teams, setTeams] = useState<OriginalTeam[]>([]);
-  const [freePlayers, setFreePlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<PopulatedTeam[]>([]);
+  const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<MatchType[]>([]);
-  const [playerDetails, setPlayerDetails] = useState<Record<string, PlayerDetails>>({});
   const [loading, setLoading] = useState(true);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [isRenameEventModalOpen, setIsRenameEventModalOpen] = useState(false);
   const [isRemoveMemberModalOpen, setIsRemoveMemberModalOpen] = useState(false);
   const [isRemoveTeamModalOpen, setIsRemoveTeamModalOpen] = useState(false);
   const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
-  const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
   const [isDeleteMatchModalOpen, setIsDeleteMatchModalOpen] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState<string | null>(null);
   const [matchToDeleteDetails, setMatchToDeleteDetails] = useState<MatchType | null>(null);
-  const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState<Team | null>(null);
-  const [teamToRemove, setTeamToRemove] = useState<Team | null>(null);
+  const [selectedTeamForPlayer, setSelectedTeamForPlayer] = useState<EventTeam | null>(null);
+  const [teamToRemove, setTeamToRemove] = useState<EventTeam | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; index: number; name: string } | null>(null);
-  const [memberToEdit, setMemberToEdit] = useState<{
-    name: string;
-    isCaptain: boolean;
-    handicap: number | string;
-    gender: 'Male' | 'Female';
-    tee?: string;
-  } | null>(null);
-  const [memberEventTee, setMemberEventTee] = useState<string>('');
-  const [memberTeamIdToEdit, setMemberTeamIdToEdit] = useState<string | null>(null);
-  const [memberIndexToEdit, setMemberIndexToEdit] = useState<number | null>(null);
   const [newEventName, setNewEventName] = useState('');
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -118,11 +95,10 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const [isUpdateHandicapModalOpen, setIsUpdateHandicapModalOpen] = useState(false);
   const [handicapToUpdate, setHandicapToUpdate] = useState<{
     playerId: string;
-    playerType: 'free' | 'team_member';
-    teamId: string;
     name: string;
     currentHandicap: number;
     newHandicap: string;
+    gender: 'Male' | 'Female';
   } | null>(null);
   const [isUpdateTeeModalOpen, setIsUpdateTeeModalOpen] = useState(false);
   const [teeToUpdate, setTeeToUpdate] = useState<{
@@ -135,90 +111,20 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   } | null>(null);
 
   useEffect(() => {
-    // Define fetch functions inside useEffect to properly capture dependencies
-    const fetchEventData = async () => {
-      try {
-        const response = await fetch(`/api/events?id=${params.id}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Fetched event data:', data);
-        
-        // Ensure the teams array exists
-        if (!data.teams) {
-          data.teams = [];
-        }
-        
-        setEvent(data);
-      } catch (error) {
-        console.error('Error fetching event:', error);
-        setError('Failed to load event');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchTeamsData = async () => {
-      try {
-        const response = await fetch('/api/teams');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setTeams(data);
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-        setError('Failed to load teams');
-      }
-    };
-
-    const fetchFreePlayersData = async () => {
-      try {
-        const response = await fetch('/api/players');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setFreePlayers(data);
-      } catch (error) {
-        console.error('Error fetching free players:', error);
-        // Don't set global error to avoid confusing the user
-      }
-    };
-    
-    const fetchMatchesData = async () => {
-      try {
-        const response = await fetch(`/api/matches?eventId=${params.id}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        // Data is already sorted by teeTime on the server
-        setMatches(data);
-      } catch (error) {
-        console.error('Error fetching matches:', error);
-        // Don't set global error to avoid confusing the user
-      }
-    };
-
     fetchEventData();
     fetchTeamsData();
-    fetchFreePlayersData();
+    fetchPlayersData();
     fetchMatchesData();
   }, [params.id]);
 
-  // Keep the original fetch functions for use in other event handlers
-  const fetchEvent = async () => {
+  const fetchEventData = async () => {
     try {
       const response = await fetch(`/api/events?id=${params.id}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log('Fetched event data:', data);
       
-      // Ensure the teams array exists
       if (!data.teams) {
         data.teams = [];
       }
@@ -232,7 +138,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const fetchTeams = async () => {
+  const fetchTeamsData = async () => {
     try {
       const response = await fetch('/api/teams');
       if (!response.ok) {
@@ -242,37 +148,44 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       setTeams(data);
     } catch (error) {
       console.error('Error fetching teams:', error);
-      setError('Failed to load teams');
     }
   };
 
-  const fetchFreePlayers = async () => {
+  const fetchPlayersData = async () => {
     try {
       const response = await fetch('/api/players');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setFreePlayers(data);
+      setAllPlayers(data);
     } catch (error) {
-      console.error('Error fetching free players:', error);
-      // Don't set global error to avoid confusing the user
+      console.error('Error fetching players:', error);
     }
   };
   
-  const fetchMatches = async () => {
+  const fetchMatchesData = async () => {
     try {
       const response = await fetch(`/api/matches?eventId=${params.id}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      // Data is already sorted by teeTime on the server
       setMatches(data);
     } catch (error) {
       console.error('Error fetching matches:', error);
-      // Don't set global error to avoid confusing the user
     }
+  };
+
+  // Get player details from the allPlayers array
+  const getPlayerDetails = (playerId: string): Player | undefined => {
+    return allPlayers.find(p => p._id === playerId);
+  };
+
+  // Get isCaptain status from event team member
+  const getMemberIsCaptain = (eventTeam: EventTeam, playerId: string): boolean => {
+    const member = eventTeam.members.find(m => m.playerId === playerId);
+    return member?.isCaptain || false;
   };
 
   const handleDeleteMatchClick = (match: MatchType) => {
@@ -295,7 +208,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         throw new Error(errorData.details || 'Failed to delete match');
       }
 
-      await fetchMatches();
+      await fetchMatchesData();
       setIsDeleteMatchModalOpen(false);
       setMatchToDelete(null);
     } catch (error) {
@@ -309,28 +222,20 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     setError(null);
     
     try {
-      console.log('Adding team to event:', teamId);
-      console.log('Event ID:', event._id);
-      
       const response = await fetch(`/api/events?id=${event._id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          teamId
-        }),
+        body: JSON.stringify({ teamId }),
       });
 
-      console.log('Response status:', response.status);
       const responseData = await response.json();
-      console.log('Response data:', responseData);
 
       if (!response.ok) {
         throw new Error(responseData.details || responseData.error || 'Failed to add team');
       }
 
-      console.log('Updated event from API:', responseData);
       setEvent(responseData);
       setIsAddTeamModalOpen(false);
     } catch (error) {
@@ -339,7 +244,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleOpenAddPlayerModal = (team: Team) => {
+  const handleOpenAddPlayerModal = (team: EventTeam) => {
     setSelectedTeamForPlayer(team);
     setIsAddPlayerModalOpen(true);
   };
@@ -354,21 +259,23 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         throw new Error('Team not found in event');
       }
 
-      const newMember = {
-        playerType: 'free' as const,
-        playerId: player._id
+      const newMember: EventTeamMember = {
+        playerId: player._id,
+        isCaptain: false
       };
 
-      event.teams[teamIndex].members.push(newMember);
+      const updatedTeams = [...event.teams];
+      updatedTeams[teamIndex] = {
+        ...updatedTeams[teamIndex],
+        members: [...updatedTeams[teamIndex].members, newMember]
+      };
 
       const response = await fetch(`/api/events?id=${event._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          teams: event.teams
-        }),
+        body: JSON.stringify({ teams: updatedTeams }),
       });
 
       if (!response.ok) {
@@ -376,7 +283,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         throw new Error(errorData.details || 'Failed to add player to team');
       }
 
-      await fetchEvent();
+      await fetchEventData();
       setIsAddPlayerModalOpen(false);
       setSelectedTeamForPlayer(null);
     } catch (error) {
@@ -385,7 +292,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleRemoveTeamClick = (team: Team) => {
+  const handleRemoveTeamClick = (team: EventTeam) => {
     setTeamToRemove(team);
     setIsRemoveTeamModalOpen(true);
   };
@@ -395,21 +302,14 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     setError(null);
     
     try {
-      console.log('Original event teams:', JSON.stringify(event.teams, null, 2));
-      
-      // Simply filter out the team to remove, preserving the current state of other teams
       const updatedTeams = event.teams.filter(team => team._id !== teamId);
-
-      console.log('Updated teams to send:', JSON.stringify(updatedTeams, null, 2));
 
       const response = await fetch(`/api/events?id=${event._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          teams: updatedTeams
-        }),
+        body: JSON.stringify({ teams: updatedTeams }),
       });
 
       if (!response.ok) {
@@ -437,10 +337,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          teamId,
-          memberIndex
-        }),
+        body: JSON.stringify({ teamId, memberIndex }),
       });
 
       if (!response.ok) {
@@ -477,9 +374,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: newEventName
-        }),
+        body: JSON.stringify({ name: newEventName }),
       });
 
       if (!response.ok) {
@@ -496,28 +391,18 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleEditMemberClick = (teamId: string, index: number, details: PlayerDetails, eventTee?: string) => {
-    setMemberToEdit(details);
-    setMemberTeamIdToEdit(teamId);
-    setMemberIndexToEdit(index);
-    setMemberEventTee(eventTee || '');
-    setIsEditMemberModalOpen(true);
-  };
-
   const handleUpdateHandicapClick = (
     playerId: string,
-    playerType: 'free' | 'team_member',
-    teamId: string,
     name: string,
-    currentHandicap: number
+    currentHandicap: number,
+    gender: 'Male' | 'Female'
   ) => {
     setHandicapToUpdate({
       playerId,
-      playerType,
-      teamId,
       name,
       currentHandicap,
-      newHandicap: currentHandicap.toString()
+      newHandicap: currentHandicap.toString(),
+      gender
     });
     setIsUpdateHandicapModalOpen(true);
   };
@@ -533,59 +418,22 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
 
     try {
-      if (handicapToUpdate.playerType === 'free') {
-        // Update free player
-        const response = await fetch(`/api/players?id=${handicapToUpdate.playerId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: handicapToUpdate.name,
-            handicap: newHandicapValue,
-            gender: playerDetails[handicapToUpdate.playerId]?.gender || 'Male'
-          }),
-        });
+      // All players are now in the Player collection
+      const response = await fetch(`/api/players?id=${handicapToUpdate.playerId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: handicapToUpdate.name,
+          handicap: newHandicapValue,
+          gender: handicapToUpdate.gender
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to update player handicap');
-        }
-
-        await fetchFreePlayers();
-      } else {
-        // Update team member
-        const originalTeam = teams.find(t => t._id === handicapToUpdate.teamId);
-        if (!originalTeam) {
-          throw new Error('Team not found');
-        }
-
-        const updatedMembers = originalTeam.members.map(member => {
-          if (member._id === handicapToUpdate.playerId) {
-            return { ...member, handicap: newHandicapValue };
-          }
-          return member;
-        });
-
-        const response = await fetch(`/api/teams?id=${handicapToUpdate.teamId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ members: updatedMembers }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to update team member handicap');
-        }
-
-        await fetchTeams();
+      if (!response.ok) {
+        throw new Error('Failed to update player handicap');
       }
 
-      // Update local player details
-      setPlayerDetails(prev => ({
-        ...prev,
-        [handicapToUpdate.playerId]: {
-          ...prev[handicapToUpdate.playerId],
-          handicap: newHandicapValue
-        }
-      }));
-
+      await fetchPlayersData();
       setIsUpdateHandicapModalOpen(false);
       setHandicapToUpdate(null);
     } catch (error) {
@@ -639,7 +487,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         throw new Error('Failed to update tee');
       }
 
-      await fetchEvent();
+      await fetchEventData();
       setIsUpdateTeeModalOpen(false);
       setTeeToUpdate(null);
     } catch (error) {
@@ -648,253 +496,30 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
   };
 
-  const handleEditMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!event || !memberToEdit || memberTeamIdToEdit === null || memberIndexToEdit === null) return;
-    setError(null);
-    
-    try {
-      // Find the original member to get its playerType and playerId
-      const team = event.teams.find(t => t._id === memberTeamIdToEdit);
-      if (!team) {
-        throw new Error('Team not found');
-      }
-      const originalMember = team.members[memberIndexToEdit];
-
-      // Update the original source data based on playerType
-      if (originalMember.playerType === 'free') {
-        // Update free player (only name, handicap, gender - no tee)
-        const response = await fetch(`/api/players?id=${originalMember.playerId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name: memberToEdit.name,
-            handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap,
-            gender: memberToEdit.gender
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.details || 'Failed to update free player');
-        }
-
-        // Refresh free players list
-        await fetchFreePlayers();
-      } else {
-        // Find the original team to get its current members
-        const originalTeam = teams.find(t => t._id === team._id);
-        if (!originalTeam) {
-          throw new Error('Original team not found');
-        }
-
-        // Update the specific member in the team's members array (only name, handicap, gender - no tee)
-        const updatedMembers = originalTeam.members.map(member => {
-          if (member._id === originalMember.playerId) {
-            return {
-              ...member,
-              name: memberToEdit.name,
-              isCaptain: memberToEdit.isCaptain,
-              handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap,
-              gender: memberToEdit.gender
-            };
-          }
-          return member;
-        });
-
-        // Update team with the modified members array
-        const response = await fetch(`/api/teams?id=${team._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            members: updatedMembers
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.details || 'Failed to update team member');
-        }
-
-        // Refresh teams list
-        await fetchTeams();
-      }
-
-      // Update tee in event member if changed
-      if (memberEventTee !== originalMember.tee) {
-        const updatedTeams = event.teams.map(t => {
-          if (t._id === memberTeamIdToEdit) {
-            const updatedMembers = [...t.members];
-            updatedMembers[memberIndexToEdit] = {
-              ...updatedMembers[memberIndexToEdit],
-              tee: memberEventTee
-            };
-            return { ...t, members: updatedMembers };
-          }
-          return t;
-        });
-
-        const eventResponse = await fetch(`/api/events?id=${event._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ teams: updatedTeams }),
-        });
-
-        if (!eventResponse.ok) {
-          const errorData = await eventResponse.json();
-          throw new Error(errorData.details || 'Failed to update event tee');
-        }
-
-        await fetchEvent();
-      }
-
-      // Update the player details in the local state
-      setPlayerDetails(prev => ({
-        ...prev,
-        [originalMember.playerId]: memberToEdit
-      }));
-
-      setIsEditMemberModalOpen(false);
-      setMemberToEdit(null);
-      setMemberTeamIdToEdit(null);
-      setMemberIndexToEdit(null);
-      setMemberEventTee('');
-    } catch (error) {
-      console.error('Error updating member:', error);
-      setError(error instanceof Error ? error.message : 'Failed to update member');
-    }
-  };
-
-  // Add function to fetch player details
-  const fetchPlayerDetails = async (playerId: string, playerType: 'free' | 'team_member') => {
-    try {
-      if (playerType === 'free') {
-        const player = freePlayers.find(p => p._id === playerId);
-        if (player) {
-          setPlayerDetails(prev => ({
-            ...prev,
-            [playerId]: {
-              name: player.name,
-              isCaptain: false,
-              handicap: player.handicap,
-              gender: player.gender
-            }
-          }));
-        }
-      } else {
-        // For team members, we need to find them in the original teams array
-        for (const team of teams) {
-          const member = team.members.find(m => m._id === playerId);
-          if (member) {
-            setPlayerDetails(prev => ({
-              ...prev,
-              [playerId]: {
-                name: member.name,
-                isCaptain: member.isCaptain,
-                handicap: member.handicap,
-                gender: member.gender as 'Male' | 'Female'
-              }
-            }));
-            break;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching player details:', error);
-    }
-  };
-
-  // Update useEffect to fetch player details when teams or free players change
-  useEffect(() => {
-    if (event) {
-      event.teams.forEach(team => {
-        team.members.forEach(member => {
-          // For team members in the event, we need to find their details in the teams array
-          if (member.playerType === 'team_member') {
-            const teamData = teams.find(t => t._id === team._id);
-            if (teamData) {
-              const teamMember = teamData.members.find(m => m._id === member.playerId);
-              if (teamMember) {
-                setPlayerDetails(prev => ({
-                  ...prev,
-                  [member.playerId]: {
-                    name: teamMember.name,
-                    isCaptain: teamMember.isCaptain,
-                    handicap: teamMember.handicap,
-                    gender: teamMember.gender as 'Male' | 'Female'
-                  }
-                }));
-              }
-            }
-          } else {
-            // For free players, fetch their details directly
-            fetchPlayerDetails(member.playerId, member.playerType);
-          }
-        });
-      });
-    }
-  }, [event, teams, freePlayers]);
-
   const handleRandomizeMatches = async () => {
     if (!event) return;
     setError(null);
     setIsRandomizing(true);
     
     try {
-      // Get all players from teams
-      const allPlayers: { name: string; teamName: string; handicap: number }[] = [];
+      // Get all players from event teams
+      const playersForMatches: { name: string; teamName: string; handicap: number }[] = [];
       
-      // Add players from teams
       event.teams.forEach((eventTeam) => {
-        const team = teams.find(t => t._id === eventTeam._id);
-        if (team) {
-          // Only add players that are explicitly in the event's team members list
-          eventTeam.members.forEach((eventMember) => {
-            if (eventMember.playerType === 'team_member') {
-              const teamMember = team.members.find(m => m._id === eventMember.playerId);
-              if (teamMember) {
-                allPlayers.push({
-                  name: teamMember.name,
-                  teamName: team.name,
-                  handicap: teamMember.handicap
-                });
-              }
-            } else if (eventMember.playerType === 'free') {
-              const freePlayer = freePlayers.find(p => p._id === eventMember.playerId);
-              if (freePlayer) {
-                allPlayers.push({
-                  name: freePlayer.name,
-                  teamName: team.name,
-                  handicap: freePlayer.handicap
-                });
-              }
-            }
-          });
-        }
-      });
-      
-      // Add free players that are not part of any team
-      if (event.freePlayers && Array.isArray(event.freePlayers)) {
-        event.freePlayers.forEach((player) => {
-          const freePlayer = freePlayers.find(p => p._id === player.playerId);
-          if (freePlayer) {
-            allPlayers.push({
-              name: freePlayer.name,
-              teamName: 'Free Player',
-              handicap: freePlayer.handicap
+        eventTeam.members.forEach((member) => {
+          const player = getPlayerDetails(member.playerId);
+          if (player) {
+            playersForMatches.push({
+              name: player.name,
+              teamName: eventTeam.name,
+              handicap: player.handicap
             });
           }
         });
-      }
+      });
       
       // Shuffle players
-      const shuffledPlayers = [...allPlayers].sort(() => Math.random() - 0.5);
+      const shuffledPlayers = [...playersForMatches].sort(() => Math.random() - 0.5);
       
       // Create matches ensuring players from same team don't play against each other
       const newMatches = [];
@@ -903,7 +528,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       for (let i = 0; i < shuffledPlayers.length; i++) {
         if (usedPlayers.has(shuffledPlayers[i].name)) continue;
         
-        // Find next available player from different team
         let j = i + 1;
         while (j < shuffledPlayers.length && 
                (shuffledPlayers[j].teamName === shuffledPlayers[i].teamName || 
@@ -911,7 +535,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           j++;
         }
         
-        // If we found a valid opponent
         if (j < shuffledPlayers.length) {
           const match = {
             eventId: params.id,
@@ -951,13 +574,10 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         }
       }
       
-      // Create new matches
       for (const match of newMatches) {
         const response = await fetch('/api/matches', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(match),
         });
         
@@ -966,9 +586,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         }
       }
       
-      // Refresh matches
-      await fetchMatches();
-      
+      await fetchMatchesData();
     } catch (error) {
       console.error('Error randomizing matches:', error);
       setError(error instanceof Error ? error.message : 'Failed to randomize matches');
@@ -982,7 +600,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     setError(null);
     
     try {
-      // Delete all matches for this event
       for (const match of matches) {
         const response = await fetch(`/api/matches?id=${match._id}`, {
           method: 'DELETE'
@@ -993,7 +610,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         }
       }
 
-      await fetchMatches();
+      await fetchMatchesData();
       setIsDeleteAllMatchesModalOpen(false);
     } catch (error) {
       console.error('Error deleting all matches:', error);
@@ -1056,9 +673,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              {/* Remove scorecard toggle */}
-            </div>
           </div>
         </div>
 
@@ -1096,7 +710,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   
                   {isMatchMenuOpen && (
                     <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                      <div className="py-1" role="menu" aria-orientation="vertical">
+                      <div className="py-1" role="menu">
                         <button
                           onClick={() => {
                             handleRandomizeMatches();
@@ -1106,19 +720,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                           className={`w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 ${
                             isRandomizing ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
-                          role="menuitem"
                         >
-                          {isRandomizing ? (
-                            <>
-                              <svg className="animate-spin h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Generating Matches...
-                            </>
-                          ) : (
-                            'Generate Random Matches'
-                          )}
+                          {isRandomizing ? 'Generating Matches...' : 'Generate Random Matches'}
                         </button>
                         
                         <button
@@ -1127,7 +730,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             setIsMatchMenuOpen(false);
                           }}
                           className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                          role="menuitem"
                         >
                           Delete All Matches
                         </button>
@@ -1136,7 +738,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                           href={`/events/${params.id}/matches/print`}
                           onClick={() => setIsMatchMenuOpen(false)}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          role="menuitem"
                         >
                           Print Match Cards
                         </Link>
@@ -1157,12 +758,6 @@ export default function EventDetails({ params }: { params: { id: string } }) {
             {matches.length === 0 ? (
               <div className="p-6 text-center">
                 <p className="text-gray-500">No matches added yet</p>
-                <Link
-                  href={`/events/${params.id}/matches/add`}
-                  className="mt-4 inline-block bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
-                >
-                  Add Match
-                </Link>
               </div>
             ) : (
               <div className="space-y-8">
@@ -1175,41 +770,22 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     <table className="min-w-full divide-y divide-gray-200 table-fixed">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Player 1
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Score
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            vs
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Score
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Player 2
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Time
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Tee
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 shadow-md">
-                            Actions
-                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Player 1</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Score</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">vs</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Score</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Player 2</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Time</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Tee</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase sticky right-0 bg-gray-50">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {[...matches]
+                        {matches
                           .filter(match => !match.completed)
                           .sort((a, b) => {
-                            const dateA = new Date(a.teeTime);
-                            const dateB = new Date(b.teeTime);
-                            // Compare only the time part (hours and minutes)
-                            const timeA = dateA.getHours() * 60 + dateA.getMinutes();
-                            const timeB = dateB.getHours() * 60 + dateB.getMinutes();
+                            const timeA = new Date(a.teeTime).getHours() * 60 + new Date(a.teeTime).getMinutes();
+                            const timeB = new Date(b.teeTime).getHours() * 60 + new Date(b.teeTime).getMinutes();
                             return timeA - timeB;
                           })
                           .map((match) => (
@@ -1218,40 +794,30 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                 <div className="text-sm font-medium text-black">{match.player1.name}</div>
                                 <div className="text-xs text-gray-500">{match.player1.teamName}</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-sm font-bold text-black">{match.player1.score}</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-xs font-medium text-gray-500">vs</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-sm font-bold text-black">{match.player2.score}</div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap">
                                 <div className="text-sm font-medium text-black">{match.player2.name}</div>
                                 <div className="text-xs text-gray-500">{match.player2.teamName}</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-sm text-black">
                                   {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-sm text-black">{match.tee}</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white border-l group-hover:bg-gray-50">
-                                <Link
-                                  href={`/events/${params.id}/matches/${match._id}/edit`}
-                                  className="text-blue-600 hover:text-blue-900 mr-3"
-                                >
-                                  Edit
-                                </Link>
-                                <button
-                                  onClick={() => handleDeleteMatchClick(match)}
-                                  className="text-red-600 hover:text-red-900"
-                                >
-                                  Delete
-                                </button>
+                              <td className="px-3 py-2 text-right text-sm font-medium sticky right-0 bg-white border-l group-hover:bg-gray-50">
+                                <Link href={`/events/${params.id}/matches/${match._id}/edit`} className="text-blue-600 hover:text-blue-900 mr-3">Edit</Link>
+                                <button onClick={() => handleDeleteMatchClick(match)} className="text-red-600 hover:text-red-900">Delete</button>
                               </td>
                             </tr>
                           ))}
@@ -1269,41 +835,22 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     <table className="min-w-full divide-y divide-gray-200 table-fixed">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Player 1
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Score
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            vs
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Score
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Player 2
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Time
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Tee
-                          </th>
-                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 shadow-md">
-                            Actions
-                          </th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Player 1</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Score</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">vs</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Score</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Player 2</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Time</th>
+                          <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Tee</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase sticky right-0 bg-gray-50">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {[...matches]
+                        {matches
                           .filter(match => match.completed)
                           .sort((a, b) => {
-                            const dateA = new Date(a.teeTime);
-                            const dateB = new Date(b.teeTime);
-                            // Compare only the time part (hours and minutes)
-                            const timeA = dateA.getHours() * 60 + dateA.getMinutes();
-                            const timeB = dateB.getHours() * 60 + dateB.getMinutes();
+                            const timeA = new Date(a.teeTime).getHours() * 60 + new Date(a.teeTime).getMinutes();
+                            const timeB = new Date(b.teeTime).getHours() * 60 + new Date(b.teeTime).getMinutes();
                             return timeA - timeB;
                           })
                           .map((match) => (
@@ -1312,40 +859,30 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                 <div className="text-sm font-medium text-black">{match.player1.name}</div>
                                 <div className="text-xs text-gray-500">{match.player1.teamName}</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-sm font-bold text-black">{match.player1.score}</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-xs font-medium text-gray-500">vs</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-sm font-bold text-black">{match.player2.score}</div>
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap">
                                 <div className="text-sm font-medium text-black">{match.player2.name}</div>
                                 <div className="text-xs text-gray-500">{match.player2.teamName}</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-sm text-black">
                                   {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-center">
+                              <td className="px-3 py-2 text-center">
                                 <div className="text-sm text-black">{match.tee}</div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-green-50 border-l group-hover:bg-gray-50">
-                                <Link
-                                  href={`/events/${params.id}/matches/${match._id}/edit`}
-                                  className="text-blue-600 hover:text-blue-900 mr-3"
-                                >
-                                  Edit
-                                </Link>
-                                <button
-                                  onClick={() => handleDeleteMatchClick(match)}
-                                  className="text-red-600 hover:text-red-900"
-                                >
-                                  Delete
-                                </button>
+                              <td className="px-3 py-2 text-right text-sm font-medium sticky right-0 bg-green-50 border-l group-hover:bg-gray-50">
+                                <Link href={`/events/${params.id}/matches/${match._id}/edit`} className="text-blue-600 hover:text-blue-900 mr-3">Edit</Link>
+                                <button onClick={() => handleDeleteMatchClick(match)} className="text-red-600 hover:text-red-900">Delete</button>
                               </td>
                             </tr>
                           ))}
@@ -1400,7 +937,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             onClick={() => handleOpenAddPlayerModal(team)}
                             className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-sm"
                           >
-                            Add Free Player
+                            Add Player
                           </button>
                           <button
                             onClick={() => handleRemoveTeamClick(team)}
@@ -1416,37 +953,22 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Member Name
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Captain
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              HCP
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Tee
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              P_HCP
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Gender
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Captain</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">HCP</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tee</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">P_HCP</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gender</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {team.members?.length ? (
                             team.members.map((member, idx) => {
-                              const details = playerDetails[member.playerId];
-                              if (!details) return null;
+                              const playerDetails = getPlayerDetails(member.playerId);
+                              if (!playerDetails) return null;
                               
-                              // Get available tees based on gender
-                              const availableTees = details.gender === 'Female' 
+                              const availableTees = playerDetails.gender === 'Female' 
                                 ? event?.course?.womenTees || []
                                 : event?.course?.menTees || [];
                               
@@ -1454,22 +976,21 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                 <tr key={idx} className="hover:bg-gray-50">
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <span className="text-sm font-medium text-gray-900">
-                                      {details.name}
+                                      {playerDetails.name}
                                     </span>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-black">{details.isCaptain ? 'Yes' : 'No'}</div>
+                                    <div className="text-sm text-black">{member.isCaptain ? 'Yes' : 'No'}</div>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-sm text-black">{details.handicap}</span>
+                                      <span className="text-sm text-black">{playerDetails.handicap}</span>
                                       <button
                                         onClick={() => handleUpdateHandicapClick(
                                           member.playerId,
-                                          member.playerType,
-                                          team._id,
-                                          details.name,
-                                          typeof details.handicap === 'string' ? parseFloat(details.handicap) || 0 : details.handicap
+                                          playerDetails.name,
+                                          playerDetails.handicap,
+                                          playerDetails.gender
                                         )}
                                         className="text-gray-400 hover:text-blue-600 transition-colors"
                                         title="Edit handicap index"
@@ -1487,7 +1008,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                         onClick={() => handleUpdateTeeClick(
                                           team._id,
                                           idx,
-                                          details.name,
+                                          playerDetails.name,
                                           member.tee || '',
                                           availableTees
                                         )}
@@ -1507,11 +1028,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                       if (!selectedTee || !coursePar || !event?.handicapAllowance) {
                                         return <span className="text-sm text-gray-400">-</span>;
                                       }
-                                      const handicapIndex = typeof details.handicap === 'string' 
-                                        ? parseFloat(details.handicap) || 0 
-                                        : details.handicap;
                                       const playingHcp = calculatePlayingHandicap(
-                                        handicapIndex,
+                                        playerDetails.handicap,
                                         selectedTee.slope,
                                         selectedTee.cr,
                                         coursePar,
@@ -1521,11 +1039,11 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                     })()}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-black">{details.gender}</div>
+                                    <div className="text-sm text-black">{playerDetails.gender}</div>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button
-                                      onClick={() => handleRemoveMemberClick(team._id, idx, details.name)}
+                                      onClick={() => handleRemoveMemberClick(team._id, idx, playerDetails.name)}
                                       className="text-red-600 hover:text-red-900"
                                     >
                                       Remove
@@ -1553,27 +1071,17 @@ export default function EventDetails({ params }: { params: { id: string } }) {
 
         {/* Add Team Modal */}
         {isAddTeamModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-black">Add Team to Event</h2>
-                <button
-                  onClick={() => {
-                    setIsAddTeamModalOpen(false);
-                    setError(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
+                <button onClick={() => setIsAddTeamModalOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
               </div>
               <div className="space-y-4">
                 {availableTeams.length === 0 ? (
                   <div className="text-center p-4">
                     <p className="text-sm text-gray-500 mb-2">All teams have been added to this event</p>
-                    <a href="/teams" className="text-green-600 hover:text-green-800">
-                      Create a new team
-                    </a>
+                    <Link href="/teams" className="text-green-600 hover:text-green-800">Create a new team</Link>
                   </div>
                 ) : (
                   <>
@@ -1582,9 +1090,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                       <div key={team._id} className="flex justify-between items-center p-4 border rounded-md hover:bg-gray-50">
                         <div>
                           <h3 className="text-sm font-medium text-black">{team.name}</h3>
-                          <p className="text-sm text-gray-500">
-                            {team.members?.length || 0} members
-                          </p>
+                          <p className="text-sm text-gray-500">{team.members?.length || 0} members</p>
                         </div>
                         <button
                           onClick={() => handleAddTeam(team._id)}
@@ -1601,111 +1107,17 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        {/* Rename Event Modal */}
-        {isRenameEventModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Rename Event</h2>
-                <button
-                  onClick={() => {
-                    setIsRenameEventModalOpen(false);
-                    setError(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="eventName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Event Name
-                  </label>
-                  <input
-                    type="text"
-                    id="eventName"
-                    value={newEventName}
-                    onChange={(e) => setNewEventName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    placeholder="Enter event name"
-                  />
-                </div>
-                <div className="flex justify-end space-x-2 mt-4">
-                  <button
-                    onClick={() => {
-                      setIsRenameEventModalOpen(false);
-                      setError(null);
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleRenameEvent}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Remove Member Confirmation Modal */}
-        {isRemoveMemberModalOpen && memberToRemove && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Remove Member</h2>
-                <button
-                  onClick={() => {
-                    setIsRemoveMemberModalOpen(false);
-                    setMemberToRemove(null);
-                    setError(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              <p className="mb-4 text-gray-700">
-                Are you sure you want to remove {memberToRemove.name} from this team?
-              </p>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setIsRemoveMemberModalOpen(false);
-                    setMemberToRemove(null);
-                  }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleRemoveMember(memberToRemove.teamId, memberToRemove.index)}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Add Free Player Modal */}
+        {/* Add Player Modal */}
         {isAddPlayerModalOpen && selectedTeamForPlayer && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Add Free Player to {selectedTeamForPlayer.name}</h2>
+                <h2 className="text-xl font-semibold text-black">Add Player to {selectedTeamForPlayer.name}</h2>
                 <button
                   onClick={() => {
                     setIsAddPlayerModalOpen(false);
                     setSelectedTeamForPlayer(null);
                     setPlayerSearchTerm('');
-                    setError(null);
                   }}
                   className="text-gray-500 hover:text-gray-700"
                 >
@@ -1713,40 +1125,26 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 </button>
               </div>
               
-              {/* Add search filter */}
               <div className="mb-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search players..."
-                    value={playerSearchTerm}
-                    onChange={(e) => setPlayerSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  />
-                  <svg 
-                    className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
+                <input
+                  type="text"
+                  placeholder="Search players..."
+                  value={playerSearchTerm}
+                  onChange={(e) => setPlayerSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                />
               </div>
               
               <div className="space-y-4 overflow-y-auto flex-grow">
-                {freePlayers.length === 0 ? (
+                {allPlayers.length === 0 ? (
                   <div className="text-center p-4">
-                    <p className="text-sm text-gray-500 mb-2">No free players available</p>
-                    <a href="/players" className="text-blue-600 hover:text-blue-800">
-                      Create a new player
-                    </a>
+                    <p className="text-sm text-gray-500 mb-2">No players available</p>
+                    <Link href="/players" className="text-blue-600 hover:text-blue-800">Create a new player</Link>
                   </div>
                 ) : (
                   <>
                     <p className="text-sm text-gray-500">Select a player to add to this team:</p>
-                    {freePlayers
+                    {allPlayers
                       .filter(player => 
                         playerSearchTerm === '' || 
                         player.name.toLowerCase().includes(playerSearchTerm.toLowerCase())
@@ -1755,9 +1153,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                         <div key={player._id} className="flex justify-between items-center p-4 border rounded-md hover:bg-gray-50">
                           <div>
                             <h3 className="text-sm font-medium text-black">{player.name}</h3>
-                            <p className="text-sm text-gray-500">
-                              HCP Index: {player.handicap} | {player.gender}
-                            </p>
+                            <p className="text-sm text-gray-500">HCP Index: {player.handicap} | {player.gender}</p>
                           </div>
                           <button
                             onClick={() => handleAddPlayerToTeam(player)}
@@ -1774,22 +1170,30 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        {/* Remove Team Confirmation Modal */}
+        {/* Remove Member Modal */}
+        {isRemoveMemberModalOpen && memberToRemove && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-black">Remove Member</h2>
+                <button onClick={() => { setIsRemoveMemberModalOpen(false); setMemberToRemove(null); }} className="text-gray-500 hover:text-gray-700">✕</button>
+              </div>
+              <p className="mb-4 text-gray-700">Are you sure you want to remove {memberToRemove.name} from this team?</p>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => { setIsRemoveMemberModalOpen(false); setMemberToRemove(null); }} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+                <button onClick={() => handleRemoveMember(memberToRemove.teamId, memberToRemove.index)} className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600">Remove</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Remove Team Modal */}
         {isRemoveTeamModalOpen && teamToRemove && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-black">Remove Team</h2>
-                <button
-                  onClick={() => {
-                    setIsRemoveTeamModalOpen(false);
-                    setTeamToRemove(null);
-                    setError(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
+                <button onClick={() => { setIsRemoveTeamModalOpen(false); setTeamToRemove(null); }} className="text-gray-500 hover:text-gray-700">✕</button>
               </div>
               <p className="mb-4 text-gray-700">
                 Are you sure you want to remove the team &quot;{teamToRemove.name}&quot; from this event?
@@ -1800,173 +1204,21 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 )}
               </p>
               <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setIsRemoveTeamModalOpen(false);
-                    setTeamToRemove(null);
-                  }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleRemoveTeam(teamToRemove._id)}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
-                >
-                  Remove
-                </button>
+                <button onClick={() => { setIsRemoveTeamModalOpen(false); setTeamToRemove(null); }} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+                <button onClick={() => handleRemoveTeam(teamToRemove._id)} className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600">Remove</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Edit Member Modal */}
-        {isEditMemberModalOpen && memberToEdit && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Edit Team Member</h2>
-                <button
-                  onClick={() => {
-                    setIsEditMemberModalOpen(false);
-                    setMemberToEdit(null);
-                    setMemberTeamIdToEdit(null);
-                    setMemberIndexToEdit(null);
-                    setMemberEventTee('');
-                    setError(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              <form onSubmit={handleEditMember}>
-                <div className="mb-4">
-                  <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Member Name
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-name"
-                    value={memberToEdit.name}
-                    onChange={(e) => setMemberToEdit({...memberToEdit, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap Index
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-handicap"
-                    value={memberToEdit.handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setMemberToEdit({...memberToEdit, handicap: value});
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setMemberToEdit({...memberToEdit, handicap: isNaN(numValue) ? 0 : numValue});
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-700 mb-1">
-                    Gender
-                  </label>
-                  <select
-                    id="edit-gender"
-                    value={memberToEdit.gender}
-                    onChange={(e) => setMemberToEdit({...memberToEdit, gender: e.target.value as 'Male' | 'Female'})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-tee" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tee (for this event)
-                  </label>
-                  <select
-                    id="edit-tee"
-                    value={memberEventTee}
-                    onChange={(e) => setMemberEventTee(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                  >
-                    <option value="">Select Tee</option>
-                    {(memberToEdit.gender === 'Female' 
-                      ? event?.course?.womenTees || []
-                      : event?.course?.menTees || []
-                    ).map((tee) => (
-                      <option key={tee.name} value={tee.name}>{tee.name} (CR: {tee.cr}, Slope: {tee.slope})</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="flex items-center text-sm font-medium text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={memberToEdit.isCaptain}
-                      onChange={(e) => setMemberToEdit({...memberToEdit, isCaptain: e.target.checked})}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    Team Captain
-                  </label>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditMemberModalOpen(false);
-                      setMemberToEdit(null);
-                      setMemberTeamIdToEdit(null);
-                      setMemberIndexToEdit(null);
-                      setMemberEventTee('');
-                      setError(null);
-                    }}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Delete Match Confirmation Modal */}
+        {/* Delete Match Modal */}
         {isDeleteMatchModalOpen && matchToDeleteDetails && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-black">Delete Match</h2>
-                <button
-                  onClick={() => {
-                    setIsDeleteMatchModalOpen(false);
-                    setMatchToDelete(null);
-                    setMatchToDeleteDetails(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
+                <button onClick={() => { setIsDeleteMatchModalOpen(false); setMatchToDelete(null); setMatchToDeleteDetails(null); }} className="text-gray-500 hover:text-gray-700">✕</button>
               </div>
-              
               <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
                 <div className="flex justify-between items-center mb-3">
                   <div>
@@ -1975,11 +1227,9 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   </div>
                   <div className="text-xl font-bold">{matchToDeleteDetails.player1.score}</div>
                 </div>
-                
                 <div className="flex justify-center items-center mb-3">
                   <span className="text-sm font-medium text-gray-500">vs</span>
                 </div>
-                
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-medium text-gray-900">{matchToDeleteDetails.player2.name}</p>
@@ -1988,76 +1238,35 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                   <div className="text-xl font-bold">{matchToDeleteDetails.player2.score}</div>
                 </div>
               </div>
-              
-              <p className="mb-4 text-gray-700">
-                Are you sure you want to delete this match? This action cannot be undone.
-              </p>
+              <p className="mb-4 text-gray-700">Are you sure you want to delete this match? This action cannot be undone.</p>
               <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setIsDeleteMatchModalOpen(false);
-                    setMatchToDelete(null);
-                    setMatchToDeleteDetails(null);
-                  }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteMatch}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
-                >
-                  Delete
-                </button>
+                <button onClick={() => { setIsDeleteMatchModalOpen(false); setMatchToDelete(null); setMatchToDeleteDetails(null); }} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+                <button onClick={handleDeleteMatch} className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600">Delete</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Delete All Matches Confirmation Modal */}
+        {/* Delete All Matches Modal */}
         {isDeleteAllMatchesModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-black">Delete All Matches</h2>
-                <button
-                  onClick={() => {
-                    setIsDeleteAllMatchesModalOpen(false);
-                    setError(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
+                <button onClick={() => setIsDeleteAllMatchesModalOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
               </div>
-              
               <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
-                <p className="text-gray-700">
-                  You are about to delete all {matches.length} matches from this event. This action cannot be undone.
-                </p>
+                <p className="text-gray-700">You are about to delete all {matches.length} matches from this event. This action cannot be undone.</p>
               </div>
-              
               <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setIsDeleteAllMatchesModalOpen(false);
-                  }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteAllMatches}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
-                >
-                  Delete All Matches
-                </button>
+                <button onClick={() => setIsDeleteAllMatchesModalOpen(false)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
+                <button onClick={handleDeleteAllMatches} className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600">Delete All Matches</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Course Snapshot Modal */}
+        {/* Course Modal */}
         {isCourseModalOpen && event?.course && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -2067,12 +1276,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 onClose={() => setIsCourseModalOpen(false)}
               />
               <div className="mt-4 pt-4 border-t border-gray-200 flex justify-end">
-                <button
-                  onClick={() => setIsCourseModalOpen(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                >
-                  Close
-                </button>
+                <button onClick={() => setIsCourseModalOpen(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Close</button>
               </div>
             </div>
           </div>
@@ -2082,53 +1286,23 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         {isUpdateHandicapModalOpen && handicapToUpdate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Update Handicap Index
-              </h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Updating handicap for <span className="font-medium">{handicapToUpdate.name}</span>
-              </p>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Update Handicap Index</h2>
+              <p className="text-sm text-gray-600 mb-4">Updating handicap for <span className="font-medium">{handicapToUpdate.name}</span></p>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Handicap Index
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Handicap Index</label>
                 <input
                   type="text"
                   value={handicapToUpdate.newHandicap}
-                  onChange={(e) => setHandicapToUpdate({
-                    ...handicapToUpdate,
-                    newHandicap: e.target.value
-                  })}
+                  onChange={(e) => setHandicapToUpdate({ ...handicapToUpdate, newHandicap: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  placeholder="Enter handicap index"
                   autoFocus
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Current: {handicapToUpdate.currentHandicap}
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Current: {handicapToUpdate.currentHandicap}</p>
               </div>
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
-                  {error}
-                </div>
-              )}
+              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
               <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setIsUpdateHandicapModalOpen(false);
-                    setHandicapToUpdate(null);
-                    setError(null);
-                  }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdateHandicap}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Save
-                </button>
+                <button onClick={() => { setIsUpdateHandicapModalOpen(false); setHandicapToUpdate(null); setError(null); }} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
+                <button onClick={handleUpdateHandicap} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
               </div>
             </div>
           </div>
@@ -2138,22 +1312,13 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         {isUpdateTeeModalOpen && teeToUpdate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Update Tee
-              </h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Updating tee for <span className="font-medium">{teeToUpdate.name}</span>
-              </p>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Update Tee</h2>
+              <p className="text-sm text-gray-600 mb-4">Updating tee for <span className="font-medium">{teeToUpdate.name}</span></p>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tee
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tee</label>
                 <select
                   value={teeToUpdate.newTee}
-                  onChange={(e) => setTeeToUpdate({
-                    ...teeToUpdate,
-                    newTee: e.target.value
-                  })}
+                  onChange={(e) => setTeeToUpdate({ ...teeToUpdate, newTee: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
                   <option value="">Select Tee</option>
@@ -2161,34 +1326,12 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     <option key={tee.name} value={tee.name}>{tee.name}</option>
                   ))}
                 </select>
-                {teeToUpdate.currentTee && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Current: {teeToUpdate.currentTee}
-                  </p>
-                )}
+                {teeToUpdate.currentTee && <p className="mt-1 text-xs text-gray-500">Current: {teeToUpdate.currentTee}</p>}
               </div>
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
-                  {error}
-                </div>
-              )}
+              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
               <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setIsUpdateTeeModalOpen(false);
-                    setTeeToUpdate(null);
-                    setError(null);
-                  }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdateTee}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Save
-                </button>
+                <button onClick={() => { setIsUpdateTeeModalOpen(false); setTeeToUpdate(null); setError(null); }} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
+                <button onClick={handleUpdateTee} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>
               </div>
             </div>
           </div>
@@ -2196,4 +1339,4 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       </div>
     </main>
   );
-} 
+}

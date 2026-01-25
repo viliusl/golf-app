@@ -6,16 +6,16 @@ import Link from 'next/link';
 import { calculateEffectiveHandicap, calculatePlayingHandicap } from '@/lib/handicap';
 import { calculateScore } from '@/lib/scoring';
 
-interface TeamMember {
+interface Player {
+  _id: string;
   name: string;
-  isCaptain: boolean;
   handicap: number;
   gender: 'Male' | 'Female';
 }
 
 interface EventTeamMember {
-  playerType: 'free' | 'team_member';
   playerId: string;
+  isCaptain: boolean;
   tee?: string;
 }
 
@@ -23,12 +23,6 @@ interface EventTeam {
   _id: string;
   name: string;
   members: EventTeamMember[];
-}
-
-interface Team {
-  _id: string;
-  name: string;
-  members: TeamMember[];
 }
 
 interface CourseHole {
@@ -143,19 +137,11 @@ export default function AddMatch({ params }: { params: { id: string } }) {
           setHoleScores(courseHoles);
         }
         
-        // Fetch teams data
-        const teamsResponse = await fetch('/api/teams');
-        if (!teamsResponse.ok) {
-          throw new Error(`HTTP error! status: ${teamsResponse.status}`);
-        }
-        const teamsData = await teamsResponse.json();
-        
-        // Fetch free players
         const playersResponse = await fetch('/api/players');
         if (!playersResponse.ok) {
           throw new Error(`HTTP error! status: ${playersResponse.status}`);
         }
-        const freePlayersData = await playersResponse.json();
+        const playersData = await playersResponse.json();
         
         // Helper function to calculate playing handicap
         const getPlayingHandicap = (
@@ -182,68 +168,29 @@ export default function AddMatch({ params }: { params: { id: string } }) {
           );
         };
         
-        // Create a map of team members
+        // Create player options from event teams
         const allPlayers: PlayerOption[] = [];
         const processedPlayerIds = new Set<string>();
         
-        // Add players from teams
+        // Add players from event teams - playerId references Player collection directly
         data.teams.forEach((eventTeam: EventTeam) => {
-          const teamData = teamsData.find((t: Team) => t._id === eventTeam._id);
-          if (teamData) {
-            eventTeam.members.forEach((member: EventTeamMember) => {
-              if (member.playerType === 'team_member') {
-                // Handle team members
-                const teamMember = teamData.members.find((m: TeamMember & { _id: string }) => m._id === member.playerId);
-                if (teamMember && !processedPlayerIds.has(member.playerId)) {
-                  const playingHcp = getPlayingHandicap(teamMember.handicap, teamMember.gender, member.tee);
-                  allPlayers.push({
-                    name: teamMember.name,
-                    teamName: teamData.name,
-                    handicapIndex: teamMember.handicap,
-                    playingHandicap: playingHcp,
-                    gender: teamMember.gender,
-                    tee: member.tee
-                  });
-                  processedPlayerIds.add(member.playerId);
-                }
-              } else if (member.playerType === 'free') {
-                // Handle free players in teams
-                const freePlayer = freePlayersData.find((p: any) => p._id === member.playerId);
-                if (freePlayer && !processedPlayerIds.has(freePlayer._id)) {
-                  const playingHcp = getPlayingHandicap(freePlayer.handicap, freePlayer.gender, member.tee);
-                  allPlayers.push({
-                    name: freePlayer.name,
-                    teamName: teamData.name,
-                    handicapIndex: freePlayer.handicap,
-                    playingHandicap: playingHcp,
-                    gender: freePlayer.gender,
-                    tee: member.tee
-                  });
-                  processedPlayerIds.add(freePlayer._id);
-                }
-              }
-            });
-          }
-        });
-        
-        // Add free players if they exist
-        if (data.freePlayers && Array.isArray(data.freePlayers)) {
-          data.freePlayers.forEach((player: any) => {
-            const freePlayer = freePlayersData.find((p: any) => p._id === player.playerId);
-            if (freePlayer && !processedPlayerIds.has(freePlayer._id)) {
-              const playingHcp = getPlayingHandicap(freePlayer.handicap, freePlayer.gender, player.tee);
+          eventTeam.members.forEach((member: EventTeamMember) => {
+            const player = playersData.find((p: Player) => p._id === member.playerId);
+            
+            if (player && !processedPlayerIds.has(member.playerId)) {
+              const playingHcp = getPlayingHandicap(player.handicap, player.gender, member.tee);
               allPlayers.push({
-                name: freePlayer.name,
-                teamName: 'Free Player',
-                handicapIndex: freePlayer.handicap,
+                name: player.name,
+                teamName: eventTeam.name,
+                handicapIndex: player.handicap,
                 playingHandicap: playingHcp,
-                gender: freePlayer.gender,
-                tee: player.tee
+                gender: player.gender,
+                tee: member.tee
               });
-              processedPlayerIds.add(freePlayer._id);
+              processedPlayerIds.add(member.playerId);
             }
           });
-        }
+        });
         
         console.log('All players:', allPlayers);
         setPlayerOptions(allPlayers);

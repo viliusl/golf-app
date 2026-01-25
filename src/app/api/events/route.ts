@@ -9,11 +9,9 @@ interface TeamData {
   _id: string;
   name: string;
   members: {
-    name: string;
+    playerId: string;
     isCaptain: boolean;
-    handicap: number;
-    tee: string;
-    gender: string;
+    tee?: string;
   }[];
 }
 
@@ -21,11 +19,9 @@ interface EventTeam {
   _id: string;
   name: string;
   members: {
-    name: string;
+    playerId: string;
     isCaptain: boolean;
-    handicap: number;
-    tee: string;
-    gender: string;
+    tee?: string;
   }[];
 }
 
@@ -169,18 +165,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Add the team to the event
+    // Add the team to the event - members now reference Player IDs directly
     const newTeam = {
       _id: teamData._id.toString(),
       name: teamData.name,
-      members: teamData.members.map((member: { _id?: string; name: string; isCaptain: boolean; handicap: number; tee: string; gender: string }) => {
-        // Generate a new ID for the member if it doesn't have one
-        const memberId = member._id || new Types.ObjectId().toString();
-        return {
-          playerType: 'team_member' as const,
-          playerId: memberId
-        };
-      })
+      members: teamData.members.map((member: { playerId: Types.ObjectId; isCaptain: boolean }) => ({
+        playerId: member.playerId.toString(),
+        isCaptain: member.isCaptain || false
+      }))
     };
     console.log('Adding team to event:', newTeam);
     event.teams.push(newTeam);
@@ -275,10 +267,13 @@ export async function PUT(request: Request) {
           const newTeam = {
             _id: teamData._id.toString(),
             name: teamData.name,
-            members: teamData.members
+            members: teamData.members.map((member: { playerId: Types.ObjectId; isCaptain: boolean }) => ({
+              playerId: member.playerId.toString(),
+              isCaptain: member.isCaptain || false
+            }))
           };
           event.teams.push(newTeam);
-          console.log('Adding team:', newTeam); // Debug log
+          console.log('Adding team:', newTeam);
         }
       } else {
         // When removing a team, just filter the array
@@ -287,7 +282,7 @@ export async function PUT(request: Request) {
     }
 
     await event.save();
-    console.log('Saved event:', event); // Debug log
+    console.log('Saved event:', event);
 
     // Fetch the updated event to ensure we have the latest data
     const updatedEvent = await Event.findById(id);
@@ -298,7 +293,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    console.log('Updated event to return:', updatedEvent); // Debug log
+    console.log('Updated event to return:', updatedEvent);
     return NextResponse.json(updatedEvent);
   } catch (error) {
     console.error('Error updating event:', error);
@@ -338,4 +333,4 @@ export async function DELETE(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

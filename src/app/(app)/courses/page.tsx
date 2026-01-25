@@ -110,7 +110,6 @@ export default function CoursesPage() {
 
         {/* Courses Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4 text-black">All Courses</h2>
           {loading ? (
             <p className="text-black">Loading courses...</p>
           ) : courses.length === 0 ? (

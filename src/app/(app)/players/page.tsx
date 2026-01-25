@@ -165,7 +165,7 @@ export default function PlayersPage() {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Free Players</h1>
+          <h1 className="text-3xl font-bold text-black">Players</h1>
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
@@ -204,7 +204,6 @@ export default function PlayersPage() {
 
         {/* Players Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4 text-black">All Free Players</h2>
           {loading ? (
             <p className="text-black">Loading players...</p>
           ) : players.length === 0 ? (
