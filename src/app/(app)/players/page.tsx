@@ -31,8 +31,13 @@ export default function PlayersPage() {
     handicap: 0,
     gender: 'Male'
   });
-  const [inlineEditPlayerId, setInlineEditPlayerId] = useState<string | null>(null);
-  const [inlineEditValue, setInlineEditValue] = useState<string>('');
+  const [isHandicapModalOpen, setIsHandicapModalOpen] = useState(false);
+  const [handicapToUpdate, setHandicapToUpdate] = useState<{
+    playerId: string;
+    name: string;
+    currentHandicap: number;
+    newHandicap: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchPlayers();
@@ -156,33 +161,45 @@ export default function PlayersPage() {
     }
   };
 
-  const handleInlineHandicapSave = async (playerId: string) => {
-    const value = inlineEditValue.replace(',', '.');
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) {
-      setInlineEditPlayerId(null);
+  const handleUpdateHandicapClick = (player: Player) => {
+    setHandicapToUpdate({
+      playerId: player._id,
+      name: player.name,
+      currentHandicap: player.handicap,
+      newHandicap: String(player.handicap)
+    });
+    setIsHandicapModalOpen(true);
+  };
+
+  const handleUpdateHandicap = async () => {
+    if (!handicapToUpdate) return;
+    setError(null);
+
+    const newHandicapValue = parseFloat(handicapToUpdate.newHandicap.replace(',', '.'));
+    if (isNaN(newHandicapValue)) {
+      setError('Please enter a valid number');
       return;
     }
 
     try {
-      const response = await fetch(`/api/players?id=${playerId}`, {
+      const response = await fetch(`/api/players?id=${handicapToUpdate.playerId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ handicap: numValue }),
+        body: JSON.stringify({ handicap: newHandicapValue }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to update handicap');
       }
 
-      setInlineEditPlayerId(null);
+      setIsHandicapModalOpen(false);
+      setHandicapToUpdate(null);
       fetchPlayers();
     } catch (error) {
       console.error('Error updating handicap:', error);
       setError(error instanceof Error ? error.message : 'Failed to update handicap');
-      setInlineEditPlayerId(null);
     }
   };
 
@@ -271,31 +288,18 @@ export default function PlayersPage() {
                         </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {inlineEditPlayerId === player._id ? (
-                          <input
-                            type="text"
-                            value={inlineEditValue}
-                            onChange={(e) => setInlineEditValue(e.target.value)}
-                            onBlur={() => handleInlineHandicapSave(player._id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleInlineHandicapSave(player._id);
-                              if (e.key === 'Escape') setInlineEditPlayerId(null);
-                            }}
-                            className="w-16 px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
-                            autoFocus
-                          />
-                        ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-black">{player.handicap}</span>
                           <button
-                            onClick={() => {
-                              setInlineEditPlayerId(player._id);
-                              setInlineEditValue(String(player.handicap));
-                            }}
-                            className="text-sm text-black hover:bg-gray-100 px-2 py-1 rounded cursor-pointer"
-                            title="Click to edit"
+                            onClick={() => handleUpdateHandicapClick(player)}
+                            className="text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Edit handicap index"
                           >
-                            {player.handicap}
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
                           </button>
-                        )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-black">{player.gender}</div>
@@ -540,6 +544,45 @@ export default function PlayersPage() {
                   className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
                 >
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Update Handicap Modal */}
+        {isHandicapModalOpen && handicapToUpdate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Update Handicap Index</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Updating handicap for <span className="font-medium">{handicapToUpdate.name}</span>
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">New Handicap Index</label>
+                <input
+                  type="text"
+                  value={handicapToUpdate.newHandicap}
+                  onChange={(e) => setHandicapToUpdate({ ...handicapToUpdate, newHandicap: e.target.value })}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleUpdateHandicap(); }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                <p className="mt-1 text-xs text-gray-500">Current: {handicapToUpdate.currentHandicap}</p>
+              </div>
+              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => { setIsHandicapModalOpen(false); setHandicapToUpdate(null); setError(null); }}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateHandicap}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Save
                 </button>
               </div>
             </div>
