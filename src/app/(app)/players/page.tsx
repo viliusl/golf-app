@@ -131,12 +131,17 @@ export default function PlayersPage() {
     if (!playerToEdit) return;
     
     try {
+      // Use original handicap value - HCP should only be edited from Events page
       const response = await fetch(`/api/players?id=${playerToEdit._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editedPlayer),
+        body: JSON.stringify({
+          name: editedPlayer.name,
+          handicap: playerToEdit.handicap, // Keep original HCP
+          gender: editedPlayer.gender
+        }),
       });
 
       if (!response.ok) {
@@ -615,29 +620,6 @@ export default function PlayersPage() {
                     id="edit-name"
                     value={editedPlayer.name}
                     onChange={(e) => setEditedPlayer({ ...editedPlayer, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap Index
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-handicap"
-                    value={editedPlayer.handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setEditedPlayer({ ...editedPlayer, handicap: value });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setEditedPlayer({ ...editedPlayer, handicap: isNaN(numValue) ? 0 : numValue });
-                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
