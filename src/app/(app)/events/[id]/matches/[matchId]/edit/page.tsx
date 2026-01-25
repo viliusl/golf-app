@@ -6,16 +6,16 @@ import Link from 'next/link';
 import { calculateEffectiveHandicap, calculatePlayingHandicap } from '@/lib/handicap';
 import { calculateScore } from '@/lib/scoring';
 
-interface TeamMember {
+interface Player {
+  _id: string;
   name: string;
-  isCaptain: boolean;
   handicap: number;
   gender: 'Male' | 'Female';
 }
 
 interface EventTeamMember {
-  playerType: 'free' | 'team_member';
   playerId: string;
+  isCaptain: boolean;
   tee?: string;
 }
 
@@ -23,12 +23,6 @@ interface EventTeam {
   _id: string;
   name: string;
   members: EventTeamMember[];
-}
-
-interface Team {
-  _id: string;
-  name: string;
-  members: TeamMember[];
 }
 
 interface CourseHole {
@@ -146,14 +140,9 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
         
         setEvent(eventData);
         
-        // Fetch teams and free players data to get full player info
-        const [teamsResponse, playersResponse] = await Promise.all([
-          fetch('/api/teams'),
-          fetch('/api/players')
-        ]);
-        
-        const teamsData = teamsResponse.ok ? await teamsResponse.json() : [];
-        const freePlayersData = playersResponse.ok ? await playersResponse.json() : [];
+        // Fetch all players
+        const playersResponse = await fetch('/api/players');
+        const playersData = playersResponse.ok ? await playersResponse.json() : [];
         
         // Helper function to calculate playing handicap
         const getPlayingHandicap = (
@@ -179,45 +168,27 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
           );
         };
         
-        // Create a flat list of all available players from all teams in event
+        // Create player options from event teams - playerId references Player collection directly
         const allPlayers: PlayerOption[] = [];
         const processedPlayerIds = new Set<string>();
         
         eventData.teams.forEach((eventTeam: EventTeam) => {
-          const teamData = teamsData.find((t: Team) => t._id === eventTeam._id);
-          if (teamData) {
-            eventTeam.members.forEach((member: EventTeamMember) => {
-              if (member.playerType === 'team_member') {
-                const teamMember = teamData.members.find((m: TeamMember & { _id: string }) => m._id === member.playerId);
-                if (teamMember && !processedPlayerIds.has(member.playerId)) {
-                  const playingHcp = getPlayingHandicap(teamMember.handicap, teamMember.gender, member.tee);
-                  allPlayers.push({
-                    name: teamMember.name,
-                    teamName: teamData.name,
-                    handicapIndex: teamMember.handicap,
-                    playingHandicap: playingHcp,
-                    gender: teamMember.gender,
-                    tee: member.tee
-                  });
-                  processedPlayerIds.add(member.playerId);
-                }
-              } else if (member.playerType === 'free') {
-                const freePlayer = freePlayersData.find((p: any) => p._id === member.playerId);
-                if (freePlayer && !processedPlayerIds.has(freePlayer._id)) {
-                  const playingHcp = getPlayingHandicap(freePlayer.handicap, freePlayer.gender, member.tee);
-                  allPlayers.push({
-                    name: freePlayer.name,
-                    teamName: teamData.name,
-                    handicapIndex: freePlayer.handicap,
-                    playingHandicap: playingHcp,
-                    gender: freePlayer.gender,
-                    tee: member.tee
-                  });
-                  processedPlayerIds.add(freePlayer._id);
-                }
-              }
-            });
-          }
+          eventTeam.members.forEach((member: EventTeamMember) => {
+            const player = playersData.find((p: Player) => p._id === member.playerId);
+            
+            if (player && !processedPlayerIds.has(member.playerId)) {
+              const playingHcp = getPlayingHandicap(player.handicap, player.gender, member.tee);
+              allPlayers.push({
+                name: player.name,
+                teamName: eventTeam.name,
+                handicapIndex: player.handicap,
+                playingHandicap: playingHcp,
+                gender: player.gender,
+                tee: member.tee
+              });
+              processedPlayerIds.add(member.playerId);
+            }
+          });
         });
         
         setPlayerOptions(allPlayers);

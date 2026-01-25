@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Team from '@/models/Team';
+import Player from '@/models/Player';
+import mongoose from 'mongoose';
 
 export async function GET(request: Request) {
   try {
@@ -8,17 +10,21 @@ export async function GET(request: Request) {
     const id = searchParams.get('id');
     
     await connectDB();
+    
+    // Ensure Player model is registered for populate to work
+    // This is needed because the model must be registered before populate
+    Player.modelName;
 
     if (id) {
-      // Fetch single team
-      const team = await Team.findById(id);
+      // Fetch single team with populated player data
+      const team = await Team.findById(id).populate('members.playerId');
       if (!team) {
         return NextResponse.json({ error: 'Team not found' }, { status: 404 });
       }
       return NextResponse.json(team);
     } else {
-      // Fetch all teams
-      const teams = await Team.find().sort({ createdAt: -1 });
+      // Fetch all teams with populated player data
+      const teams = await Team.find().populate('members.playerId').sort({ createdAt: -1 });
       return NextResponse.json(teams);
     }
   } catch (error) {
@@ -37,13 +43,32 @@ export async function POST(request: Request) {
     }
 
     await connectDB();
+
+    // Validate that all player IDs exist if members are provided
+    if (body.members && body.members.length > 0) {
+      const playerIds = body.members.map((m: { playerId: string }) => m.playerId);
+      const validPlayerIds = playerIds.filter((id: string) => mongoose.Types.ObjectId.isValid(id));
+      
+      if (validPlayerIds.length !== playerIds.length) {
+        return NextResponse.json({ error: 'Invalid player ID format' }, { status: 400 });
+      }
+
+      const existingPlayers = await Player.find({ _id: { $in: validPlayerIds } });
+      if (existingPlayers.length !== validPlayerIds.length) {
+        return NextResponse.json({ error: 'One or more players not found' }, { status: 400 });
+      }
+    }
+
     const team = await Team.create({
       name: body.name,
-      members: body.members || [], // Use provided members or empty array
+      members: body.members || [],
       createdAt: new Date()
     });
-    console.log('Created team:', team);
-    return NextResponse.json(team, { status: 201 });
+
+    // Return team with populated player data
+    const populatedTeam = await Team.findById(team._id).populate('members.playerId');
+    console.log('Created team:', populatedTeam);
+    return NextResponse.json(populatedTeam, { status: 201 });
   } catch (error) {
     console.error('Error creating team:', error);
     return NextResponse.json({ 
@@ -109,11 +134,27 @@ export async function PUT(request: Request) {
 
     // Update members if provided
     if (members) {
+      // Validate that all player IDs exist
+      const playerIds = members.map((m: { playerId: string }) => m.playerId);
+      const validPlayerIds = playerIds.filter((id: string) => mongoose.Types.ObjectId.isValid(id));
+      
+      if (validPlayerIds.length !== playerIds.length) {
+        return NextResponse.json({ error: 'Invalid player ID format' }, { status: 400 });
+      }
+
+      const existingPlayers = await Player.find({ _id: { $in: validPlayerIds } });
+      if (existingPlayers.length !== validPlayerIds.length) {
+        return NextResponse.json({ error: 'One or more players not found' }, { status: 400 });
+      }
+
       team.members = members;
     }
 
     await team.save();
-    return NextResponse.json(team);
+
+    // Return team with populated player data
+    const populatedTeam = await Team.findById(id).populate('members.playerId');
+    return NextResponse.json(populatedTeam);
   } catch (error) {
     console.error('Error updating team:', error);
     return NextResponse.json(
@@ -121,4 +162,4 @@ export async function PUT(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

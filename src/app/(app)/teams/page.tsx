@@ -1,55 +1,76 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { calculatePlayingHandicap } from '@/lib/handicap';
+
+interface Player {
+  _id: string;
+  name: string;
+  handicap: number;
+  gender: 'Male' | 'Female';
+}
+
+interface TeamMember {
+  playerId: Player | null;
+  isCaptain: boolean;
+}
 
 interface Team {
   _id: string;
   name: string;
-  members: {
-    name: string;
-    isCaptain: boolean;
-    handicap: number;
-    gender: 'Male' | 'Female';
-  }[];
+  members: TeamMember[];
   createdAt: string;
+}
+
+interface FutureEvent {
+  _id: string;
+  name: string;
+  date: string;
+  teamId: string;
+  teamName: string;
+  memberIndex: number;
+  currentHandicap: number;
+  currentPlayingHcp: number | null;
+  tee: string | null;
+  // Data needed for recalculation
+  slope: number | null;
+  cr: number | null;
+  par: number;
+  handicapAllowance: number;
 }
 
 export default function Teams() {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
-  const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
   const [isRenameTeamModalOpen, setIsRenameTeamModalOpen] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
   const [teamToAddMember, setTeamToAddMember] = useState<Team | null>(null);
-  const [teamToEditMember, setTeamToEditMember] = useState<Team | null>(null);
   const [teamToRename, setTeamToRename] = useState<Team | null>(null);
-  const [memberToEdit, setMemberToEdit] = useState<{
-    name: string;
-    isCaptain: boolean;
-    handicap: number | string;
-    gender: 'Male' | 'Female';
-  } | null>(null);
-  const [memberIndexToEdit, setMemberIndexToEdit] = useState<number | null>(null);
   const [newTeam, setNewTeam] = useState({ name: '' });
-  const [newMember, setNewMember] = useState<{
-    name: string;
-    isCaptain: boolean;
-    handicap: number | string;
-    gender: 'Male' | 'Female';
-  }>({
-    name: '',
-    isCaptain: false,
-    handicap: 0,
-    gender: 'Male'
-  });
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
+  const [newMemberIsCaptain, setNewMemberIsCaptain] = useState(false);
+  const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [renamedTeamName, setRenamedTeamName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isHandicapModalOpen, setIsHandicapModalOpen] = useState(false);
+  const [handicapToUpdate, setHandicapToUpdate] = useState<{
+    playerId: string;
+    name: string;
+    currentHandicap: number;
+    newHandicap: string;
+  } | null>(null);
+  const [futureEvents, setFutureEvents] = useState<FutureEvent[]>([]);
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   useEffect(() => {
     fetchTeams();
+    fetchPlayers();
   }, []);
 
   const fetchTeams = async () => {
@@ -65,6 +86,19 @@ export default function Teams() {
       setError('Failed to load teams');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPlayers = async () => {
+    try {
+      const response = await fetch('/api/players');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setPlayers(data);
+    } catch (error) {
+      console.error('Error fetching players:', error);
     }
   };
 
@@ -100,14 +134,31 @@ export default function Teams() {
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teamToAddMember || !newMember.name) return;
+    if (!teamToAddMember || !selectedPlayerId) return;
     setError(null);
     
     try {
-      const updatedMembers = [...teamToAddMember.members, {
-        ...newMember,
-        handicap: typeof newMember.handicap === 'string' ? parseFloat(newMember.handicap) || 0 : newMember.handicap
-      }];
+      // Check if player is already in the team
+      const isAlreadyMember = teamToAddMember.members.some(
+        member => member.playerId?._id === selectedPlayerId
+      );
+      
+      if (isAlreadyMember) {
+        setError('This player is already a member of this team');
+        return;
+      }
+
+      const updatedMembers = [
+        ...teamToAddMember.members.map(m => ({
+          playerId: m.playerId?._id,
+          isCaptain: m.isCaptain
+        })),
+        {
+          playerId: selectedPlayerId,
+          isCaptain: newMemberIsCaptain
+        }
+      ];
+      
       const response = await fetch(`/api/teams?id=${teamToAddMember._id}`, {
         method: 'PUT',
         headers: {
@@ -123,36 +174,28 @@ export default function Teams() {
         throw new Error(errorData.details || 'Failed to add member');
       }
 
-      const updatedTeam = await response.json();
-      setTeams(teams.map(team => team._id === updatedTeam._id ? updatedTeam : team));
-
-      setNewMember({
-        name: '',
-        isCaptain: false,
-        handicap: 0,
-        gender: 'Male'
-      });
+      setSelectedPlayerId('');
+      setNewMemberIsCaptain(false);
+      setPlayerSearchTerm('');
       setIsAddMemberModalOpen(false);
       setTeamToAddMember(null);
+      fetchTeams();
     } catch (error) {
       console.error('Error adding member:', error);
       setError(error instanceof Error ? error.message : 'Failed to add member');
     }
   };
 
-  const handleEditMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!teamToEditMember || !memberToEdit || memberIndexToEdit === null) return;
-    setError(null);
-    
+  const handleRemoveMember = async (team: Team, index: number) => {
     try {
-      const updatedMembers = [...teamToEditMember.members];
-      updatedMembers[memberIndexToEdit] = {
-        ...memberToEdit,
-        handicap: typeof memberToEdit.handicap === 'string' ? parseFloat(memberToEdit.handicap) || 0 : memberToEdit.handicap
-      };
+      const updatedMembers = team.members
+        .filter((_, i) => i !== index)
+        .map(m => ({
+          playerId: m.playerId?._id,
+          isCaptain: m.isCaptain
+        }));
       
-      const response = await fetch(`/api/teams?id=${teamToEditMember._id}`, {
+      const response = await fetch(`/api/teams?id=${team._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -163,21 +206,241 @@ export default function Teams() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to update member');
+        throw new Error('Failed to remove member');
       }
 
-      const updatedTeam = await response.json();
-      setTeams(teams.map(team => team._id === updatedTeam._id ? updatedTeam : team));
-
-      setMemberToEdit(null);
-      setMemberIndexToEdit(null);
-      setIsEditMemberModalOpen(false);
-      setTeamToEditMember(null);
+      fetchTeams();
     } catch (error) {
-      console.error('Error updating member:', error);
-      setError(error instanceof Error ? error.message : 'Failed to update member');
+      console.error('Error removing member:', error);
+      setError(error instanceof Error ? error.message : 'Failed to remove member');
     }
+  };
+
+  const handleToggleCaptain = async (team: Team, memberIndex: number) => {
+    try {
+      const currentMember = team.members[memberIndex];
+      const newCaptainStatus = !currentMember.isCaptain;
+      
+      // Update members: if setting as captain, remove captain from others
+      const updatedMembers = team.members.map((m, idx) => ({
+        playerId: m.playerId?._id,
+        isCaptain: idx === memberIndex ? newCaptainStatus : (newCaptainStatus ? false : m.isCaptain)
+      }));
+      
+      const response = await fetch(`/api/teams?id=${team._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          members: updatedMembers
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update captain');
+      }
+
+      fetchTeams();
+    } catch (error) {
+      console.error('Error updating captain:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update captain');
+    }
+  };
+
+  const handleUpdateHandicapClick = async (member: TeamMember) => {
+    if (!member.playerId) return;
+    const playerId = member.playerId._id;
+    const playerHandicap = member.playerId.handicap;
+    
+    setHandicapToUpdate({
+      playerId: playerId,
+      name: member.playerId.name,
+      currentHandicap: playerHandicap,
+      newHandicap: String(playerHandicap)
+    });
+    setFutureEvents([]);
+    setSelectedEventIds(new Set());
+    setLoadingEvents(true);
+    setIsHandicapModalOpen(true);
+
+    // Fetch future events containing this player
+    try {
+      const response = await fetch('/api/events');
+      if (response.ok) {
+        const events = await response.json();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        interface EventMember {
+          playerId: string;
+          handicap?: number;
+          tee?: string;
+        }
+        interface EventTeam {
+          _id: string;
+          name: string;
+          members: EventMember[];
+        }
+        interface CourseHole {
+          par: number;
+        }
+        interface CourseTee {
+          name: string;
+          cr: number;
+          slope: number;
+        }
+        interface EventData {
+          _id: string;
+          name: string;
+          date: string;
+          handicapAllowance?: number;
+          course?: {
+            holes?: CourseHole[];
+            menTees?: CourseTee[];
+            womenTees?: CourseTee[];
+          };
+          teams: EventTeam[];
+        }
+
+        const playerFutureEvents: FutureEvent[] = [];
+        events.forEach((event: EventData) => {
+          const eventDate = new Date(event.date);
+          if (eventDate >= today) {
+            event.teams?.forEach((team: EventTeam) => {
+              team.members?.forEach((m: EventMember, memberIndex: number) => {
+                if (m.playerId === playerId) {
+                  // Get course data for playing handicap calculation
+                  const coursePar = event.course?.holes?.reduce((sum, h) => sum + h.par, 0) || 72;
+                  const handicapAllowance = event.handicapAllowance || 100;
+                  const allTees = [...(event.course?.menTees || []), ...(event.course?.womenTees || [])];
+                  const selectedTee = m.tee ? allTees.find(t => t.name === m.tee) : null;
+                  
+                  const currentHcp = m.handicap ?? playerHandicap;
+                  let currentPlayingHcp: number | null = null;
+                  
+                  if (selectedTee) {
+                    currentPlayingHcp = calculatePlayingHandicap(
+                      currentHcp,
+                      selectedTee.slope,
+                      selectedTee.cr,
+                      coursePar,
+                      handicapAllowance
+                    );
+                  }
+
+                  playerFutureEvents.push({
+                    _id: event._id,
+                    name: event.name,
+                    date: event.date,
+                    teamId: team._id,
+                    teamName: team.name,
+                    memberIndex,
+                    currentHandicap: currentHcp,
+                    currentPlayingHcp,
+                    tee: m.tee || null,
+                    slope: selectedTee?.slope || null,
+                    cr: selectedTee?.cr || null,
+                    par: coursePar,
+                    handicapAllowance
+                  });
+                }
+              });
+            });
+          }
+        });
+
+        setFutureEvents(playerFutureEvents);
+        // Pre-select all future events
+        setSelectedEventIds(new Set(playerFutureEvents.map(e => `${e._id}-${e.teamId}-${e.memberIndex}`)));
+      }
+    } catch (err) {
+      console.error('Error fetching future events:', err);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  const handleUpdateHandicap = async () => {
+    if (!handicapToUpdate) return;
+    setError(null);
+
+    const newHandicapValue = parseFloat(handicapToUpdate.newHandicap.replace(',', '.'));
+    if (isNaN(newHandicapValue)) {
+      setError('Please enter a valid number');
+      return;
+    }
+
+    try {
+      // Update global player handicap
+      const response = await fetch(`/api/players?id=${handicapToUpdate.playerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ handicap: newHandicapValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update handicap');
+      }
+
+      // Update selected future events
+      for (const futureEvent of futureEvents) {
+        const eventKey = `${futureEvent._id}-${futureEvent.teamId}-${futureEvent.memberIndex}`;
+        if (selectedEventIds.has(eventKey)) {
+          // Fetch current event data
+          const eventResponse = await fetch(`/api/events?id=${futureEvent._id}`);
+          if (eventResponse.ok) {
+            const eventData = await eventResponse.json();
+            
+            // Update the specific member's handicap
+            const updatedTeams = eventData.teams.map((team: { _id: string; members: { handicap?: number }[] }) => {
+              if (team._id === futureEvent.teamId) {
+                return {
+                  ...team,
+                  members: team.members.map((m: { handicap?: number }, idx: number) => {
+                    if (idx === futureEvent.memberIndex) {
+                      return { ...m, handicap: newHandicapValue };
+                    }
+                    return m;
+                  })
+                };
+              }
+              return team;
+            });
+
+            // Save updated event
+            await fetch(`/api/events?id=${futureEvent._id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ teams: updatedTeams }),
+            });
+          }
+        }
+      }
+
+      setIsHandicapModalOpen(false);
+      setHandicapToUpdate(null);
+      setFutureEvents([]);
+      setSelectedEventIds(new Set());
+      fetchTeams();
+    } catch (err) {
+      console.error('Error updating handicap:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update handicap');
+    }
+  };
+
+  const toggleEventSelection = (eventKey: string) => {
+    setSelectedEventIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventKey)) {
+        newSet.delete(eventKey);
+      } else {
+        newSet.add(eventKey);
+      }
+      return newSet;
+    });
   };
 
   const handleDeleteClick = (team: Team) => {
@@ -231,19 +494,11 @@ export default function Teams() {
         throw new Error('Failed to rename team');
       }
 
-      const updatedTeam = await response.json();
-      
-      // Update the teams list with the renamed team
-      setTeams(prevTeams => 
-        prevTeams.map(team => 
-          team._id === updatedTeam._id ? updatedTeam : team
-        )
-      );
-
       // Reset and close modal
       setRenamedTeamName('');
       setTeamToRename(null);
       setIsRenameTeamModalOpen(false);
+      fetchTeams();
     } catch (error) {
       console.error('Error renaming team:', error);
       setError(error instanceof Error ? error.message : 'Failed to rename team');
@@ -255,6 +510,22 @@ export default function Teams() {
     setRenamedTeamName(team.name);
     setIsRenameTeamModalOpen(true);
   };
+
+  // Get players that are not already in the team
+  const getAvailablePlayers = (team: Team) => {
+    const teamPlayerIds = team.members
+      .map(m => m.playerId?._id)
+      .filter(Boolean);
+    return players.filter(p => !teamPlayerIds.includes(p._id));
+  };
+
+  // Filter players based on search term
+  const filteredPlayers = teamToAddMember 
+    ? getAvailablePlayers(teamToAddMember).filter(player =>
+        playerSearchTerm === '' || 
+        player.name.toLowerCase().includes(playerSearchTerm.toLowerCase())
+      )
+    : [];
 
   return (
     <main className="p-8">
@@ -348,43 +619,54 @@ export default function Teams() {
                         team.members.map((member, index) => (
                           <tr key={index} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-medium text-gray-900">
+                                {member.playerId?.name || 'Unknown Player'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <button
-                                onClick={() => {
-                                  setTeamToEditMember(team);
-                                  setMemberToEdit(member);
-                                  setMemberIndexToEdit(index);
-                                  setIsEditMemberModalOpen(true);
-                                }}
-                                className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium"
+                                onClick={() => handleToggleCaptain(team, index)}
+                                className={`flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors ${
+                                  member.isCaptain 
+                                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                }`}
+                                title={member.isCaptain ? 'Click to remove captain' : 'Click to make captain'}
                               >
-                                {member.name}
+                                {member.isCaptain ? (
+                                  <>
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                    Captain
+                                  </>
+                                ) : (
+                                  'Set Captain'
+                                )}
                               </button>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">
-                                {member.isCaptain ? 'Yes' : 'No'}
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-black">{member.playerId?.handicap ?? '-'}</span>
+                                {member.playerId && (
+                                  <button
+                                    onClick={() => handleUpdateHandicapClick(member)}
+                                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                                    title="Edit handicap index"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                  </button>
+                                )}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">{member.handicap}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">{member.gender}</div>
+                              <div className="text-sm text-black">{member.playerId?.gender || '-'}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <button
-                                onClick={() => {
-                                  const updatedMembers = team.members.filter((_, i) => i !== index);
-                                  fetch(`/api/teams?id=${team._id}`, {
-                                    method: 'PUT',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                      members: updatedMembers
-                                    }),
-                                  }).then(() => fetchTeams());
-                                }}
+                                onClick={() => handleRemoveMember(team, index)}
                                 className="text-red-600 hover:text-red-900"
                               >
                                 Remove
@@ -454,16 +736,19 @@ export default function Teams() {
           </div>
         )}
 
-        {/* Add Member Modal */}
+        {/* Add Member Modal - Now with player selection */}
         {isAddMemberModalOpen && teamToAddMember && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-black">Add Member to {teamToAddMember.name}</h2>
                 <button
                   onClick={() => {
                     setIsAddMemberModalOpen(false);
                     setTeamToAddMember(null);
+                    setSelectedPlayerId('');
+                    setNewMemberIsCaptain(false);
+                    setPlayerSearchTerm('');
                     setError(null);
                   }}
                   className="text-gray-500 hover:text-gray-700"
@@ -471,75 +756,99 @@ export default function Teams() {
                   ✕
                 </button>
               </div>
-              <form onSubmit={handleAddMember}>
-                <div className="mb-4">
-                  <label htmlFor="member" className="block text-sm font-medium text-gray-700 mb-1">
-                    Member Name
-                  </label>
+              
+              {/* Search Box */}
+              <div className="mb-4">
+                <div className="relative">
                   <input
                     type="text"
-                    id="member"
-                    value={newMember.name}
-                    onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
+                    placeholder="Search players..."
+                    value={playerSearchTerm}
+                    onChange={(e) => setPlayerSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   />
+                  <svg 
+                    className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
+              </div>
+
+              <form onSubmit={handleAddMember} className="flex flex-col flex-grow">
+                <div className="mb-4 flex-grow overflow-y-auto">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select a Player
+                  </label>
+                  {filteredPlayers.length === 0 ? (
+                    <div className="text-center p-4">
+                      <p className="text-sm text-gray-500 mb-2">
+                        {players.length === 0 
+                          ? 'No players available' 
+                          : getAvailablePlayers(teamToAddMember).length === 0
+                            ? 'All players are already in this team'
+                            : 'No players match your search'}
+                      </p>
+                      <Link href="/players" className="text-blue-600 hover:text-blue-800">
+                        Go to Players page to add new players
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {filteredPlayers.map((player) => (
+                        <label
+                          key={player._id}
+                          className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${
+                            selectedPlayerId === player._id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="player"
+                            value={player._id}
+                            checked={selectedPlayerId === player._id}
+                            onChange={(e) => setSelectedPlayerId(e.target.value)}
+                            className="mr-3"
+                          />
+                          <div className="flex-grow">
+                            <div className="text-sm font-medium text-black">{player.name}</div>
+                            <div className="text-xs text-gray-500">
+                              HCP: {player.handicap} | {player.gender}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 <div className="mb-4">
                   <label className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      checked={newMember.isCaptain}
-                      onChange={(e) => setNewMember({ ...newMember, isCaptain: e.target.checked })}
+                      checked={newMemberIsCaptain}
+                      onChange={(e) => setNewMemberIsCaptain(e.target.checked)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm font-medium text-gray-700">Team Captain</span>
                   </label>
                 </div>
-                <div className="mb-4">
-                  <label htmlFor="handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap Index
-                  </label>
-                  <input
-                    type="text"
-                    id="handicap"
-                    value={newMember.handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setNewMember({ ...newMember, handicap: value });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setNewMember({ ...newMember, handicap: isNaN(numValue) ? 0 : numValue });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
-                    Gender
-                  </label>
-                  <select
-                    id="gender"
-                    value={newMember.gender}
-                    onChange={(e) => setNewMember({ ...newMember, gender: e.target.value as 'Male' | 'Female' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
+
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       setIsAddMemberModalOpen(false);
                       setTeamToAddMember(null);
+                      setSelectedPlayerId('');
+                      setNewMemberIsCaptain(false);
+                      setPlayerSearchTerm('');
                       setError(null);
                     }}
                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
@@ -548,117 +857,14 @@ export default function Teams() {
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                    disabled={!selectedPlayerId}
+                    className={`py-2 px-4 rounded-md transition-colors ${
+                      selectedPlayerId
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
                     Add Member
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Edit Member Modal */}
-        {isEditMemberModalOpen && teamToEditMember && memberToEdit && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Edit Member</h2>
-                <button
-                  onClick={() => {
-                    setIsEditMemberModalOpen(false);
-                    setTeamToEditMember(null);
-                    setMemberToEdit(null);
-                    setMemberIndexToEdit(null);
-                    setError(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              <form onSubmit={handleEditMember}>
-                <div className="mb-4">
-                  <label htmlFor="edit-member" className="block text-sm font-medium text-gray-700 mb-1">
-                    Member Name
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-member"
-                    value={memberToEdit.name}
-                    onChange={(e) => setMemberToEdit({ ...memberToEdit, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={memberToEdit.isCaptain}
-                      onChange={(e) => setMemberToEdit({ ...memberToEdit, isCaptain: e.target.checked })}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Team Captain</span>
-                  </label>
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-handicap" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap Index
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-handicap"
-                    value={memberToEdit.handicap}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      if (value === '' || value === '.' || /^\d*\.?\d*$/.test(value)) {
-                        setMemberToEdit({ ...memberToEdit, handicap: value });
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(',', '.');
-                      const numValue = parseFloat(value);
-                      setMemberToEdit({ ...memberToEdit, handicap: isNaN(numValue) ? 0 : numValue });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-700 mb-1">
-                    Gender
-                  </label>
-                  <select
-                    id="edit-gender"
-                    value={memberToEdit.gender}
-                    onChange={(e) => setMemberToEdit({ ...memberToEdit, gender: e.target.value as 'Male' | 'Female' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
-                    required
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditMemberModalOpen(false);
-                      setTeamToEditMember(null);
-                      setMemberToEdit(null);
-                      setMemberIndexToEdit(null);
-                      setError(null);
-                    }}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
-                  >
-                    Save Changes
                   </button>
                 </div>
               </form>
@@ -761,7 +967,117 @@ export default function Teams() {
             </div>
           </div>
         )}
+
+        {/* Update Handicap Modal */}
+        {isHandicapModalOpen && handicapToUpdate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Update Handicap Index</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Updating handicap for <span className="font-medium">{handicapToUpdate.name}</span>
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">New Handicap Index</label>
+                <input
+                  type="text"
+                  value={handicapToUpdate.newHandicap}
+                  onChange={(e) => setHandicapToUpdate({ ...handicapToUpdate, newHandicap: e.target.value })}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !loadingEvents) handleUpdateHandicap(); }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                <p className="mt-1 text-xs text-gray-500">Current: {handicapToUpdate.currentHandicap}</p>
+              </div>
+
+              {/* Future Events Section */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Update handicap in future events
+                </label>
+                {loadingEvents ? (
+                  <p className="text-sm text-gray-500">Loading events...</p>
+                ) : futureEvents.length === 0 ? (
+                  <p className="text-sm text-gray-500">No future events found for this player</p>
+                ) : (
+                  <div className="border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+                    {futureEvents.map((event) => {
+                      const eventKey = `${event._id}-${event.teamId}-${event.memberIndex}`;
+                      const newHcpValue = handicapToUpdate ? parseFloat(handicapToUpdate.newHandicap.replace(',', '.')) : NaN;
+                      const newPlayingHcp = event.slope && event.cr && !isNaN(newHcpValue)
+                        ? calculatePlayingHandicap(newHcpValue, event.slope, event.cr, event.par, event.handicapAllowance)
+                        : null;
+                      return (
+                        <label
+                          key={eventKey}
+                          className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedEventIds.has(eventKey)}
+                            onChange={() => toggleEventSelection(eventKey)}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900">{event.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(event.date).toLocaleDateString()} • Team: {event.teamName}
+                            </div>
+                            {event.tee ? (
+                              <div className="text-xs text-gray-600 mt-1">
+                                Playing HCP: {event.currentPlayingHcp}
+                                {newPlayingHcp !== null && newPlayingHcp !== event.currentPlayingHcp && (
+                                  <span className="text-blue-600 font-medium"> → {newPlayingHcp}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-orange-500 mt-1">No tee selected</div>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                {futureEvents.length > 0 && (
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEventIds(new Set(futureEvents.map(e => `${e._id}-${e.teamId}-${e.memberIndex}`)))}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEventIds(new Set())}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => { setIsHandicapModalOpen(false); setHandicapToUpdate(null); setFutureEvents([]); setSelectedEventIds(new Set()); setError(null); }}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateHandicap}
+                  disabled={loadingEvents}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
-} 
+}

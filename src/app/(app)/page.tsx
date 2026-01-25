@@ -159,7 +159,6 @@ export default function Home() {
 
         {/* Events Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4 text-black">Events</h2>
           {loading ? (
             <p className="text-black">Loading events...</p>
           ) : events.length === 0 ? (
@@ -200,7 +199,7 @@ export default function Home() {
                         )}
                         {event.handicapAllowance !== undefined && (
                           <div className="text-xs text-gray-500">
-                            HCP: {event.handicapAllowance}%
+                            HCP Allowance: {event.handicapAllowance}%
                           </div>
                         )}
                       </td>
@@ -296,7 +295,7 @@ export default function Home() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="handicapAllowance" className="block text-sm font-medium text-gray-700 mb-1">
-                    Handicap Allowance (%)
+                    HCP Allowance (%)
                   </label>
                   <input
                     type="number"
