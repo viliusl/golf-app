@@ -72,6 +72,10 @@ const TeamMemberSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  handicap: {
+    type: Number,
+    default: 0
+  },
   tee: {
     type: String,
     trim: true

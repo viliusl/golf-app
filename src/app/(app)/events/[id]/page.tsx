@@ -7,10 +7,11 @@ import Link from 'next/link';
 import { calculatePlayingHandicap } from '@/lib/handicap';
 import CourseView from '@/components/CourseView';
 
-// Event team member - references Player collection
+// Event team member - references Player collection with handicap snapshot
 interface EventTeamMember {
   playerId: string;
   isCaptain: boolean;
+  handicap?: number;
   tee?: string;
 }
 
@@ -99,6 +100,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     currentHandicap: number;
     newHandicap: string;
     gender: 'Male' | 'Female';
+    teamId: string;
+    memberIndex: number;
   } | null>(null);
   const [isUpdateTeeModalOpen, setIsUpdateTeeModalOpen] = useState(false);
   const [teeToUpdate, setTeeToUpdate] = useState<{
@@ -395,20 +398,24 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     playerId: string,
     name: string,
     currentHandicap: number,
-    gender: 'Male' | 'Female'
+    gender: 'Male' | 'Female',
+    teamId: string,
+    memberIndex: number
   ) => {
     setHandicapToUpdate({
       playerId,
       name,
       currentHandicap,
       newHandicap: currentHandicap.toString(),
-      gender
+      gender,
+      teamId,
+      memberIndex
     });
     setIsUpdateHandicapModalOpen(true);
   };
 
   const handleUpdateHandicap = async () => {
-    if (!handicapToUpdate) return;
+    if (!handicapToUpdate || !event) return;
     setError(null);
 
     const newHandicapValue = parseFloat(handicapToUpdate.newHandicap.replace(',', '.'));
@@ -418,8 +425,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     }
 
     try {
-      // All players are now in the Player collection
-      const response = await fetch(`/api/players?id=${handicapToUpdate.playerId}`, {
+      // Update global player handicap
+      const playerResponse = await fetch(`/api/players?id=${handicapToUpdate.playerId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -429,11 +436,38 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         }),
       });
 
-      if (!response.ok) {
+      if (!playerResponse.ok) {
         throw new Error('Failed to update player handicap');
       }
 
+      // Update event member handicap
+      const updatedTeams = event.teams.map(team => {
+        if (team._id === handicapToUpdate.teamId) {
+          return {
+            ...team,
+            members: team.members.map((member, idx) => {
+              if (idx === handicapToUpdate.memberIndex) {
+                return { ...member, handicap: newHandicapValue };
+              }
+              return member;
+            })
+          };
+        }
+        return team;
+      });
+
+      const eventResponse = await fetch(`/api/events?id=${event._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teams: updatedTeams }),
+      });
+
+      if (!eventResponse.ok) {
+        throw new Error('Failed to update event handicap');
+      }
+
       await fetchPlayersData();
+      await fetchEventData();
       setIsUpdateHandicapModalOpen(false);
       setHandicapToUpdate(null);
     } catch (error) {
@@ -984,13 +1018,15 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-sm text-black">{playerDetails.handicap}</span>
+                                      <span className="text-sm text-black">{member.handicap ?? playerDetails.handicap}</span>
                                       <button
                                         onClick={() => handleUpdateHandicapClick(
                                           member.playerId,
                                           playerDetails.name,
-                                          playerDetails.handicap,
-                                          playerDetails.gender
+                                          member.handicap ?? playerDetails.handicap,
+                                          playerDetails.gender,
+                                          team._id,
+                                          idx
                                         )}
                                         className="text-gray-400 hover:text-blue-600 transition-colors"
                                         title="Edit handicap index"
@@ -1025,11 +1061,12 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                     {(() => {
                                       const selectedTee = availableTees.find(t => t.name === member.tee);
                                       const coursePar = event?.course?.holes?.reduce((sum, hole) => sum + hole.par, 0) || 0;
+                                      const memberHandicap = member.handicap ?? playerDetails.handicap;
                                       if (!selectedTee || !coursePar || !event?.handicapAllowance) {
                                         return <span className="text-sm text-gray-400">-</span>;
                                       }
                                       const playingHcp = calculatePlayingHandicap(
-                                        playerDetails.handicap,
+                                        memberHandicap,
                                         selectedTee.slope,
                                         selectedTee.cr,
                                         coursePar,

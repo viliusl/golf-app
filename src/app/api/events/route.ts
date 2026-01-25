@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Event from '@/models/Event';
 import Team from '@/models/Team';
 import Course from '@/models/Course';
+import Player from '@/models/Player';
 import { Types } from 'mongoose';
 
 interface TeamData {
@@ -11,6 +12,7 @@ interface TeamData {
   members: {
     playerId: string;
     isCaptain: boolean;
+    handicap?: number;
     tee?: string;
   }[];
 }
@@ -21,6 +23,7 @@ interface EventTeam {
   members: {
     playerId: string;
     isCaptain: boolean;
+    handicap?: number;
     tee?: string;
   }[];
 }
@@ -165,13 +168,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Add the team to the event - members now reference Player IDs directly
+    // Fetch player handicaps for all team members
+    const playerIds = teamData.members.map((m: { playerId: Types.ObjectId }) => m.playerId);
+    const players = await Player.find({ _id: { $in: playerIds } });
+    const playerHandicapMap = new Map(players.map(p => [p._id.toString(), p.handicap]));
+
+    // Add the team to the event - store handicap snapshot for each member
     const newTeam = {
       _id: teamData._id.toString(),
       name: teamData.name,
       members: teamData.members.map((member: { playerId: Types.ObjectId; isCaptain: boolean }) => ({
         playerId: member.playerId.toString(),
-        isCaptain: member.isCaptain || false
+        isCaptain: member.isCaptain || false,
+        handicap: playerHandicapMap.get(member.playerId.toString()) || 0
       }))
     };
     console.log('Adding team to event:', newTeam);
@@ -264,12 +273,18 @@ export async function PUT(request: Request) {
         const newTeamId = teams[teams.length - 1];
         const teamData = await Team.findById(newTeamId);
         if (teamData) {
+          // Fetch player handicaps for all team members
+          const playerIds = teamData.members.map((m: { playerId: Types.ObjectId }) => m.playerId);
+          const players = await Player.find({ _id: { $in: playerIds } });
+          const playerHandicapMap = new Map(players.map(p => [p._id.toString(), p.handicap]));
+
           const newTeam = {
             _id: teamData._id.toString(),
             name: teamData.name,
             members: teamData.members.map((member: { playerId: Types.ObjectId; isCaptain: boolean }) => ({
               playerId: member.playerId.toString(),
-              isCaptain: member.isCaptain || false
+              isCaptain: member.isCaptain || false,
+              handicap: playerHandicapMap.get(member.playerId.toString()) || 0
             }))
           };
           event.teams.push(newTeam);
