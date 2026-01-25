@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Player } from '@/app/api/players/route';
+import { calculatePlayingHandicap } from '@/lib/handicap';
 
 interface FutureEvent {
   _id: string;
@@ -10,6 +11,14 @@ interface FutureEvent {
   teamId: string;
   teamName: string;
   memberIndex: number;
+  currentHandicap: number;
+  currentPlayingHcp: number | null;
+  tee: string | null;
+  // Data needed for recalculation
+  slope: number | null;
+  cr: number | null;
+  par: number;
+  handicapAllowance: number;
 }
 
 export default function PlayersPage() {
@@ -174,11 +183,12 @@ export default function PlayersPage() {
   };
 
   const handleUpdateHandicapClick = async (player: Player) => {
+    const newHandicapStr = String(player.handicap);
     setHandicapToUpdate({
       playerId: player._id,
       name: player.name,
       currentHandicap: player.handicap,
-      newHandicap: String(player.handicap)
+      newHandicap: newHandicapStr
     });
     setFutureEvents([]);
     setSelectedEventIds(new Set());
@@ -193,20 +203,77 @@ export default function PlayersPage() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        interface EventMember {
+          playerId: string;
+          handicap?: number;
+          tee?: string;
+        }
+        interface EventTeam {
+          _id: string;
+          name: string;
+          members: EventMember[];
+        }
+        interface CourseHole {
+          par: number;
+        }
+        interface CourseTee {
+          name: string;
+          cr: number;
+          slope: number;
+        }
+        interface EventData {
+          _id: string;
+          name: string;
+          date: string;
+          handicapAllowance?: number;
+          course?: {
+            holes?: CourseHole[];
+            menTees?: CourseTee[];
+            womenTees?: CourseTee[];
+          };
+          teams: EventTeam[];
+        }
+
         const playerFutureEvents: FutureEvent[] = [];
-        events.forEach((event: { _id: string; name: string; date: string; teams: { _id: string; name: string; members: { playerId: string }[] }[] }) => {
+        events.forEach((event: EventData) => {
           const eventDate = new Date(event.date);
           if (eventDate >= today) {
-            event.teams?.forEach(team => {
-              team.members?.forEach((member, memberIndex) => {
+            event.teams?.forEach((team: EventTeam) => {
+              team.members?.forEach((member: EventMember, memberIndex: number) => {
                 if (member.playerId === player._id) {
+                  // Get course data for playing handicap calculation
+                  const coursePar = event.course?.holes?.reduce((sum, h) => sum + h.par, 0) || 72;
+                  const handicapAllowance = event.handicapAllowance || 100;
+                  const allTees = [...(event.course?.menTees || []), ...(event.course?.womenTees || [])];
+                  const selectedTee = member.tee ? allTees.find(t => t.name === member.tee) : null;
+                  
+                  const currentHcp = member.handicap ?? player.handicap;
+                  let currentPlayingHcp: number | null = null;
+                  
+                  if (selectedTee) {
+                    currentPlayingHcp = calculatePlayingHandicap(
+                      currentHcp,
+                      selectedTee.slope,
+                      selectedTee.cr,
+                      coursePar,
+                      handicapAllowance
+                    );
+                  }
+
                   playerFutureEvents.push({
                     _id: event._id,
                     name: event.name,
                     date: event.date,
                     teamId: team._id,
                     teamName: team.name,
-                    memberIndex
+                    memberIndex,
+                    currentHandicap: currentHcp,
+                    currentPlayingHcp,
+                    tee: member.tee || null,
+                    slope: selectedTee?.slope || null,
+                    cr: selectedTee?.cr || null,
+                    par: coursePar,
+                    handicapAllowance
                   });
                 }
               });
@@ -685,9 +752,13 @@ export default function PlayersPage() {
                 ) : futureEvents.length === 0 ? (
                   <p className="text-sm text-gray-500">No future events found for this player</p>
                 ) : (
-                  <div className="border border-gray-200 rounded-md max-h-48 overflow-y-auto">
+                  <div className="border border-gray-200 rounded-md max-h-60 overflow-y-auto">
                     {futureEvents.map((event) => {
                       const eventKey = `${event._id}-${event.teamId}-${event.memberIndex}`;
+                      const newHcpValue = parseFloat(handicapToUpdate.newHandicap.replace(',', '.'));
+                      const newPlayingHcp = event.slope && event.cr && !isNaN(newHcpValue)
+                        ? calculatePlayingHandicap(newHcpValue, event.slope, event.cr, event.par, event.handicapAllowance)
+                        : null;
                       return (
                         <label
                           key={eventKey}
@@ -704,6 +775,16 @@ export default function PlayersPage() {
                             <div className="text-xs text-gray-500">
                               {new Date(event.date).toLocaleDateString()} • Team: {event.teamName}
                             </div>
+                            {event.tee ? (
+                              <div className="text-xs text-gray-600 mt-1">
+                                Playing HCP: {event.currentPlayingHcp}
+                                {newPlayingHcp !== null && newPlayingHcp !== event.currentPlayingHcp && (
+                                  <span className="text-blue-600 font-medium"> → {newPlayingHcp}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-orange-500 mt-1">No tee selected</div>
+                            )}
                           </div>
                         </label>
                       );

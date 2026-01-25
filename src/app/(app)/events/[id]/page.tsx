@@ -76,6 +76,14 @@ interface FutureEvent {
   teamId: string;
   teamName: string;
   memberIndex: number;
+  currentHandicap: number;
+  currentPlayingHcp: number | null;
+  tee: string | null;
+  // Data needed for recalculation
+  slope: number | null;
+  cr: number | null;
+  par: number;
+  handicapAllowance: number;
 }
 
 export default function EventDetails({ params }: { params: { id: string } }) {
@@ -436,23 +444,80 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        interface EventMember {
+          playerId: string;
+          handicap?: number;
+          tee?: string;
+        }
+        interface EventTeam {
+          _id: string;
+          name: string;
+          members: EventMember[];
+        }
+        interface CourseHole {
+          par: number;
+        }
+        interface CourseTee {
+          name: string;
+          cr: number;
+          slope: number;
+        }
+        interface EventData {
+          _id: string;
+          name: string;
+          date: string;
+          handicapAllowance?: number;
+          course?: {
+            holes?: CourseHole[];
+            menTees?: CourseTee[];
+            womenTees?: CourseTee[];
+          };
+          teams: EventTeam[];
+        }
+
         const playerFutureEvents: FutureEvent[] = [];
-        events.forEach((evt: { _id: string; name: string; date: string; teams: { _id: string; name: string; members: { playerId: string }[] }[] }) => {
+        events.forEach((evt: EventData) => {
           // Skip current event
           if (evt._id === params.id) return;
           
           const eventDate = new Date(evt.date);
           if (eventDate >= today) {
-            evt.teams?.forEach(team => {
-              team.members?.forEach((member, idx) => {
+            evt.teams?.forEach((team: EventTeam) => {
+              team.members?.forEach((member: EventMember, idx: number) => {
                 if (member.playerId === playerId) {
+                  // Get course data for playing handicap calculation
+                  const coursePar = evt.course?.holes?.reduce((sum, h) => sum + h.par, 0) || 72;
+                  const handicapAllowance = evt.handicapAllowance || 100;
+                  const allTees = [...(evt.course?.menTees || []), ...(evt.course?.womenTees || [])];
+                  const selectedTee = member.tee ? allTees.find(t => t.name === member.tee) : null;
+                  
+                  const currentHcp = member.handicap ?? currentHandicap;
+                  let currentPlayingHcp: number | null = null;
+                  
+                  if (selectedTee) {
+                    currentPlayingHcp = calculatePlayingHandicap(
+                      currentHcp,
+                      selectedTee.slope,
+                      selectedTee.cr,
+                      coursePar,
+                      handicapAllowance
+                    );
+                  }
+
                   playerFutureEvents.push({
                     _id: evt._id,
                     name: evt.name,
                     date: evt.date,
                     teamId: team._id,
                     teamName: team.name,
-                    memberIndex: idx
+                    memberIndex: idx,
+                    currentHandicap: currentHcp,
+                    currentPlayingHcp,
+                    tee: member.tee || null,
+                    slope: selectedTee?.slope || null,
+                    cr: selectedTee?.cr || null,
+                    par: coursePar,
+                    handicapAllowance
                   });
                 }
               });
@@ -1454,9 +1519,13 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 ) : futureEvents.length === 0 ? (
                   <p className="text-sm text-gray-500">No other future events found for this player</p>
                 ) : (
-                  <div className="border border-gray-200 rounded-md max-h-48 overflow-y-auto">
+                  <div className="border border-gray-200 rounded-md max-h-60 overflow-y-auto">
                     {futureEvents.map((futureEvent) => {
                       const eventKey = `${futureEvent._id}-${futureEvent.teamId}-${futureEvent.memberIndex}`;
+                      const newHcpValue = handicapToUpdate ? parseFloat(handicapToUpdate.newHandicap.replace(',', '.')) : NaN;
+                      const newPlayingHcp = futureEvent.slope && futureEvent.cr && !isNaN(newHcpValue)
+                        ? calculatePlayingHandicap(newHcpValue, futureEvent.slope, futureEvent.cr, futureEvent.par, futureEvent.handicapAllowance)
+                        : null;
                       return (
                         <label
                           key={eventKey}
@@ -1473,6 +1542,16 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             <div className="text-xs text-gray-500">
                               {new Date(futureEvent.date).toLocaleDateString()} • Team: {futureEvent.teamName}
                             </div>
+                            {futureEvent.tee ? (
+                              <div className="text-xs text-gray-600 mt-1">
+                                Playing HCP: {futureEvent.currentPlayingHcp}
+                                {newPlayingHcp !== null && newPlayingHcp !== futureEvent.currentPlayingHcp && (
+                                  <span className="text-blue-600 font-medium"> → {newPlayingHcp}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-orange-500 mt-1">No tee selected</div>
+                            )}
                           </div>
                         </label>
                       );
