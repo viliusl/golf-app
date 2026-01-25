@@ -39,6 +39,8 @@ export default function Teams() {
   const [playerSearchTerm, setPlayerSearchTerm] = useState('');
   const [renamedTeamName, setRenamedTeamName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [inlineEditPlayerId, setInlineEditPlayerId] = useState<string | null>(null);
+  const [inlineEditValue, setInlineEditValue] = useState<string>('');
 
   useEffect(() => {
     fetchTeams();
@@ -217,6 +219,36 @@ export default function Teams() {
     } catch (error) {
       console.error('Error updating captain:', error);
       setError(error instanceof Error ? error.message : 'Failed to update captain');
+    }
+  };
+
+  const handleInlineHandicapSave = async (playerId: string) => {
+    const value = inlineEditValue.replace(',', '.');
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      setInlineEditPlayerId(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/players?id=${playerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ handicap: numValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update handicap');
+      }
+
+      setInlineEditPlayerId(null);
+      fetchTeams(); // Refresh to get updated player data
+    } catch (error) {
+      console.error('Error updating handicap:', error);
+      setError(error instanceof Error ? error.message : 'Failed to update handicap');
+      setInlineEditPlayerId(null);
     }
   };
 
@@ -423,7 +455,33 @@ export default function Teams() {
                               </button>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">{member.playerId?.handicap ?? '-'}</div>
+                              {member.playerId?._id && inlineEditPlayerId === member.playerId._id ? (
+                                <input
+                                  type="text"
+                                  value={inlineEditValue}
+                                  onChange={(e) => setInlineEditValue(e.target.value)}
+                                  onBlur={() => handleInlineHandicapSave(member.playerId!._id)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleInlineHandicapSave(member.playerId!._id);
+                                    if (e.key === 'Escape') setInlineEditPlayerId(null);
+                                  }}
+                                  className="w-16 px-2 py-1 text-sm border border-blue-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
+                                  autoFocus
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    if (member.playerId?._id) {
+                                      setInlineEditPlayerId(member.playerId._id);
+                                      setInlineEditValue(String(member.playerId.handicap ?? 0));
+                                    }
+                                  }}
+                                  className="text-sm text-black hover:bg-gray-100 px-2 py-1 rounded cursor-pointer"
+                                  title="Click to edit"
+                                >
+                                  {member.playerId?.handicap ?? '-'}
+                                </button>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-black">{member.playerId?.gender || '-'}</div>
