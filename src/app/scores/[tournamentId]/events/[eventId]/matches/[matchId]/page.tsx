@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Match as MatchType } from '@/app/api/matches/route';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
 import { calculateEffectiveHandicap } from '@/lib/handicap';
 import { calculateScore } from '@/lib/scoring';
 
@@ -113,13 +114,22 @@ export default function PublicMatchView() {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-black">Match Details</h1>
-          <a 
-            href={`/scores/${tournamentId}/events/${eventId}`}
-            className="px-4 py-2 bg-white text-black border border-gray-300 hover:bg-gray-100 rounded-md"
-          >
-            Back to Event
-          </a>
+          <div className="flex items-center gap-4">
+            <a 
+              href={`/scores/${tournamentId}/events/${eventId}`}
+              className="px-4 py-2 bg-white text-black border border-gray-300 hover:bg-gray-100 rounded-md"
+            >
+              ← Back to Event
+            </a>
+            <h1 className="text-2xl font-semibold text-black">Match Details</h1>
+          </div>
+          <Image
+            src="/logo.svg"
+            alt="DGL.ONLINE"
+            width={120}
+            height={48}
+            className="h-10 w-auto"
+          />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-8">

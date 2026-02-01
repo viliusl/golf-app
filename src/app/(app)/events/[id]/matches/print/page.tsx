@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Match as MatchType } from '@/app/api/matches/route';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { calculateEffectiveHandicap } from '@/lib/handicap';
 
 interface Event {
@@ -111,7 +112,7 @@ export default function PrintMatchCards() {
           <div className="space-y-1.5">
             {matches.map((match, index) => (
               <div key={match._id} className="bg-white rounded-lg shadow-sm p-1.5 border border-gray-200">
-                <div className="flex justify-between items-center mb-0.5">
+                <div className="flex justify-between items-start mb-0.5">
                   <div>
                     <h2 className="text-sm font-semibold text-black leading-snug">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
                     <p className="text-xs text-black leading-snug">
@@ -119,6 +120,13 @@ export default function PrintMatchCards() {
                       Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} | Starting Hole: {match.tee}
                     </p>
                   </div>
+                  <Image
+                    src="/logo.svg"
+                    alt="DGL.ONLINE"
+                    width={80}
+                    height={32}
+                    className="h-6 w-auto print-logo"
+                  />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-1.5 mt-0.5">
@@ -236,6 +244,10 @@ export default function PrintMatchCards() {
             }
             .print-section tr {
               page-break-inside: avoid;
+            }
+            .print-logo {
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
             }
             @page {
               size: A4;

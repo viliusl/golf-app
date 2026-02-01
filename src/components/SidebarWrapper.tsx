@@ -6,14 +6,14 @@ import Image from 'next/image';
 export default function SidebarWrapper() {
   return (
     <div className="w-64 bg-brand-dark text-white p-4">
-      <div className="mb-8 px-2">
-        <Link href="/" className="block">
+      <div className="mb-8">
+        <Link href="/" className="block py-2">
           <Image
             src="/logo-light.svg"
             alt="DGL.ONLINE"
-            width={160}
-            height={50}
-            className="h-10 w-auto"
+            width={224}
+            height={80}
+            className="h-14 w-full object-contain"
             priority
           />
         </Link>
