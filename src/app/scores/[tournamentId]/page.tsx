@@ -15,6 +15,7 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  tournamentId?: string;
   course?: {
     _id: string;
     name: string;
@@ -58,6 +59,7 @@ interface AggregatePlayer {
 interface Tournament {
   _id: string;
   name: string;
+  type: 'Team' | 'Individual';
   eventIds: string[];
   createdAt: string;
 }
@@ -108,9 +110,9 @@ export default function PublicTournamentScorecard() {
         }
         const allEvents = await eventsResponse.json();
         
-        // Filter events to only show those in this tournament
+        // Filter events to only show those in this tournament (by tournamentId)
         const tournamentEvents = allEvents
-          .filter((event: Event) => tournamentData.eventIds?.includes(event._id))
+          .filter((event: Event) => event.tournamentId === tournamentId)
           .map((event: Event) => ({
             ...event,
             teamScores: [],
@@ -458,7 +460,8 @@ export default function PublicTournamentScorecard() {
           </div>
         )}
 
-        {/* Team Scores */}
+        {/* Team Scores - only show for Team tournaments */}
+        {tournament.type !== 'Individual' && (
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4 text-black">Team Standings</h2>
           <div className="overflow-x-auto -mx-4 sm:mx-0">
@@ -511,6 +514,7 @@ export default function PublicTournamentScorecard() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Player Scores */}
         <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-8">

@@ -41,6 +41,7 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  tournamentId?: string;
   teams: EventTeam[];
   handicapAllowance?: number;
   createdAt: string;
@@ -53,6 +54,12 @@ interface Event {
     menTees?: CourseTee[];
     womenTees?: CourseTee[];
   };
+}
+
+interface Tournament {
+  _id: string;
+  name: string;
+  type: 'Team' | 'Individual';
 }
 
 interface PlayerOption {
@@ -79,6 +86,7 @@ interface HoleScore {
 export default function AddMatch({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
+  const [tournament, setTournament] = useState<Tournament | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playerOptions, setPlayerOptions] = useState<PlayerOption[]>([]);
@@ -120,6 +128,21 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         }
         const data = await response.json();
         setEvent(data);
+        
+        // Fetch tournament to check type
+        let isIndividualTournament = false;
+        if (data.tournamentId) {
+          try {
+            const tournamentResponse = await fetch(`/api/tournaments/${data.tournamentId}`);
+            if (tournamentResponse.ok) {
+              const tournamentData = await tournamentResponse.json();
+              setTournament(tournamentData);
+              isIndividualTournament = tournamentData.type === 'Individual';
+            }
+          } catch (err) {
+            console.error('Error fetching tournament:', err);
+          }
+        }
         
         // Initialize hole scores from event course data
         if (data.course?.holes && data.course.holes.length > 0) {
@@ -181,7 +204,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
               const playingHcp = getPlayingHandicap(player.handicap, player.gender, member.tee);
               allPlayers.push({
                 name: player.name,
-                teamName: eventTeam.name,
+                teamName: isIndividualTournament ? '-' : eventTeam.name,
                 handicapIndex: player.handicap,
                 playingHandicap: playingHcp,
                 gender: player.gender,
@@ -549,19 +572,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        {event && event.teams.length < 2 ? (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <p className="text-gray-600 mb-4">You need at least two teams with members to create a match.</p>
-            <div className="flex justify-center space-x-4">
-              <Link
-                href={`/events/${params.id}`}
-                className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition-colors"
-              >
-                Back to Event
-              </Link>
-            </div>
-          </div>
-        ) : availablePlayerOptions.filter(p => p.tee && p.tee.trim() !== '').length < 2 ? (
+        {availablePlayerOptions.filter(p => p.tee && p.tee.trim() !== '').length < 2 ? (
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <p className="text-gray-600 mb-4">
               You need at least two players with Tee set to create a match.

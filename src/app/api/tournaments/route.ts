@@ -47,14 +47,17 @@ export async function POST(request: Request) {
     }
     
     // Create a new tournament
-    const tournament = await mongoose.connection.db.collection('tournaments').insertOne({
+    const tournamentData = {
       name: body.name,
       type: body.type,
       eventIds: body.eventIds,
       createdAt: new Date()
-    });
+    };
     
-    return NextResponse.json(tournament, { status: 201 });
+    const result = await mongoose.connection.db.collection('tournaments').insertOne(tournamentData);
+    
+    // Return the full document with _id
+    return NextResponse.json({ _id: result.insertedId, ...tournamentData }, { status: 201 });
   } catch (error) {
     console.error('Error creating tournament:', error);
     return NextResponse.json(

@@ -7,6 +7,7 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  tournamentId?: string;
 }
 
 interface Tournament {
@@ -31,17 +32,11 @@ export default function TournamentsPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedEventsCount, setSelectedEventsCount] = useState(0);
 
   useEffect(() => {
     fetchEvents();
     fetchTournaments();
   }, []);
-
-  useEffect(() => {
-    setSelectedEventsCount(newTournament.eventIds.length);
-  }, [newTournament.eventIds]);
 
   const fetchEvents = async () => {
     try {
@@ -93,7 +88,6 @@ export default function TournamentsPage() {
         setTournaments(prev => [...prev, createdTournament]);
         setNewTournament({ name: '', type: 'Team', eventIds: [] });
         setIsModalOpen(false);
-        setSearchQuery('');
       } catch (error) {
         console.error('Error creating tournament:', error);
         setError(error instanceof Error ? error.message : 'Failed to create tournament');
@@ -128,38 +122,8 @@ export default function TournamentsPage() {
     }
   };
 
-  const toggleEventSelection = (eventId: string) => {
-    setNewTournament(prev => ({
-      ...prev,
-      eventIds: prev.eventIds.includes(eventId)
-        ? prev.eventIds.filter(id => id !== eventId)
-        : [...prev.eventIds, eventId],
-    }));
-  };
-
-  const getSelectedEvents = (tournament: Tournament) => {
-    return events.filter(event => tournament.eventIds?.includes(event._id));
-  };
-
-  const filteredEvents = events
-    .filter(event => 
-      event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.date.includes(searchQuery)
-    )
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const handleSelectAll = () => {
-    if (newTournament.eventIds.length === filteredEvents.length) {
-      setNewTournament(prev => ({
-        ...prev,
-        eventIds: prev.eventIds.filter(id => !filteredEvents.some(event => event._id === id))
-      }));
-    } else {
-      setNewTournament(prev => ({
-        ...prev,
-        eventIds: [...new Set([...prev.eventIds, ...filteredEvents.map(event => event._id)])]
-      }));
-    }
+  const getEventsForTournament = (tournamentId: string) => {
+    return events.filter(event => event.tournamentId === tournamentId);
   };
 
   const handleEditClick = (tournament: Tournament) => {
@@ -217,7 +181,6 @@ export default function TournamentsPage() {
       setNewTournament({ name: '', type: 'Team', eventIds: [] });
       setEditingTournament(null);
       setIsModalOpen(false);
-      setSearchQuery('');
     } catch (error) {
       console.error('Error saving tournament:', error);
       setError(error instanceof Error ? error.message : 'Failed to save tournament');
@@ -227,7 +190,6 @@ export default function TournamentsPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setError(null);
-    setSearchQuery('');
     setEditingTournament(null);
     setNewTournament({ name: '', type: 'Team', eventIds: [] });
   };
@@ -295,7 +257,7 @@ export default function TournamentsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-black">
-                          {getSelectedEvents(tournament).map(event => event.name).join(', ')}
+                          {getEventsForTournament(tournament._id).map(event => event.name).join(', ') || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -326,7 +288,7 @@ export default function TournamentsPage() {
         {/* Add Tournament Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-black">
                   {editingTournament ? 'Edit Tournament' : 'Add New Tournament'}
@@ -385,73 +347,6 @@ export default function TournamentsPage() {
                     ? 'Players compete as part of teams' 
                     : 'Players compete individually without teams'}
                 </p>
-              </div>
-
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-lg font-medium text-black">Select Events</h3>
-                  <div className="text-sm text-gray-500">
-                    {selectedEventsCount} events selected
-                  </div>
-                </div>
-
-                {loading ? (
-                  <p className="text-black">Loading events...</p>
-                ) : events.length === 0 ? (
-                  <p className="text-black">No events available</p>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search events by name or date..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
-                      />
-                      <button
-                        onClick={handleSelectAll}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
-                      >
-                        {newTournament.eventIds.length === filteredEvents.length ? 'Deselect All' : 'Select All'}
-                      </button>
-                    </div>
-
-                    <div className="border border-gray-200 rounded-md">
-                      <div className="max-h-96 overflow-y-auto">
-                        {filteredEvents.length === 0 ? (
-                          <div className="p-4 text-center text-gray-500">
-                            No events match your search
-                          </div>
-                        ) : (
-                          <div className="divide-y divide-gray-200">
-                            {filteredEvents.map((event) => (
-                              <label
-                                key={event._id}
-                                className="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={newTournament.eventIds.includes(event._id)}
-                                  onChange={() => toggleEventSelection(event._id)}
-                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium text-black truncate">
-                                    {event.name}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    {new Date(event.date).toISOString().split('T')[0]}
-                                  </div>
-                                </div>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="flex justify-end gap-2 mt-6">

@@ -160,6 +160,11 @@ export default function Home() {
     router.push(`/events/${eventId}`);
   };
 
+  const getTournament = (tournamentId?: string) => {
+    if (!tournamentId) return null;
+    return tournaments.find(t => t._id === tournamentId);
+  };
+
   return (
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
@@ -194,10 +199,13 @@ export default function Home() {
                       Event Name
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tournament
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Teams
+                      Teams/Players
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -226,13 +234,25 @@ export default function Home() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-black">
+                          {getTournament(event.tournamentId)?.name || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-black">
                           {new Date(event.date).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-black">
-                          {event.teams.length}
+                          {(() => {
+                            const tournament = getTournament(event.tournamentId);
+                            const totalPlayers = event.teams.reduce((sum, t) => sum + (t.members?.length || 0), 0);
+                            if (tournament?.type === 'Individual') {
+                              return `${totalPlayers} players`;
+                            }
+                            return `${event.teams.length} teams / ${totalPlayers} players`;
+                          })()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
