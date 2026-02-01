@@ -191,9 +191,9 @@ export default function PublicEventScorecard() {
       const player1Strokes = match.holes?.reduce((sum, h) => sum + (h.player1Score || 0), 0) || 0;
       const player2Strokes = match.holes?.reduce((sum, h) => sum + (h.player2Score || 0), 0) || 0;
       
-      // Calculate net score: PAR + Handicap - Strokes
-      const player1NetScore = coursePar + (match.player1.handicap || 0) - player1Strokes;
-      const player2NetScore = coursePar + (match.player2.handicap || 0) - player2Strokes;
+      // Calculate net score: Strokes - PAR + Handicap
+      const player1NetScore = player1Strokes - coursePar + (match.player1.handicap || 0);
+      const player2NetScore = player2Strokes - coursePar + (match.player2.handicap || 0);
 
       // Process player 1
       const player1Key = match.player1.name;
