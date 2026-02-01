@@ -25,8 +25,7 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname === '/players' ||
     request.nextUrl.pathname.startsWith('/players/') ||
     request.nextUrl.pathname === '/events' ||
-    request.nextUrl.pathname.startsWith('/events/') ||
-    request.nextUrl.pathname.startsWith('/scorecard/')
+    request.nextUrl.pathname.startsWith('/events/')
   ) {
     return NextResponse.next();
   }

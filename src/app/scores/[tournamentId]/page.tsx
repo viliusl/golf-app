@@ -20,6 +20,7 @@ interface Event {
   course?: {
     _id: string;
     name: string;
+    holes?: { number: number; handicap: number; par: number }[];
   };
   teams: {
     _id: string;
@@ -55,6 +56,8 @@ interface AggregatePlayer {
   totalScore: number;
   matchCount: number;
   eventCount: number;
+  totalStrokes: number;
+  totalNetScore: number;
 }
 
 interface Tournament {
@@ -263,14 +266,27 @@ export default function PublicTournamentScorecard() {
       totalScore: number;
       matchCount: number;
       eventIds: Set<string>;
+      totalStrokes: number;
+      totalNetScore: number;
     }>();
 
     scorecardEvents.forEach(event => {
       if (!event.matches) return;
 
+      // Calculate course PAR for this event
+      const coursePar = event.course?.holes?.reduce((sum, h) => sum + h.par, 0) || 72;
+
       const completedMatches = event.matches.filter(match => match.completed);
       
       completedMatches.forEach(match => {
+        // Calculate strokes for each player in this match
+        const player1Strokes = match.holes?.reduce((sum, h) => sum + (h.player1Score || 0), 0) || 0;
+        const player2Strokes = match.holes?.reduce((sum, h) => sum + (h.player2Score || 0), 0) || 0;
+        
+        // Calculate net score: PAR + Handicap - Strokes
+        const player1NetScore = coursePar + (match.player1.handicap || 0) - player1Strokes;
+        const player2NetScore = coursePar + (match.player2.handicap || 0) - player2Strokes;
+
         // Process player 1
         const player1Key = match.player1.name;
         const existingPlayer1 = playerScoreMap.get(player1Key);
@@ -279,6 +295,8 @@ export default function PublicTournamentScorecard() {
           existingPlayer1.totalScore += match.player1.score;
           existingPlayer1.matchCount += 1;
           existingPlayer1.eventIds.add(event._id);
+          existingPlayer1.totalStrokes += player1Strokes;
+          existingPlayer1.totalNetScore += player1NetScore;
           playerScoreMap.set(player1Key, existingPlayer1);
         } else {
           playerScoreMap.set(player1Key, {
@@ -286,7 +304,9 @@ export default function PublicTournamentScorecard() {
             teamName: match.player1.teamName,
             totalScore: match.player1.score,
             matchCount: 1,
-            eventIds: new Set([event._id])
+            eventIds: new Set([event._id]),
+            totalStrokes: player1Strokes,
+            totalNetScore: player1NetScore
           });
         }
 
@@ -298,6 +318,8 @@ export default function PublicTournamentScorecard() {
           existingPlayer2.totalScore += match.player2.score;
           existingPlayer2.matchCount += 1;
           existingPlayer2.eventIds.add(event._id);
+          existingPlayer2.totalStrokes += player2Strokes;
+          existingPlayer2.totalNetScore += player2NetScore;
           playerScoreMap.set(player2Key, existingPlayer2);
         } else {
           playerScoreMap.set(player2Key, {
@@ -305,7 +327,9 @@ export default function PublicTournamentScorecard() {
             teamName: match.player2.teamName,
             totalScore: match.player2.score,
             matchCount: 1,
-            eventIds: new Set([event._id])
+            eventIds: new Set([event._id]),
+            totalStrokes: player2Strokes,
+            totalNetScore: player2NetScore
           });
         }
       });
@@ -316,7 +340,9 @@ export default function PublicTournamentScorecard() {
       teamName: player.teamName,
       totalScore: player.totalScore,
       matchCount: player.matchCount,
-      eventCount: player.eventIds.size
+      eventCount: player.eventIds.size,
+      totalStrokes: player.totalStrokes,
+      totalNetScore: player.totalNetScore
     }));
 
     playerScoresArray.sort((a, b) => 
@@ -539,7 +565,13 @@ export default function PublicTournamentScorecard() {
                       Player
                     </th>
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Total Score
+                      Score
+                    </th>
+                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      Strokes
+                    </th>
+                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      Net
                     </th>
                     <th scope="col" className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Team
@@ -566,6 +598,14 @@ export default function PublicTournamentScorecard() {
                         </td>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-brand-dark">{player.totalScore}</div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-brand-dark">{player.totalStrokes}</div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${player.totalNetScore >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                            {player.totalNetScore >= 0 ? '+' : ''}{player.totalNetScore}
+                          </div>
                         </td>
                         <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-brand-dark">{player.teamName}</div>
