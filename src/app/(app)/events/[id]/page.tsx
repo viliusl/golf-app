@@ -46,10 +46,17 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  tournamentId?: string;
   course?: CourseSnapshot;
   handicapAllowance?: number;
   teams: EventTeam[];
   createdAt: string;
+}
+
+interface Tournament {
+  _id: string;
+  name: string;
+  type: 'Team' | 'Individual';
 }
 
 // Team from Teams collection (with populated player data)
@@ -88,6 +95,7 @@ interface FutureEvent {
 
 export default function EventDetails({ params }: { params: { id: string } }) {
   const [event, setEvent] = useState<Event | null>(null);
+  const [tournament, setTournament] = useState<Tournament | null>(null);
   const [teams, setTeams] = useState<PopulatedTeam[]>([]);
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [matches, setMatches] = useState<MatchType[]>([]);
@@ -153,6 +161,19 @@ export default function EventDetails({ params }: { params: { id: string } }) {
       }
       
       setEvent(data);
+      
+      // Fetch tournament data if event has a tournamentId
+      if (data.tournamentId) {
+        try {
+          const tournamentResponse = await fetch(`/api/tournaments/${data.tournamentId}`);
+          if (tournamentResponse.ok) {
+            const tournamentData = await tournamentResponse.json();
+            setTournament(tournamentData);
+          }
+        } catch (err) {
+          console.error('Error fetching tournament:', err);
+        }
+      }
     } catch (error) {
       console.error('Error fetching event:', error);
       setError('Failed to load event');
@@ -264,6 +285,49 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     } catch (error) {
       console.error('Error adding team:', error);
       setError(error instanceof Error ? error.message : 'Failed to add team');
+    }
+  };
+
+  // Create an implicit "Players" team for Individual tournaments
+  const handleCreateImplicitTeam = async () => {
+    if (!event) return;
+    setError(null);
+    
+    try {
+      const implicitTeam: EventTeam = {
+        _id: 'players-' + Date.now(),
+        name: 'Players',
+        members: []
+      };
+      
+      const updatedTeams = [...event.teams, implicitTeam];
+      
+      const response = await fetch(`/api/events?id=${event._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ teams: updatedTeams }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to create players group');
+      }
+
+      const updatedEvent = await response.json();
+      setEvent(updatedEvent);
+      
+      // Now open the add player modal with the new team
+      const newTeam = updatedEvent.teams.find((t: EventTeam) => t.name === 'Players');
+      if (newTeam) {
+        setSelectedTeamForPlayer(newTeam);
+        setIsAddPlayerModalOpen(true);
+      }
+      setIsAddTeamModalOpen(false);
+    } catch (error) {
+      console.error('Error creating players group:', error);
+      setError(error instanceof Error ? error.message : 'Failed to create players group');
     }
   };
 
@@ -847,6 +911,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
   const availableTeams = teams.filter(team => !eventTeamIds.includes(team._id));
   const eventTeams = event.teams || [];
   const totalMembers = eventTeams.reduce((sum, team) => sum + (team.members?.length || 0), 0);
+  const isIndividualTournament = tournament?.type === 'Individual';
 
   return (
     <main className="p-8">
@@ -997,7 +1062,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             <tr key={match._id} className="group hover:bg-gray-50">
                               <td className="px-3 py-2 whitespace-nowrap">
                                 <div className="text-sm font-medium text-black">{match.player1.name}</div>
-                                <div className="text-xs text-gray-500">{match.player1.teamName}</div>
+                                <div className="text-xs text-gray-500">{isIndividualTournament ? '-' : match.player1.teamName}</div>
                               </td>
                               <td className="px-3 py-2 text-center">
                                 <div className="text-sm font-bold text-black">{match.player1.score}</div>
@@ -1010,7 +1075,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap">
                                 <div className="text-sm font-medium text-black">{match.player2.name}</div>
-                                <div className="text-xs text-gray-500">{match.player2.teamName}</div>
+                                <div className="text-xs text-gray-500">{isIndividualTournament ? '-' : match.player2.teamName}</div>
                               </td>
                               <td className="px-3 py-2 text-center">
                                 <div className="text-sm text-black">
@@ -1062,7 +1127,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             <tr key={match._id} className="group hover:bg-gray-50 bg-green-50">
                               <td className="px-3 py-2 whitespace-nowrap">
                                 <div className="text-sm font-medium text-black">{match.player1.name}</div>
-                                <div className="text-xs text-gray-500">{match.player1.teamName}</div>
+                                <div className="text-xs text-gray-500">{isIndividualTournament ? '-' : match.player1.teamName}</div>
                               </td>
                               <td className="px-3 py-2 text-center">
                                 <div className="text-sm font-bold text-black">{match.player1.score}</div>
@@ -1075,7 +1140,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap">
                                 <div className="text-sm font-medium text-black">{match.player2.name}</div>
-                                <div className="text-xs text-gray-500">{match.player2.teamName}</div>
+                                <div className="text-xs text-gray-500">{isIndividualTournament ? '-' : match.player2.teamName}</div>
                               </td>
                               <td className="px-3 py-2 text-center">
                                 <div className="text-sm text-black">
@@ -1100,66 +1165,101 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Teams Section */}
+        {/* Teams/Players Section */}
         <div className="space-y-8">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold text-black">Teams</h2>
+            <h2 className="text-2xl font-semibold text-black">{isIndividualTournament ? 'Players' : 'Teams'}</h2>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
             <div className="p-6 border-b flex justify-between items-center">
-              <h3 className="text-lg font-medium text-black">Team List</h3>
-              <button
-                onClick={() => setIsAddTeamModalOpen(true)}
-                className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
-              >
-                Add Team
-              </button>
+              <h3 className="text-lg font-medium text-black">{isIndividualTournament ? 'Player List' : 'Team List'}</h3>
+              {isIndividualTournament ? (
+                <button
+                  onClick={() => {
+                    // For individual tournaments, open player modal directly
+                    // Use first team or create implicit one
+                    const implicitTeam = eventTeams.length > 0 ? eventTeams[0] : null;
+                    if (implicitTeam) {
+                      setSelectedTeamForPlayer(implicitTeam);
+                      setIsAddPlayerModalOpen(true);
+                    } else {
+                      // Need to create the implicit "Players" team first
+                      setIsAddTeamModalOpen(true);
+                    }
+                  }}
+                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                >
+                  Add Player
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsAddTeamModalOpen(true)}
+                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                >
+                  Add Team
+                </button>
+              )}
             </div>
 
             {eventTeams.length === 0 ? (
               <div className="p-6 text-center">
-                <p className="text-gray-500">No teams added yet</p>
-                <button
-                  onClick={() => setIsAddTeamModalOpen(true)}
-                  className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
-                >
-                  Add Team
-                </button>
+                <p className="text-gray-500">{isIndividualTournament ? 'No players added yet' : 'No teams added yet'}</p>
+                {isIndividualTournament ? (
+                  <button
+                    onClick={() => {
+                      // For individual tournaments with no team, create one first
+                      setIsAddTeamModalOpen(true);
+                    }}
+                    className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                  >
+                    Add Player
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setIsAddTeamModalOpen(true)}
+                    className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                  >
+                    Add Team
+                  </button>
+                )}
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
                 {eventTeams.map((team) => (
                   <div key={team._id} className="overflow-hidden">
-                    <div className="p-6 border-b bg-gray-50">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xl font-semibold text-black">{team.name}</h3>
-                          <p className="text-sm text-gray-500 mt-1">{team.members?.length || 0} members</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleOpenAddPlayerModal(team)}
-                            className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-sm"
-                          >
-                            Add Player
-                          </button>
-                          <button
-                            onClick={() => handleRemoveTeamClick(team)}
-                            className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors text-sm"
-                          >
-                            Remove Team
-                          </button>
+                    {/* Team header - hidden for individual tournaments */}
+                    {!isIndividualTournament && (
+                      <div className="p-6 border-b bg-gray-50">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-xl font-semibold text-black">{team.name}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{team.members?.length || 0} members</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleOpenAddPlayerModal(team)}
+                              className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-sm"
+                            >
+                              Add Player
+                            </button>
+                            <button
+                              onClick={() => handleRemoveTeamClick(team)}
+                              className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors text-sm"
+                            >
+                              Remove Team
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                     
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Captain</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{isIndividualTournament ? 'Player Name' : 'Member Name'}</th>
+                            {!isIndividualTournament && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Captain</th>}
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">HCP</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tee</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">P_HCP</th>
@@ -1184,9 +1284,11 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                       {playerDetails.name}
                                     </span>
                                   </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-black">{member.isCaptain ? 'Yes' : 'No'}</div>
-                                  </td>
+                                  {!isIndividualTournament && (
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <div className="text-sm text-black">{member.isCaptain ? 'Yes' : 'No'}</div>
+                                    </td>
+                                  )}
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center gap-2">
                                       <span className="text-sm text-black">{member.handicap ?? playerDetails.handicap}</span>
@@ -1282,11 +1384,26 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Add Team to Event</h2>
+                <h2 className="text-xl font-semibold text-black">
+                  {isIndividualTournament ? 'Add Players to Event' : 'Add Team to Event'}
+                </h2>
                 <button onClick={() => setIsAddTeamModalOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
               </div>
               <div className="space-y-4">
-                {availableTeams.length === 0 ? (
+                {isIndividualTournament ? (
+                  // For Individual tournaments, create implicit team and open player selection
+                  <div className="text-center p-4">
+                    <p className="text-sm text-gray-500 mb-4">
+                      This will create a player group for this individual tournament event.
+                    </p>
+                    <button
+                      onClick={handleCreateImplicitTeam}
+                      className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                    >
+                      Continue to Add Players
+                    </button>
+                  </div>
+                ) : availableTeams.length === 0 ? (
                   <div className="text-center p-4">
                     <p className="text-sm text-gray-500 mb-2">All teams have been added to this event</p>
                     <Link href="/teams" className="text-green-600 hover:text-green-800">Create a new team</Link>
@@ -1320,7 +1437,9 @@ export default function EventDetails({ params }: { params: { id: string } }) {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Add Player to {selectedTeamForPlayer.name}</h2>
+                <h2 className="text-xl font-semibold text-black">
+                  {isIndividualTournament ? 'Add Player' : `Add Player to ${selectedTeamForPlayer.name}`}
+                </h2>
                 <button
                   onClick={() => {
                     setIsAddPlayerModalOpen(false);

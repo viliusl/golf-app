@@ -9,10 +9,17 @@ interface Course {
   address: string;
 }
 
+interface Tournament {
+  _id: string;
+  name: string;
+  type: 'Team' | 'Individual';
+}
+
 interface Event {
   _id: string;
   name: string;
   date: string;
+  tournamentId?: string;
   course?: {
     _id: string;
     name: string;
@@ -34,17 +41,19 @@ interface Event {
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-  const [newEvent, setNewEvent] = useState({ name: '', date: '', courseId: '', handicapAllowance: 100 });
+  const [newEvent, setNewEvent] = useState({ name: '', date: '', courseId: '', tournamentId: '', handicapAllowance: 100 });
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     fetchEvents();
     fetchCourses();
+    fetchTournaments();
   }, []);
 
   const fetchEvents = async () => {
@@ -76,6 +85,19 @@ export default function Home() {
     }
   };
 
+  const fetchTournaments = async () => {
+    try {
+      const response = await fetch('/api/tournaments');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setTournaments(data);
+    } catch (error) {
+      console.error('Error fetching tournaments:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -98,7 +120,7 @@ export default function Home() {
       const createdEvent = await response.json();
       console.log('Event created successfully:', createdEvent);
       
-      setNewEvent({ name: '', date: '', courseId: '', handicapAllowance: 100 });
+      setNewEvent({ name: '', date: '', courseId: '', tournamentId: '', handicapAllowance: 100 });
       setIsModalOpen(false);
       fetchEvents();
     } catch (error) {
@@ -138,6 +160,11 @@ export default function Home() {
     router.push(`/events/${eventId}`);
   };
 
+  const getTournament = (tournamentId?: string) => {
+    if (!tournamentId) return null;
+    return tournaments.find(t => t._id === tournamentId);
+  };
+
   return (
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
@@ -172,10 +199,13 @@ export default function Home() {
                       Event Name
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tournament
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Teams
+                      Teams/Players
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -204,13 +234,25 @@ export default function Home() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-black">
+                          {getTournament(event.tournamentId)?.name || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-black">
                           {new Date(event.date).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-black">
-                          {event.teams.length}
+                          {(() => {
+                            const tournament = getTournament(event.tournamentId);
+                            const totalPlayers = event.teams.reduce((sum, t) => sum + (t.members?.length || 0), 0);
+                            if (tournament?.type === 'Individual') {
+                              return `${totalPlayers} players`;
+                            }
+                            return `${event.teams.length} teams / ${totalPlayers} players`;
+                          })()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -273,6 +315,25 @@ export default function Home() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="tournamentId" className="block text-sm font-medium text-gray-700 mb-1">
+                    Tournament
+                  </label>
+                  <select
+                    id="tournamentId"
+                    value={newEvent.tournamentId}
+                    onChange={(e) => setNewEvent({ ...newEvent, tournamentId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  >
+                    <option value="">Select a tournament</option>
+                    {tournaments.map((tournament) => (
+                      <option key={tournament._id} value={tournament._id}>
+                        {tournament.name} ({tournament.type})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="courseId" className="block text-sm font-medium text-gray-700 mb-1">

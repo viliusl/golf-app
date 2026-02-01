@@ -98,6 +98,10 @@ const eventSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'Event date is required']
   },
+  tournamentId: {
+    type: String,
+    required: [true, 'Tournament is required']
+  },
   course: {
     type: CourseSnapshotSchema,
     required: [true, 'Course is required']
