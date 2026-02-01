@@ -62,6 +62,23 @@ interface Tournament {
   createdAt: string;
 }
 
+// Helper function to calculate ranks with tie handling (standard competition ranking)
+function calculateRanks<T>(items: T[], getScore: (item: T) => number): number[] {
+  const ranks: number[] = [];
+  
+  items.forEach((item, index) => {
+    if (index === 0) {
+      ranks.push(1);
+    } else if (getScore(item) === getScore(items[index - 1])) {
+      ranks.push(ranks[index - 1]); // Same rank as previous
+    } else {
+      ranks.push(index + 1); // Skip ranks for ties
+    }
+  });
+  
+  return ranks;
+}
+
 export default function PublicTournamentScorecard() {
   const params = useParams();
   const tournamentId = params.tournamentId as string;
@@ -450,6 +467,9 @@ export default function PublicTournamentScorecard() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rank
+                    </th>
+                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Team
                     </th>
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -464,22 +484,28 @@ export default function PublicTournamentScorecard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {aggregateScores.map((team, index) => (
-                    <tr key={team.name} className={index === 0 ? 'bg-yellow-50' : ''}>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">{team.name}</div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{team.totalScore}</div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{team.matchCount}</div>
-                      </td>
-                      <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{team.eventCount}</div>
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const teamRanks = calculateRanks(aggregateScores, team => team.totalScore);
+                    return aggregateScores.map((team, index) => (
+                      <tr key={team.name} className={teamRanks[index] <= 3 ? 'bg-yellow-50' : ''}>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-black">{teamRanks[index]}</div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-black">{team.name}</div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">{team.totalScore}</div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">{team.matchCount}</div>
+                        </td>
+                        <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">{team.eventCount}</div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -494,6 +520,9 @@ export default function PublicTournamentScorecard() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rank
+                    </th>
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Player
                     </th>
@@ -512,26 +541,32 @@ export default function PublicTournamentScorecard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {playerScores.map((player, index) => (
-                    <tr key={player.name} className={index === 0 ? 'bg-yellow-50' : ''}>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">{player.name}</div>
-                        <div className="sm:hidden text-xs text-gray-500">{player.teamName}</div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{player.totalScore}</div>
-                      </td>
-                      <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{player.teamName}</div>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{player.matchCount}</div>
-                      </td>
-                      <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{player.eventCount}</div>
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const playerRanks = calculateRanks(playerScores, player => player.totalScore);
+                    return playerScores.map((player, index) => (
+                      <tr key={player.name} className={playerRanks[index] <= 3 ? 'bg-yellow-50' : ''}>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-black">{playerRanks[index]}</div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-black">{player.name}</div>
+                          <div className="sm:hidden text-xs text-gray-500">{player.teamName}</div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">{player.totalScore}</div>
+                        </td>
+                        <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">{player.teamName}</div>
+                        </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">{player.matchCount}</div>
+                        </td>
+                        <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-black">{player.eventCount}</div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
