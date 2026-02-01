@@ -12,6 +12,8 @@ interface Team {
   name: string;
   totalScore: number;
   matchCount: number;
+  totalStrokes: number;
+  totalNetScore: number;
 }
 
 interface Event {
@@ -124,7 +126,7 @@ export default function PublicEventScorecard() {
         const matchesData = await matchesResponse.json();
         
         // Calculate team scores
-        const teamScores = calculateTeamScores(matchesData, eventData.teams);
+        const teamScores = calculateTeamScores(matchesData, eventData.teams, eventData);
         setEvent(prev => prev ? {
           ...prev,
           teamScores,
@@ -145,20 +147,33 @@ export default function PublicEventScorecard() {
     }
   }, [tournamentId, eventId]);
 
-  const calculateTeamScores = (matches: MatchType[], eventTeams: Event['teams']): Team[] => {
-    const teamScoreMap = new Map<string, { totalScore: number; matchCount: number }>();
+  const calculateTeamScores = (matches: MatchType[], eventTeams: Event['teams'], eventData: Event): Team[] => {
+    const teamScoreMap = new Map<string, { totalScore: number; matchCount: number; totalStrokes: number; totalNetScore: number }>();
     
     eventTeams.forEach(team => {
-      teamScoreMap.set(team.name, { totalScore: 0, matchCount: 0 });
+      teamScoreMap.set(team.name, { totalScore: 0, matchCount: 0, totalStrokes: 0, totalNetScore: 0 });
     });
+    
+    // Get course par for net score calculation
+    const coursePar = eventData.course?.holes?.reduce((sum, hole) => sum + (hole.par || 0), 0) || 72;
     
     matches.forEach(match => {
       if (!match.completed) return; // Skip incomplete matches
+
+      // Calculate strokes for each player
+      const player1Strokes = match.holes?.reduce((sum, h) => sum + (h.player1Score || 0), 0) || 0;
+      const player2Strokes = match.holes?.reduce((sum, h) => sum + (h.player2Score || 0), 0) || 0;
+      
+      // Calculate net scores
+      const player1NetScore = player1Strokes - coursePar + (match.player1.handicap || 0);
+      const player2NetScore = player2Strokes - coursePar + (match.player2.handicap || 0);
 
       const team1 = teamScoreMap.get(match.player1.teamName);
       if (team1) {
         team1.totalScore += match.player1.score;
         team1.matchCount += 1;
+        team1.totalStrokes += player1Strokes;
+        team1.totalNetScore += player1NetScore;
         teamScoreMap.set(match.player1.teamName, team1);
       }
       
@@ -166,6 +181,8 @@ export default function PublicEventScorecard() {
       if (team2) {
         team2.totalScore += match.player2.score;
         team2.matchCount += 1;
+        team2.totalStrokes += player2Strokes;
+        team2.totalNetScore += player2NetScore;
         teamScoreMap.set(match.player2.teamName, team2);
       }
     });
@@ -174,7 +191,9 @@ export default function PublicEventScorecard() {
       _id: eventTeams.find(team => team.name === name)?._id || '',
       name,
       totalScore: stats.totalScore,
-      matchCount: stats.matchCount
+      matchCount: stats.matchCount,
+      totalStrokes: stats.totalStrokes,
+      totalNetScore: stats.totalNetScore
     }));
     
     teamScoresArray.sort((a, b) => b.totalScore - a.totalScore);
@@ -370,6 +389,12 @@ export default function PublicEventScorecard() {
                         DGL Points
                       </th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Strokes
+                      </th>
+                      <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Net
+                      </th>
+                      <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Matches
                       </th>
                     </tr>
@@ -387,6 +412,14 @@ export default function PublicEventScorecard() {
                           </td>
                           <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-brand-dark">{team.totalScore}</div>
+                          </td>
+                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-brand-dark">{team.totalStrokes}</div>
+                          </td>
+                          <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                            <div className={`text-sm ${team.totalNetScore >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                              {team.totalNetScore >= 0 ? '+' : ''}{team.totalNetScore}
+                            </div>
                           </td>
                           <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-brand-dark">{team.matchCount}</div>
