@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Match as MatchType } from '@/app/api/matches/route';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+
+type SortColumn = 'points' | 'strokes' | 'net';
 
 interface Team {
   _id: string;
@@ -69,6 +71,8 @@ function calculateRanks<T>(items: T[], getScore: (item: T) => number): number[] 
 
 export default function PublicEventScorecard() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const tournamentId = params.tournamentId as string;
   const eventId = params.eventId as string;
   
@@ -77,6 +81,15 @@ export default function PublicEventScorecard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
+  
+  // Get sort column from URL, default to 'points'
+  const sortColumn = (searchParams.get('sort') as SortColumn) || 'points';
+  
+  const handleSort = (column: SortColumn) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('sort', column);
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -239,12 +252,22 @@ export default function PublicEventScorecard() {
     });
 
     const playerScoresArray = Array.from(playerScoreMap.values());
-    // Sort by total strokes (lower is better), then by net score (lower is better)
-    playerScoresArray.sort((a, b) => 
-      a.totalStrokes !== b.totalStrokes 
-        ? a.totalStrokes - b.totalStrokes 
-        : a.totalNetScore - b.totalNetScore
-    );
+    // Sort based on selected column
+    playerScoresArray.sort((a, b) => {
+      switch (sortColumn) {
+        case 'points':
+          // DGL Points: highest to lowest
+          return b.totalScore - a.totalScore;
+        case 'strokes':
+          // Strokes: lowest to highest
+          return a.totalStrokes - b.totalStrokes;
+        case 'net':
+          // Net: lowest to highest
+          return a.totalNetScore - b.totalNetScore;
+        default:
+          return b.totalScore - a.totalScore;
+      }
+    });
     
     return playerScoresArray;
   };
@@ -392,14 +415,26 @@ export default function PublicEventScorecard() {
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Player
                     </th>
-                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      DGL Points
+                    <th 
+                      scope="col" 
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                      onClick={() => handleSort('points')}
+                    >
+                      DGL Points {sortColumn === 'points' && '↓'}
                     </th>
-                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Strokes
+                    <th 
+                      scope="col" 
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                      onClick={() => handleSort('strokes')}
+                    >
+                      Strokes {sortColumn === 'strokes' && '↑'}
                     </th>
-                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Net
+                    <th 
+                      scope="col" 
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                      onClick={() => handleSort('net')}
+                    >
+                      Net {sortColumn === 'net' && '↑'}
                     </th>
                     <th scope="col" className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Team
@@ -411,7 +446,16 @@ export default function PublicEventScorecard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
                   {(() => {
-                    const playerRanks = calculateRanks(playerScores, player => player.totalScore);
+                    type PlayerScore = { name: string; teamName: string; totalScore: number; matchCount: number; totalStrokes: number; totalNetScore: number };
+                    const getRankValue = (player: PlayerScore) => {
+                      switch (sortColumn) {
+                        case 'points': return -player.totalScore; // Negative because higher is better
+                        case 'strokes': return player.totalStrokes;
+                        case 'net': return player.totalNetScore;
+                        default: return -player.totalScore;
+                      }
+                    };
+                    const playerRanks = calculateRanks(playerScores, getRankValue);
                     return playerScores.map((player, index) => (
                       <tr key={player.name} className={playerRanks[index] <= 3 ? 'bg-orange-50' : ''}>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
