@@ -196,7 +196,19 @@ export default function PublicEventScorecard() {
       totalNetScore: stats.totalNetScore
     }));
     
-    teamScoresArray.sort((a, b) => b.totalScore - a.totalScore);
+    // Sort based on selected column (same as player standings)
+    teamScoresArray.sort((a, b) => {
+      switch (sortColumn) {
+        case 'points':
+          return b.totalScore - a.totalScore;
+        case 'strokes':
+          return a.totalStrokes - b.totalStrokes;
+        case 'net':
+          return a.totalNetScore - b.totalNetScore;
+        default:
+          return b.totalScore - a.totalScore;
+      }
+    });
     
     return teamScoresArray;
   };
@@ -385,14 +397,26 @@ export default function PublicEventScorecard() {
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Team
                       </th>
-                      <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        DGL Points
+                      <th 
+                        scope="col" 
+                        className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                        onClick={() => handleSort('points')}
+                      >
+                        DGL Points {sortColumn === 'points' && '↓'}
                       </th>
-                      <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        Strokes
+                      <th 
+                        scope="col" 
+                        className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                        onClick={() => handleSort('strokes')}
+                      >
+                        Strokes {sortColumn === 'strokes' && '↑'}
                       </th>
-                      <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        Net
+                      <th 
+                        scope="col" 
+                        className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                        onClick={() => handleSort('net')}
+                      >
+                        Net {sortColumn === 'net' && '↑'}
                       </th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Matches
@@ -401,8 +425,25 @@ export default function PublicEventScorecard() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
                     {(() => {
-                      const teamRanks = calculateRanks(event.teamScores, team => team.totalScore);
-                      return event.teamScores.map((team, index) => (
+                      // Sort teams based on selected column
+                      const sortedTeams = [...event.teamScores].sort((a, b) => {
+                        switch (sortColumn) {
+                          case 'points': return b.totalScore - a.totalScore;
+                          case 'strokes': return a.totalStrokes - b.totalStrokes;
+                          case 'net': return a.totalNetScore - b.totalNetScore;
+                          default: return b.totalScore - a.totalScore;
+                        }
+                      });
+                      const getTeamRankValue = (team: Team) => {
+                        switch (sortColumn) {
+                          case 'points': return -team.totalScore;
+                          case 'strokes': return team.totalStrokes;
+                          case 'net': return team.totalNetScore;
+                          default: return -team.totalScore;
+                        }
+                      };
+                      const teamRanks = calculateRanks(sortedTeams, getTeamRankValue);
+                      return sortedTeams.map((team, index) => (
                         <tr key={team.name} className={teamRanks[index] <= 3 ? 'bg-orange-50' : ''}>
                           <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-brand-dark">{teamRanks[index]}</div>

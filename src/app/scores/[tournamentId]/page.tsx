@@ -288,7 +288,19 @@ export default function PublicTournamentScorecard() {
     });
 
     const aggregateScoresArray = Array.from(aggregateScoreMap.values());
-    aggregateScoresArray.sort((a, b) => b.totalScore - a.totalScore);
+    // Sort based on selected column (same as player standings)
+    aggregateScoresArray.sort((a, b) => {
+      switch (sortColumn) {
+        case 'points':
+          return b.totalScore - a.totalScore;
+        case 'strokes':
+          return a.totalStrokes - b.totalStrokes;
+        case 'net':
+          return a.totalNetScore - b.totalNetScore;
+        default:
+          return b.totalScore - a.totalScore;
+      }
+    });
     
     return aggregateScoresArray;
   };
@@ -558,14 +570,26 @@ export default function PublicTournamentScorecard() {
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Team
                     </th>
-                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      DGL Points
+                    <th 
+                      scope="col" 
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                      onClick={() => handleSort('points')}
+                    >
+                      DGL Points {sortColumn === 'points' && '↓'}
                     </th>
-                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Strokes
+                    <th 
+                      scope="col" 
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                      onClick={() => handleSort('strokes')}
+                    >
+                      Strokes {sortColumn === 'strokes' && '↑'}
                     </th>
-                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Net
+                    <th 
+                      scope="col" 
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:text-brand select-none"
+                      onClick={() => handleSort('net')}
+                    >
+                      Net {sortColumn === 'net' && '↑'}
                     </th>
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Matches
@@ -577,7 +601,15 @@ export default function PublicTournamentScorecard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
                   {(() => {
-                    const teamRanks = calculateRanks(aggregateScores, team => team.totalScore);
+                    const getTeamRankValue = (team: AggregateTeam) => {
+                      switch (sortColumn) {
+                        case 'points': return -team.totalScore;
+                        case 'strokes': return team.totalStrokes;
+                        case 'net': return team.totalNetScore;
+                        default: return -team.totalScore;
+                      }
+                    };
+                    const teamRanks = calculateRanks(aggregateScores, getTeamRankValue);
                     return aggregateScores.map((team, index) => (
                       <tr key={team.name} className={teamRanks[index] <= 3 ? 'bg-orange-50' : ''}>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
