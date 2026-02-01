@@ -10,6 +10,10 @@ interface Event {
   _id: string;
   name: string;
   date: string;
+  course: {
+    name: string;
+    address: string;
+  };
 }
 
 interface Tournament {
@@ -140,7 +144,10 @@ export default function PublicMatchView() {
           </div>
 
           {/* Match Info */}
-          <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-3 gap-6 mb-8">
+            <div>
+              <p className="text-sm text-gray-500">Course: {event.course?.name}</p>
+            </div>
             <div>
               <p className="text-sm text-gray-500">Tee Time: {new Date(match.teeTime).toLocaleString()}</p>
             </div>
