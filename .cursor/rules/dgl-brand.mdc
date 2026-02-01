@@ -1,0 +1,99 @@
+---
+description: DGL.ONLINE brand guidelines for consistent styling
+globs: "**/*.{tsx,css,scss}"
+alwaysApply: false
+---
+
+# DGL.ONLINE Brand Guidelines
+
+Follow these brand guidelines when styling components and creating new UI elements.
+
+## Brand Colors
+
+### Primary Colors
+| Name | Hex | Tailwind | Usage |
+|------|-----|----------|-------|
+| Orange | `#EA6B15` | `brand` / `brand-orange` | Primary actions, CTAs, highlights |
+| Dark | `#1E1D1D` | `brand-dark` | Dark backgrounds, text on light |
+| White | `#FFFFFF` | `white` | Light backgrounds, text on dark |
+
+### Grayscale Palette
+| Name | Hex | Tailwind | Usage |
+|------|-----|----------|-------|
+| Cloud | `#EDEFF7` | `gray-50` | Light backgrounds, muted areas |
+| Smoke | `#D3D6E0` | `gray-100` | Borders, dividers |
+| Steel | `#BCBFCC` | `gray-200` | Secondary borders |
+| Space | `#9DA2B3` | `gray-300` | Muted text, icons |
+| Graphite | `#6E7180` | `gray-400` | Secondary text |
+| Arsenic | `#40424D` | `gray-500` | Dark mode borders/cards |
+| Phantom | `#1E1E24` | `gray-600` | Dark mode background |
+| Black | `#000000` | `gray-900` | Pure black (use sparingly) |
+
+## Typography
+
+**Primary Font:** Manrope (loaded via `next/font/google`)
+
+### Type Scale
+- H1: 64px (`text-6xl`) - Major headings
+- H2: 48px (`text-5xl`) - Section headings
+- Subheader 1: 32px (`text-3xl`) - Subsection titles
+- Subheader 2: 24px (`text-2xl`) - Card titles
+- Paragraph 1: 18px (`text-lg`) - Body text
+- Paragraph 2: 16px (`text-base`) - Default text
+
+### Font Weights
+- Light: 300
+- Regular: 400
+- Medium: 500
+- Semibold: 600
+- Bold: 700
+- ExtraBold: 800
+
+## Logo Usage
+
+### Available Logo Files
+- `/public/logo.svg` - Primary (light background)
+- `/public/logo-light.svg` - For dark backgrounds
+- `/public/logo-icon.svg` - Icon only (dark)
+- `/public/logo-icon-light.svg` - Icon only (light/white)
+
+### Logo Guidelines
+- Maintain 1/4 height clearspace around logos
+- Don't stretch or distort logos
+- Use appropriate variant for background color
+
+## Color Usage Examples
+
+```tsx
+// Primary button
+<button className="bg-primary text-primary-foreground hover:bg-primary/90">
+  Action
+</button>
+
+// Dark sidebar
+<aside className="bg-brand-dark text-white">
+  <img src="/logo-light.svg" alt="DGL.ONLINE" />
+</aside>
+
+// Muted card
+<div className="bg-muted text-muted-foreground">
+  Secondary content
+</div>
+
+// Orange accent
+<span className="text-brand">Highlighted text</span>
+```
+
+## CSS Variables (shadcn/ui)
+
+The brand colors are configured as CSS variables in `globals.css` using HSL format for shadcn/ui compatibility:
+
+- `--primary`: DGL Orange
+- `--background`: White (light) / Phantom (dark)
+- `--foreground`: Brand Dark (light) / Cloud (dark)
+- `--muted`: Cloud (light) / Arsenic (dark)
+- `--border`: Smoke (light) / Arsenic (dark)
+
+## Reference
+
+Full brand guidelines available at: `DGL (modestaskalinau)/BrandGuideline/DGL.pdf`

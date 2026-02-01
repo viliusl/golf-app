@@ -1,22 +1,32 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SidebarWrapper() {
   return (
-    <div className="w-64 bg-gray-800 text-white p-4">
-      <div className="mb-8">
-        <h1 className="text-xl font-bold">Golf App</h1>
+    <div className="w-64 bg-brand-dark text-white p-4">
+      <div className="mb-8 px-2">
+        <Link href="/" className="block">
+          <Image
+            src="/logo-light.svg"
+            alt="DGL.ONLINE"
+            width={160}
+            height={50}
+            className="h-10 w-auto"
+            priority
+          />
+        </Link>
       </div>
       <nav>
-        <ul className="space-y-2">
+        <ul className="space-y-1">
           <li>
             <Link
               href="/tournaments"
-              className="flex items-center p-2 rounded-md hover:bg-gray-700 transition-colors"
+              className="flex items-center p-2 rounded-md hover:bg-gray-500 transition-colors"
             >
               <svg
-                className="w-5 h-5 mr-2"
+                className="w-5 h-5 mr-3 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -35,10 +45,10 @@ export default function SidebarWrapper() {
           <li>
             <Link
               href="/"
-              className="flex items-center p-2 rounded-md hover:bg-gray-700 transition-colors"
+              className="flex items-center p-2 rounded-md hover:bg-gray-500 transition-colors"
             >
               <svg
-                className="w-5 h-5 mr-2"
+                className="w-5 h-5 mr-3 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -57,10 +67,10 @@ export default function SidebarWrapper() {
           <li>
             <Link
               href="/teams"
-              className="flex items-center p-2 rounded-md hover:bg-gray-700 transition-colors"
+              className="flex items-center p-2 rounded-md hover:bg-gray-500 transition-colors"
             >
               <svg
-                className="w-5 h-5 mr-2"
+                className="w-5 h-5 mr-3 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -79,10 +89,10 @@ export default function SidebarWrapper() {
           <li>
             <Link
               href="/players"
-              className="flex items-center p-2 rounded-md hover:bg-gray-700 transition-colors"
+              className="flex items-center p-2 rounded-md hover:bg-gray-500 transition-colors"
             >
               <svg
-                className="w-5 h-5 mr-2"
+                className="w-5 h-5 mr-3 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -101,10 +111,10 @@ export default function SidebarWrapper() {
           <li>
             <Link
               href="/courses"
-              className="flex items-center p-2 rounded-md hover:bg-gray-700 transition-colors"
+              className="flex items-center p-2 rounded-md hover:bg-gray-500 transition-colors"
             >
               <svg
-                className="w-5 h-5 mr-2"
+                className="w-5 h-5 mr-3 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -124,4 +134,4 @@ export default function SidebarWrapper() {
       </nav>
     </div>
   );
-} 
+}

@@ -2,20 +2,91 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+  :root {
+    /* DGL Brand Colors converted to HSL for shadcn/ui compatibility */
+    /* Primary Orange: #EA6B15 = hsl(24, 85%, 50%) */
+    /* Brand Dark: #1E1D1D = hsl(0, 2%, 12%) */
+    /* White: #FFFFFF = hsl(0, 0%, 100%) */
+    
+    --background: 0 0% 100%;
+    --foreground: 0 2% 12%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 0 2% 12%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 2% 12%;
+    
+    /* Primary: DGL Orange #EA6B15 */
+    --primary: 24 85% 50%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary: DGL Steel #BCBFCC */
+    --secondary: 226 14% 77%;
+    --secondary-foreground: 0 2% 12%;
+    
+    /* Muted: DGL Cloud #EDEFF7 */
+    --muted: 228 33% 95%;
+    --muted-foreground: 227 7% 46%;
+    
+    /* Accent: lighter orange tint */
+    --accent: 24 85% 95%;
+    --accent-foreground: 24 85% 30%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Border: DGL Smoke #D3D6E0 */
+    --border: 226 17% 85%;
+    --input: 226 17% 85%;
+    --ring: 24 85% 50%;
+    
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark mode: DGL Phantom #1E1E24 as background */
+    --background: 240 10% 13%;
+    --foreground: 228 33% 95%;
+    
+    --card: 240 10% 13%;
+    --card-foreground: 228 33% 95%;
+    
+    --popover: 240 10% 13%;
+    --popover-foreground: 228 33% 95%;
+    
+    /* Primary stays orange */
+    --primary: 24 85% 50%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary: DGL Arsenic #40424D */
+    --secondary: 231 9% 28%;
+    --secondary-foreground: 228 33% 95%;
+    
+    /* Muted: DGL Arsenic #40424D */
+    --muted: 231 9% 28%;
+    --muted-foreground: 227 10% 66%;
+    
+    --accent: 231 9% 28%;
+    --accent-foreground: 228 33% 95%;
+    
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Border: DGL Arsenic #40424D */
+    --border: 231 9% 28%;
+    --input: 231 9% 28%;
+    --ring: 24 85% 50%;
+  }
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }

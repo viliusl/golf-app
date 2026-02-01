@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import '@/lib/config'; // Import config to ensure env variables are loaded
-import dynamic from 'next/dynamic';
 
-// Use dynamic import with no SSR for the layout wrapper
-const LayoutWrapper = dynamic(() => import('@/components/LayoutWrapper'), { ssr: false });
-
-const inter = Inter({ subsets: ["latin"] });
+const manrope = Manrope({ 
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
 
 export const metadata: Metadata = {
-  title: "Golf App",
-  description: "Manage your golf events and teams",
+  title: "DGL.ONLINE",
+  description: "Golf marketplace connecting enthusiasts in the Baltic states",
+  icons: {
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -21,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${manrope.variable} font-sans antialiased`} suppressHydrationWarning>
         {children}
       </body>
     </html>

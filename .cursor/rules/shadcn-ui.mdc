@@ -1,0 +1,47 @@
+---
+description: Use shadcn/ui components for UI elements
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# shadcn/ui Components
+
+Use shadcn/ui components instead of building custom UI primitives.
+
+## Installation
+
+Add components via CLI:
+```bash
+npx shadcn@latest add button
+```
+
+## Component Usage
+
+```tsx
+// ❌ BAD - Custom button
+<button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+  Submit
+</button>
+
+// ✅ GOOD - shadcn/ui Button
+import { Button } from "@/components/ui/button"
+<Button variant="default">Submit</Button>
+```
+
+## Guidelines
+
+- Import from `@/components/ui/*` (components live in `src/components/ui/`)
+- Use built-in variants (`variant`, `size`) instead of custom styles
+- Compose complex UIs from shadcn primitives (Dialog, Card, Form, etc.)
+- Customize via CSS variables in `globals.css`, not inline overrides
+- For forms, use shadcn Form components with react-hook-form + zod
+
+## Common Components
+
+| Need | Component |
+|------|-----------|
+| Buttons | `Button` |
+| Forms | `Form`, `Input`, `Select`, `Checkbox` |
+| Feedback | `Toast`, `Alert`, `Dialog` |
+| Layout | `Card`, `Separator`, `Tabs` |
+| Data | `Table`, `DataTable` |
