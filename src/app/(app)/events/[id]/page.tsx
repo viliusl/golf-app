@@ -891,7 +891,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <p className="text-black">Loading event details...</p>
+          <p className="text-brand-dark">Loading event details...</p>
         </div>
       </main>
     );
@@ -901,7 +901,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <p className="text-black">Event not found</p>
+          <p className="text-brand-dark">Event not found</p>
         </div>
       </main>
     );
@@ -919,8 +919,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-black">{event?.name}</h1>
-              <p className="text-lg text-gray-600 mt-2">
+              <h1 className="text-3xl font-bold text-brand-dark">{event?.name}</h1>
+              <p className="text-lg text-gray-400 mt-2">
                 {event?.date && new Date(event.date).toLocaleDateString(undefined, { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -932,7 +932,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     {' · '}
                     <button
                       onClick={() => setIsCourseModalOpen(true)}
-                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                      className="text-brand hover:text-brand/80 hover:underline"
                     >
                       {event.course.name}
                     </button>
@@ -947,7 +947,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -955,12 +955,12 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         {/* Matches Section */}
         <div className="space-y-8 mb-8">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold text-black">Matches</h2>
+            <h2 className="text-2xl font-semibold text-brand-dark">Matches</h2>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-6 border-b flex justify-between items-center">
-              <h3 className="text-lg font-medium text-black">Match List</h3>
+              <h3 className="text-lg font-medium text-brand-dark">Match List</h3>
               <div className="flex gap-2">
                 <div className="relative">
                   <button
@@ -999,7 +999,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             setIsDeleteAllMatchesModalOpen(true);
                             setIsMatchMenuOpen(false);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          className="w-full text-left px-4 py-2 text-sm text-danger-700 hover:bg-gray-50"
                         >
                           Delete All Matches
                         </button>
@@ -1018,7 +1018,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 
                 <Link
                   href={`/events/${params.id}/matches/add`}
-                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                  className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                 >
                   Add Match
                 </Link>
@@ -1086,8 +1086,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                 <div className="text-sm text-black">{match.tee}</div>
                               </td>
                               <td className="px-3 py-2 text-right text-sm font-medium sticky right-0 bg-white border-l group-hover:bg-gray-50">
-                                <Link href={`/events/${params.id}/matches/${match._id}/edit`} className="text-blue-600 hover:text-blue-900 mr-3">Edit</Link>
-                                <button onClick={() => handleDeleteMatchClick(match)} className="text-red-600 hover:text-red-900">Delete</button>
+                                <Link href={`/events/${params.id}/matches/${match._id}/edit`} className="text-brand hover:text-brand/80 mr-3">Edit</Link>
+                                <button onClick={() => handleDeleteMatchClick(match)} className="text-danger-700 hover:text-danger-600">Delete</button>
                               </td>
                             </tr>
                           ))}
@@ -1124,7 +1124,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                             return timeA - timeB;
                           })
                           .map((match) => (
-                            <tr key={match._id} className="group hover:bg-gray-50 bg-green-50">
+                            <tr key={match._id} className="group hover:bg-gray-50 bg-success-50">
                               <td className="px-3 py-2 whitespace-nowrap">
                                 <div className="text-sm font-medium text-black">{match.player1.name}</div>
                                 <div className="text-xs text-gray-500">{isIndividualTournament ? '-' : match.player1.teamName}</div>
@@ -1150,9 +1150,9 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                               <td className="px-3 py-2 text-center">
                                 <div className="text-sm text-black">{match.tee}</div>
                               </td>
-                              <td className="px-3 py-2 text-right text-sm font-medium sticky right-0 bg-green-50 border-l group-hover:bg-gray-50">
-                                <Link href={`/events/${params.id}/matches/${match._id}/edit`} className="text-blue-600 hover:text-blue-900 mr-3">Edit</Link>
-                                <button onClick={() => handleDeleteMatchClick(match)} className="text-red-600 hover:text-red-900">Delete</button>
+                              <td className="px-3 py-2 text-right text-sm font-medium sticky right-0 bg-success-50 border-l group-hover:bg-gray-50">
+                                <Link href={`/events/${params.id}/matches/${match._id}/edit`} className="text-brand hover:text-brand/80 mr-3">Edit</Link>
+                                <button onClick={() => handleDeleteMatchClick(match)} className="text-danger-700 hover:text-danger-600">Delete</button>
                               </td>
                             </tr>
                           ))}
@@ -1168,12 +1168,12 @@ export default function EventDetails({ params }: { params: { id: string } }) {
         {/* Teams/Players Section */}
         <div className="space-y-8">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold text-black">{isIndividualTournament ? 'Players' : 'Teams'}</h2>
+            <h2 className="text-2xl font-semibold text-brand-dark">{isIndividualTournament ? 'Players' : 'Teams'}</h2>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
             <div className="p-6 border-b flex justify-between items-center">
-              <h3 className="text-lg font-medium text-black">{isIndividualTournament ? 'Player List' : 'Team List'}</h3>
+              <h3 className="text-lg font-medium text-brand-dark">{isIndividualTournament ? 'Player List' : 'Team List'}</h3>
               {isIndividualTournament ? (
                 <button
                   onClick={() => {
@@ -1188,14 +1188,14 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                       setIsAddTeamModalOpen(true);
                     }
                   }}
-                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                  className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                 >
                   Add Player
                 </button>
               ) : (
                 <button
                   onClick={() => setIsAddTeamModalOpen(true)}
-                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                  className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                 >
                   Add Team
                 </button>
@@ -1211,14 +1211,14 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                       // For individual tournaments with no team, create one first
                       setIsAddTeamModalOpen(true);
                     }}
-                    className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                    className="mt-4 bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                   >
                     Add Player
                   </button>
                 ) : (
                   <button
                     onClick={() => setIsAddTeamModalOpen(true)}
-                    className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                    className="mt-4 bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                   >
                     Add Team
                   </button>
@@ -1239,13 +1239,13 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleOpenAddPlayerModal(team)}
-                              className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-sm"
+                              className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors text-sm"
                             >
                               Add Player
                             </button>
                             <button
                               onClick={() => handleRemoveTeamClick(team)}
-                              className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors text-sm"
+                              className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700 transition-colors text-sm"
                             >
                               Remove Team
                             </button>
@@ -1354,7 +1354,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button
                                       onClick={() => handleRemoveMemberClick(team._id, idx, playerDetails.name)}
-                                      className="text-red-600 hover:text-red-900"
+                                      className="text-danger-700 hover:text-danger-600"
                                     >
                                       Remove
                                     </button>
@@ -1398,7 +1398,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                     </p>
                     <button
                       onClick={handleCreateImplicitTeam}
-                      className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                      className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                     >
                       Continue to Add Players
                     </button>
@@ -1406,7 +1406,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 ) : availableTeams.length === 0 ? (
                   <div className="text-center p-4">
                     <p className="text-sm text-gray-500 mb-2">All teams have been added to this event</p>
-                    <Link href="/teams" className="text-green-600 hover:text-green-800">Create a new team</Link>
+                    <Link href="/teams" className="text-brand hover:text-brand/80">Create a new team</Link>
                   </div>
                 ) : (
                   <>
@@ -1419,7 +1419,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                         </div>
                         <button
                           onClick={() => handleAddTeam(team._id)}
-                          className="bg-green-500 text-white py-1 px-3 rounded-md hover:bg-green-600 transition-colors text-sm"
+                          className="bg-brand text-white py-1 px-3 rounded-md hover:bg-brand/90 transition-colors text-sm"
                         >
                           Add
                         </button>
@@ -1466,7 +1466,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 {allPlayers.length === 0 ? (
                   <div className="text-center p-4">
                     <p className="text-sm text-gray-500 mb-2">No players available</p>
-                    <Link href="/players" className="text-blue-600 hover:text-blue-800">Create a new player</Link>
+                    <Link href="/players" className="text-brand hover:text-brand/80">Create a new player</Link>
                   </div>
                 ) : (
                   <>
@@ -1484,7 +1484,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                           </div>
                           <button
                             onClick={() => handleAddPlayerToTeam(player)}
-                            className="bg-green-500 text-white py-1 px-3 rounded-md hover:bg-green-600 transition-colors text-sm"
+                            className="bg-brand text-white py-1 px-3 rounded-md hover:bg-brand/90 transition-colors text-sm"
                           >
                             Add
                           </button>
@@ -1508,7 +1508,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               <p className="mb-4 text-gray-700">Are you sure you want to remove {memberToRemove.name} from this team?</p>
               <div className="flex justify-end gap-2">
                 <button onClick={() => { setIsRemoveMemberModalOpen(false); setMemberToRemove(null); }} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
-                <button onClick={() => handleRemoveMember(memberToRemove.teamId, memberToRemove.index)} className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600">Remove</button>
+                <button onClick={() => handleRemoveMember(memberToRemove.teamId, memberToRemove.index)} className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700">Remove</button>
               </div>
             </div>
           </div>
@@ -1532,7 +1532,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               </p>
               <div className="flex justify-end gap-2">
                 <button onClick={() => { setIsRemoveTeamModalOpen(false); setTeamToRemove(null); }} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
-                <button onClick={() => handleRemoveTeam(teamToRemove._id)} className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600">Remove</button>
+                <button onClick={() => handleRemoveTeam(teamToRemove._id)} className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700">Remove</button>
               </div>
             </div>
           </div>
@@ -1568,7 +1568,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               <p className="mb-4 text-gray-700">Are you sure you want to delete this match? This action cannot be undone.</p>
               <div className="flex justify-end gap-2">
                 <button onClick={() => { setIsDeleteMatchModalOpen(false); setMatchToDelete(null); setMatchToDeleteDetails(null); }} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
-                <button onClick={handleDeleteMatch} className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600">Delete</button>
+                <button onClick={handleDeleteMatch} className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700">Delete</button>
               </div>
             </div>
           </div>
@@ -1587,7 +1587,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               </div>
               <div className="flex justify-end gap-2">
                 <button onClick={() => setIsDeleteAllMatchesModalOpen(false)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Cancel</button>
-                <button onClick={handleDeleteAllMatches} className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600">Delete All Matches</button>
+                <button onClick={handleDeleteAllMatches} className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700">Delete All Matches</button>
               </div>
             </div>
           </div>
@@ -1697,7 +1697,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 )}
               </div>
 
-              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
+              {error && <div className="mb-4 p-3 bg-danger-50 text-danger-700 rounded-md text-sm">{error}</div>}
               <div className="flex justify-end gap-3">
                 <button onClick={() => { setIsUpdateHandicapModalOpen(false); setHandicapToUpdate(null); setFutureEvents([]); setSelectedEventIds(new Set()); setError(null); }} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
                 <button onClick={handleUpdateHandicap} disabled={loadingEvents} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">Save</button>
@@ -1726,7 +1726,7 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 </select>
                 {teeToUpdate.currentTee && <p className="mt-1 text-xs text-gray-500">Current: {teeToUpdate.currentTee}</p>}
               </div>
-              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
+              {error && <div className="mb-4 p-3 bg-danger-50 text-danger-700 rounded-md text-sm">{error}</div>}
               <div className="flex justify-end gap-3">
                 <button onClick={() => { setIsUpdateTeeModalOpen(false); setTeeToUpdate(null); setError(null); }} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Cancel</button>
                 <button onClick={handleUpdateTee} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button>

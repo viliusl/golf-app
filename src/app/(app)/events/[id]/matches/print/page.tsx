@@ -57,7 +57,7 @@ export default function PrintMatchCards() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <p className="text-black">Loading match data...</p>
+          <p className="text-brand-dark">Loading match data...</p>
         </div>
       </main>
     );
@@ -67,7 +67,7 @@ export default function PrintMatchCards() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          <div className="bg-danger-50 text-danger-700 p-4 rounded-md mb-4">
             {error}
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function PrintMatchCards() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
+          <div className="bg-orange-100 text-orange-800 p-4 rounded-md mb-4">
             Event not found
           </div>
         </div>
@@ -91,11 +91,11 @@ export default function PrintMatchCards() {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-black">Match Cards - {event.name}</h1>
+          <h1 className="text-2xl font-semibold text-brand-dark">Match Cards - {event.name}</h1>
           <div className="flex gap-2">
             <button
               onClick={() => window.print()}
-              className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+              className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
             >
               Print Cards
             </button>

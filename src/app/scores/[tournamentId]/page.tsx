@@ -374,7 +374,7 @@ export default function PublicTournamentScorecard() {
     return (
       <main className="p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          <div className="bg-danger-50 text-danger-700 p-4 rounded-md mb-4">
             {error}
           </div>
         </div>
@@ -386,7 +386,7 @@ export default function PublicTournamentScorecard() {
     return (
       <main className="p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
+          <div className="bg-orange-100 text-orange-800 p-4 rounded-md mb-4">
             Tournament not found
           </div>
         </div>

@@ -60,6 +60,22 @@ module.exports = {
           600: "#1E1E24",  // Phantom
           900: "#000000",  // Black
         },
+        // Semantic: Muted Red (for errors/destructive)
+        danger: {
+          DEFAULT: "#B54B4B",
+          50: "#F5E6E6",
+          100: "#EBCCCC",
+          600: "#B54B4B",
+          700: "#8B3A3A",
+        },
+        // Semantic: Teal (for success/completed)
+        success: {
+          DEFAULT: "#0D9488",
+          50: "#F0FDFA",
+          100: "#CCFBF1",
+          600: "#0D9488",
+          700: "#115E59",
+        },
       },
       fontFamily: {
         sans: ["var(--font-manrope)", "sans-serif"],

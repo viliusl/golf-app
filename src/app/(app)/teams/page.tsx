@@ -531,17 +531,17 @@ export default function Teams() {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Teams</h1>
+          <h1 className="text-3xl font-bold text-brand-dark">Teams</h1>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
           >
             Add Team
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -549,18 +549,18 @@ export default function Teams() {
         {/* Teams List */}
         <div className="space-y-6">
           {loading ? (
-            <p className="text-black">Loading teams...</p>
+            <p className="text-brand-dark">Loading teams...</p>
           ) : teams.length === 0 ? (
-            <p className="text-black">No teams found</p>
+            <p className="text-brand-dark">No teams found</p>
           ) : (
             teams.map((team) => (
               <div key={team._id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold text-black">{team.name}</h2>
+                    <h2 className="text-xl font-semibold text-brand-dark">{team.name}</h2>
                     <button
                       onClick={() => openRenameTeamModal(team)}
-                      className="text-blue-500 hover:text-blue-700"
+                      className="text-brand hover:text-brand/80"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
@@ -573,13 +573,13 @@ export default function Teams() {
                         setTeamToAddMember(team);
                         setIsAddMemberModalOpen(true);
                       }}
-                      className="bg-green-500 text-white py-1 px-3 rounded-md hover:bg-green-600 transition-colors text-sm"
+                      className="bg-success-600 text-white py-1 px-3 rounded-md hover:bg-success-700 transition-colors text-sm"
                     >
                       Add Member
                     </button>
                     <button
                       onClick={() => handleDeleteClick(team)}
-                      className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors text-sm"
+                      className="bg-danger-600 text-white py-1 px-3 rounded-md hover:bg-danger-700 transition-colors text-sm"
                     >
                       Delete Team
                     </button>
@@ -588,30 +588,30 @@ export default function Teams() {
 
                 {/* Members Table */}
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
+                  <table className="min-w-full divide-y divide-gray-100">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                           Member Name
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                           Captain
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                           Handicap Index
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                           Gender
                         </th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-100">
                       {team.members.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                          <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-400">
                             No members yet
                           </td>
                         </tr>
@@ -619,7 +619,7 @@ export default function Teams() {
                         team.members.map((member, index) => (
                           <tr key={index} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm font-medium text-gray-900">
+                              <span className="text-sm font-medium text-brand-dark">
                                 {member.playerId?.name || 'Unknown Player'}
                               </span>
                             </td>
@@ -628,8 +628,8 @@ export default function Teams() {
                                 onClick={() => handleToggleCaptain(team, index)}
                                 className={`flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors ${
                                   member.isCaptain 
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                    ? 'bg-success-50 text-success-700 hover:bg-success-100' 
+                                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                                 }`}
                                 title={member.isCaptain ? 'Click to remove captain' : 'Click to make captain'}
                               >
@@ -647,11 +647,11 @@ export default function Teams() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm text-black">{member.playerId?.handicap ?? '-'}</span>
+                                <span className="text-sm text-brand-dark">{member.playerId?.handicap ?? '-'}</span>
                                 {member.playerId && (
                                   <button
                                     onClick={() => handleUpdateHandicapClick(member)}
-                                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                                    className="text-gray-400 hover:text-brand transition-colors"
                                     title="Edit handicap index"
                                   >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -662,12 +662,12 @@ export default function Teams() {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-black">{member.playerId?.gender || '-'}</div>
+                              <div className="text-sm text-brand-dark">{member.playerId?.gender || '-'}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <button
                                 onClick={() => handleRemoveMember(team, index)}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-danger-700 hover:text-danger-600"
                               >
                                 Remove
                               </button>
@@ -688,20 +688,20 @@ export default function Teams() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Add New Team</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Add New Team</h2>
                 <button
                   onClick={() => {
                     setIsModalOpen(false);
                     setError(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-400 mb-1">
                     Team Name
                   </label>
                   <input
@@ -709,7 +709,7 @@ export default function Teams() {
                     id="name"
                     value={newTeam.name}
                     onChange={(e) => setNewTeam({ name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   />
                 </div>
@@ -720,13 +720,13 @@ export default function Teams() {
                       setIsModalOpen(false);
                       setError(null);
                     }}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                    className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                   >
                     Add Team
                   </button>
@@ -741,7 +741,7 @@ export default function Teams() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Add Member to {teamToAddMember.name}</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Add Member to {teamToAddMember.name}</h2>
                 <button
                   onClick={() => {
                     setIsAddMemberModalOpen(false);
@@ -751,7 +751,7 @@ export default function Teams() {
                     setPlayerSearchTerm('');
                     setError(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
@@ -765,7 +765,7 @@ export default function Teams() {
                     placeholder="Search players..."
                     value={playerSearchTerm}
                     onChange={(e) => setPlayerSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-4 py-2 border border-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-brand text-brand-dark"
                   />
                   <svg 
                     className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
@@ -781,19 +781,19 @@ export default function Teams() {
 
               <form onSubmit={handleAddMember} className="flex flex-col flex-grow">
                 <div className="mb-4 flex-grow overflow-y-auto">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
                     Select a Player
                   </label>
                   {filteredPlayers.length === 0 ? (
                     <div className="text-center p-4">
-                      <p className="text-sm text-gray-500 mb-2">
+                      <p className="text-sm text-gray-400 mb-2">
                         {players.length === 0 
                           ? 'No players available' 
                           : getAvailablePlayers(teamToAddMember).length === 0
                             ? 'All players are already in this team'
                             : 'No players match your search'}
                       </p>
-                      <Link href="/players" className="text-blue-600 hover:text-blue-800">
+                      <Link href="/players" className="text-brand hover:text-brand/80">
                         Go to Players page to add new players
                       </Link>
                     </div>
@@ -804,8 +804,8 @@ export default function Teams() {
                           key={player._id}
                           className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${
                             selectedPlayerId === player._id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:bg-gray-50'
+                              ? 'border-brand bg-orange-50'
+                              : 'border-gray-100 hover:bg-gray-50'
                           }`}
                         >
                           <input
@@ -817,8 +817,8 @@ export default function Teams() {
                             className="mr-3"
                           />
                           <div className="flex-grow">
-                            <div className="text-sm font-medium text-black">{player.name}</div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-sm font-medium text-brand-dark">{player.name}</div>
+                            <div className="text-xs text-gray-400">
                               HCP: {player.handicap} | {player.gender}
                             </div>
                           </div>
@@ -834,9 +834,9 @@ export default function Teams() {
                       type="checkbox"
                       checked={newMemberIsCaptain}
                       onChange={(e) => setNewMemberIsCaptain(e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-100 text-brand focus:ring-brand"
                     />
-                    <span className="text-sm font-medium text-gray-700">Team Captain</span>
+                    <span className="text-sm font-medium text-gray-400">Team Captain</span>
                   </label>
                 </div>
 
@@ -851,7 +851,7 @@ export default function Teams() {
                       setPlayerSearchTerm('');
                       setError(null);
                     }}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                   >
                     Cancel
                   </button>
@@ -860,8 +860,8 @@ export default function Teams() {
                     disabled={!selectedPlayerId}
                     className={`py-2 px-4 rounded-md transition-colors ${
                       selectedPlayerId
-                        ? 'bg-blue-500 text-white hover:bg-blue-600'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ? 'bg-brand text-white hover:bg-brand/90'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                     }`}
                   >
                     Add Member
@@ -877,18 +877,18 @@ export default function Teams() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Delete Team</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Delete Team</h2>
                 <button
                   onClick={() => {
                     setIsDeleteModalOpen(false);
                     setTeamToDelete(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
-              <p className="mb-4 text-gray-700">
+              <p className="mb-4 text-gray-400">
                 Are you sure you want to delete the team &quot;{teamToDelete.name}&quot;?
               </p>
               <div className="flex justify-end gap-2">
@@ -897,13 +897,13 @@ export default function Teams() {
                     setIsDeleteModalOpen(false);
                     setTeamToDelete(null);
                   }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                  className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700 transition-colors"
                 >
                   Delete
                 </button>
@@ -917,7 +917,7 @@ export default function Teams() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Rename Team</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Rename Team</h2>
                 <button
                   onClick={() => {
                     setIsRenameTeamModalOpen(false);
@@ -925,14 +925,14 @@ export default function Teams() {
                     setRenamedTeamName('');
                     setError(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="teamName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="teamName" className="block text-sm font-medium text-gray-400 mb-1">
                     Team Name
                   </label>
                   <input
@@ -940,7 +940,7 @@ export default function Teams() {
                     id="teamName"
                     value={renamedTeamName}
                     onChange={(e) => setRenamedTeamName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     placeholder="Enter team name"
                   />
                 </div>
@@ -952,13 +952,13 @@ export default function Teams() {
                       setRenamedTeamName('');
                       setError(null);
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 border border-gray-100 rounded-md text-gray-400 hover:bg-gray-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleRenameTeam}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                    className="px-4 py-2 bg-brand text-white rounded-md hover:bg-brand/90"
                   >
                     Save
                   </button>
@@ -972,34 +972,34 @@ export default function Teams() {
         {isHandicapModalOpen && handicapToUpdate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Update Handicap Index</h2>
-              <p className="text-sm text-gray-600 mb-4">
+              <h2 className="text-xl font-bold text-brand-dark mb-4">Update Handicap Index</h2>
+              <p className="text-sm text-gray-400 mb-4">
                 Updating handicap for <span className="font-medium">{handicapToUpdate.name}</span>
               </p>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Handicap Index</label>
+                <label className="block text-sm font-medium text-gray-400 mb-1">New Handicap Index</label>
                 <input
                   type="text"
                   value={handicapToUpdate.newHandicap}
                   onChange={(e) => setHandicapToUpdate({ ...handicapToUpdate, newHandicap: e.target.value })}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !loadingEvents) handleUpdateHandicap(); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:outline-none focus:ring-2 focus:ring-brand"
                   autoFocus
                 />
-                <p className="mt-1 text-xs text-gray-500">Current: {handicapToUpdate.currentHandicap}</p>
+                <p className="mt-1 text-xs text-gray-400">Current: {handicapToUpdate.currentHandicap}</p>
               </div>
 
               {/* Future Events Section */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
                   Update handicap in future events
                 </label>
                 {loadingEvents ? (
-                  <p className="text-sm text-gray-500">Loading events...</p>
+                  <p className="text-sm text-gray-400">Loading events...</p>
                 ) : futureEvents.length === 0 ? (
-                  <p className="text-sm text-gray-500">No future events found for this player</p>
+                  <p className="text-sm text-gray-400">No future events found for this player</p>
                 ) : (
-                  <div className="border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+                  <div className="border border-gray-100 rounded-md max-h-60 overflow-y-auto">
                     {futureEvents.map((event) => {
                       const eventKey = `${event._id}-${event.teamId}-${event.memberIndex}`;
                       const newHcpValue = handicapToUpdate ? parseFloat(handicapToUpdate.newHandicap.replace(',', '.')) : NaN;
@@ -1015,22 +1015,22 @@ export default function Teams() {
                             type="checkbox"
                             checked={selectedEventIds.has(eventKey)}
                             onChange={() => toggleEventSelection(eventKey)}
-                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="h-4 w-4 text-brand border-gray-100 rounded focus:ring-brand"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900">{event.name}</div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-sm font-medium text-brand-dark">{event.name}</div>
+                            <div className="text-xs text-gray-400">
                               {new Date(event.date).toLocaleDateString()} • Team: {event.teamName}
                             </div>
                             {event.tee ? (
-                              <div className="text-xs text-gray-600 mt-1">
+                              <div className="text-xs text-gray-400 mt-1">
                                 Playing HCP: {event.currentPlayingHcp}
                                 {newPlayingHcp !== null && newPlayingHcp !== event.currentPlayingHcp && (
-                                  <span className="text-blue-600 font-medium"> → {newPlayingHcp}</span>
+                                  <span className="text-brand font-medium"> → {newPlayingHcp}</span>
                                 )}
                               </div>
                             ) : (
-                              <div className="text-xs text-orange-500 mt-1">No tee selected</div>
+                              <div className="text-xs text-brand mt-1">No tee selected</div>
                             )}
                           </div>
                         </label>
@@ -1043,14 +1043,14 @@ export default function Teams() {
                     <button
                       type="button"
                       onClick={() => setSelectedEventIds(new Set(futureEvents.map(e => `${e._id}-${e.teamId}-${e.memberIndex}`)))}
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-brand hover:text-brand/80"
                     >
                       Select all
                     </button>
                     <button
                       type="button"
                       onClick={() => setSelectedEventIds(new Set())}
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-brand hover:text-brand/80"
                     >
                       Deselect all
                     </button>
@@ -1058,18 +1058,18 @@ export default function Teams() {
                 )}
               </div>
 
-              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
+              {error && <div className="mb-4 p-3 bg-danger-50 text-danger-700 rounded-md text-sm">{error}</div>}
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => { setIsHandicapModalOpen(false); setHandicapToUpdate(null); setFutureEvents([]); setSelectedEventIds(new Set()); setError(null); }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                  className="px-4 py-2 bg-gray-50 text-gray-400 rounded-md hover:bg-gray-100"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleUpdateHandicap}
                   disabled={loadingEvents}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-brand text-white rounded-md hover:bg-brand/90 disabled:opacity-50"
                 >
                   Save
                 </button>

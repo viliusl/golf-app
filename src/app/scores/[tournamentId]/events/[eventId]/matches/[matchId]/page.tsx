@@ -80,7 +80,7 @@ export default function PublicMatchView() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <p className="text-black">Loading match data...</p>
+          <p className="text-brand-dark">Loading match data...</p>
         </div>
       </main>
     );
@@ -90,7 +90,7 @@ export default function PublicMatchView() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          <div className="bg-danger-50 text-danger-700 p-4 rounded-md mb-4">
             {error}
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function PublicMatchView() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
+          <div className="bg-orange-100 text-orange-800 p-4 rounded-md mb-4">
             Match not found
           </div>
         </div>
@@ -117,11 +117,11 @@ export default function PublicMatchView() {
           <div className="flex items-center gap-4">
             <a 
               href={`/scores/${tournamentId}/events/${eventId}`}
-              className="px-4 py-2 bg-white text-black border border-gray-300 hover:bg-gray-100 rounded-md"
+              className="px-4 py-2 bg-white text-brand-dark border border-gray-100 hover:bg-gray-50 rounded-md"
             >
               ← Back to Event
             </a>
-            <h1 className="text-2xl font-semibold text-black">Match Details</h1>
+            <h1 className="text-2xl font-semibold text-brand-dark">Match Details</h1>
           </div>
           <Image
             src="/logo.svg"
@@ -137,7 +137,7 @@ export default function PublicMatchView() {
             {/* Player 1 info */}
             <div>
               <div className="bg-gray-50 p-4 rounded-md">
-                <h3 className="text-lg font-medium text-black">{match.player1.name}</h3>
+                <h3 className="text-lg font-medium text-brand-dark">{match.player1.name}</h3>
                 <p className="text-sm text-gray-500">Team: {match.player1.teamName}</p>
                 <p className="text-sm font-medium text-gray-700">Playing Handicap: {match.player1.handicap || 0}</p>
               </div>
@@ -146,7 +146,7 @@ export default function PublicMatchView() {
             {/* Player 2 info */}
             <div>
               <div className="bg-gray-50 p-4 rounded-md">
-                <h3 className="text-lg font-medium text-black">{match.player2.name}</h3>
+                <h3 className="text-lg font-medium text-brand-dark">{match.player2.name}</h3>
                 <p className="text-sm text-gray-500">Team: {match.player2.teamName}</p>
                 <p className="text-sm font-medium text-gray-700">Playing Handicap: {match.player2.handicap || 0}</p>
               </div>
@@ -170,8 +170,8 @@ export default function PublicMatchView() {
           <div className="mb-8">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
               match.completed 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-yellow-100 text-yellow-800'
+                ? 'bg-success-100 text-success-700' 
+                : 'bg-orange-100 text-orange-800'
             }`}>
               {match.completed ? 'Match Completed' : 'Match In Progress'}
             </span>

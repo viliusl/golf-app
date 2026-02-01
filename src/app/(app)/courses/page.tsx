@@ -71,10 +71,10 @@ export default function CoursesPage() {
     <main className="p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Courses</h1>
+          <h1 className="text-3xl font-bold text-brand-dark">Courses</h1>
           <Link
             href="/courses/add"
-            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
           >
             Add Course
           </Link>
@@ -88,7 +88,7 @@ export default function CoursesPage() {
               placeholder="Search courses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="w-full px-4 py-2 border border-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-brand text-brand-dark"
             />
             <svg 
               className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
@@ -103,7 +103,7 @@ export default function CoursesPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -111,68 +111,68 @@ export default function CoursesPage() {
         {/* Courses Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
           {loading ? (
-            <p className="text-black">Loading courses...</p>
+            <p className="text-brand-dark">Loading courses...</p>
           ) : courses.length === 0 ? (
-            <p className="text-black">No courses found</p>
+            <p className="text-brand-dark">No courses found</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-100">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Name
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Address
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Holes / PAR
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Men&apos;s Tees
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Women&apos;s Tees
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {filteredCourses.map((course) => (
                     <tr key={course._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Link
                           href={`/courses/${course._id}/edit`}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-sm font-medium text-brand hover:text-brand/80 hover:underline"
                         >
                           {course.name}
                         </Link>
                       </td>
                       <td className="px-6 py-4">
                         <div className="relative group">
-                          <div className="text-sm text-black max-w-[200px] truncate">
+                          <div className="text-sm text-brand-dark max-w-[200px] truncate">
                             <a
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(course.address)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                              className="text-brand hover:text-brand/80 hover:underline"
                             >
                               {course.address}
                             </a>
                           </div>
-                          <div className="absolute z-10 invisible group-hover:visible bg-gray-900 text-white text-xs rounded py-2 px-3 -top-2 left-0 transform -translate-y-full max-w-[300px] whitespace-normal shadow-lg">
+                          <div className="absolute z-10 invisible group-hover:visible bg-gray-600 text-white text-xs rounded py-2 px-3 -top-2 left-0 transform -translate-y-full max-w-[300px] whitespace-normal shadow-lg">
                             {course.address}
-                            <div className="absolute top-full left-4 border-4 border-transparent border-t-gray-900"></div>
+                            <div className="absolute top-full left-4 border-4 border-transparent border-t-gray-600"></div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">
+                        <div className="text-sm text-brand-dark">
                           {course.holes?.length || 0}
                           {course.holes && course.holes.length > 0 && (
-                            <span className="text-gray-500 ml-1">
+                            <span className="text-gray-400 ml-1">
                               / {course.holes.reduce((sum, h) => sum + (h.par || 0), 0)}
                             </span>
                           )}
@@ -180,26 +180,26 @@ export default function CoursesPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="relative group">
-                          <div className="text-sm text-black max-w-[120px] truncate cursor-default">
+                          <div className="text-sm text-brand-dark max-w-[120px] truncate cursor-default">
                             {course.menTees?.map(t => t.name).join(', ') || '-'}
                           </div>
                           {course.menTees && course.menTees.length > 0 && (
-                            <div className="absolute z-10 invisible group-hover:visible bg-gray-900 text-white text-xs rounded py-2 px-3 -top-2 left-0 transform -translate-y-full max-w-[250px] whitespace-normal shadow-lg">
+                            <div className="absolute z-10 invisible group-hover:visible bg-gray-600 text-white text-xs rounded py-2 px-3 -top-2 left-0 transform -translate-y-full max-w-[250px] whitespace-normal shadow-lg">
                               {course.menTees.map(t => t.name).join(', ')}
-                              <div className="absolute top-full left-4 border-4 border-transparent border-t-gray-900"></div>
+                              <div className="absolute top-full left-4 border-4 border-transparent border-t-gray-600"></div>
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="relative group">
-                          <div className="text-sm text-black max-w-[120px] truncate cursor-default">
+                          <div className="text-sm text-brand-dark max-w-[120px] truncate cursor-default">
                             {course.womenTees?.map(t => t.name).join(', ') || '-'}
                           </div>
                           {course.womenTees && course.womenTees.length > 0 && (
-                            <div className="absolute z-10 invisible group-hover:visible bg-gray-900 text-white text-xs rounded py-2 px-3 -top-2 left-0 transform -translate-y-full max-w-[250px] whitespace-normal shadow-lg">
+                            <div className="absolute z-10 invisible group-hover:visible bg-gray-600 text-white text-xs rounded py-2 px-3 -top-2 left-0 transform -translate-y-full max-w-[250px] whitespace-normal shadow-lg">
                               {course.womenTees.map(t => t.name).join(', ')}
-                              <div className="absolute top-full left-4 border-4 border-transparent border-t-gray-900"></div>
+                              <div className="absolute top-full left-4 border-4 border-transparent border-t-gray-600"></div>
                             </div>
                           )}
                         </div>
@@ -207,13 +207,13 @@ export default function CoursesPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link
                           href={`/courses/${course._id}/edit`}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-brand hover:text-brand/80"
                         >
                           Edit
                         </Link>
                         <button
                           onClick={() => handleDeleteClick(course)}
-                          className="text-red-600 hover:text-red-900 ml-4"
+                          className="text-danger-700 hover:text-danger-600 ml-4"
                         >
                           Delete
                         </button>
@@ -231,18 +231,18 @@ export default function CoursesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Delete Course</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Delete Course</h2>
                 <button
                   onClick={() => {
                     setIsDeleteModalOpen(false);
                     setCourseToDelete(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
-              <p className="mb-4 text-gray-700">
+              <p className="mb-4 text-gray-400">
                 Are you sure you want to delete the course &quot;{courseToDelete.name}&quot;?
               </p>
               <div className="flex justify-end gap-2">
@@ -251,13 +251,13 @@ export default function CoursesPage() {
                     setIsDeleteModalOpen(false);
                     setCourseToDelete(null);
                   }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                  className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700 transition-colors"
                 >
                   Delete
                 </button>

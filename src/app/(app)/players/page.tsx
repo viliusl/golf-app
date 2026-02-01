@@ -390,10 +390,10 @@ export default function PlayersPage() {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Players</h1>
+          <h1 className="text-3xl font-bold text-brand-dark">Players</h1>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
           >
             Add Player
           </button>
@@ -407,7 +407,7 @@ export default function PlayersPage() {
               placeholder="Search players..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="w-full px-4 py-2 border border-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-brand text-brand-dark"
             />
             <svg 
               className="absolute right-3 top-2.5 h-5 w-5 text-gray-400"
@@ -422,7 +422,7 @@ export default function PlayersPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -430,34 +430,34 @@ export default function PlayersPage() {
         {/* Players Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
           {loading ? (
-            <p className="text-black">Loading players...</p>
+            <p className="text-brand-dark">Loading players...</p>
           ) : players.length === 0 ? (
-            <p className="text-black">No players found</p>
+            <p className="text-brand-dark">No players found</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-100">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Name
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Handicap Index
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Gender
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {filteredPlayers.map((player) => (
                     <tr key={player._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-sm font-medium text-brand hover:text-brand/80 hover:underline"
                           onClick={() => handleEditClick(player)}
                         >
                           {player.name}
@@ -465,10 +465,10 @@ export default function PlayersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-black">{player.handicap}</span>
+                          <span className="text-sm text-brand-dark">{player.handicap}</span>
                           <button
                             onClick={() => handleUpdateHandicapClick(player)}
-                            className="text-gray-400 hover:text-blue-600 transition-colors"
+                            className="text-gray-400 hover:text-brand transition-colors"
                             title="Edit handicap index"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -478,18 +478,18 @@ export default function PlayersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">{player.gender}</div>
+                        <div className="text-sm text-brand-dark">{player.gender}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => handleEditClick(player)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-brand hover:text-brand/80"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteClick(player)}
-                          className="text-red-600 hover:text-red-900 ml-4"
+                          className="text-danger-700 hover:text-danger-600 ml-4"
                         >
                           Delete
                         </button>
@@ -507,20 +507,20 @@ export default function PlayersPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Add New Player</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Add New Player</h2>
                 <button
                   onClick={() => {
                     setIsAddModalOpen(false);
                     setError(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-400 mb-1">
                     Player Name
                   </label>
                   <input
@@ -528,12 +528,12 @@ export default function PlayersPage() {
                     id="name"
                     value={newPlayer.name}
                     onChange={(e) => setNewPlayer({ ...newPlayer, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="handicap" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="handicap" className="block text-sm font-medium text-gray-400 mb-1">
                     Handicap Index
                   </label>
                   <input
@@ -551,19 +551,19 @@ export default function PlayersPage() {
                       const numValue = parseFloat(value);
                       setNewPlayer({ ...newPlayer, handicap: isNaN(numValue) ? 0 : numValue });
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="gender" className="block text-sm font-medium text-gray-400 mb-1">
                     Gender
                   </label>
                   <select
                     id="gender"
                     value={newPlayer.gender}
                     onChange={(e) => setNewPlayer({ ...newPlayer, gender: e.target.value as 'Male' | 'Female' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   >
                     <option value="Male">Male</option>
@@ -577,13 +577,13 @@ export default function PlayersPage() {
                       setIsAddModalOpen(false);
                       setError(null);
                     }}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                    className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                   >
                     Add Player
                   </button>
@@ -598,21 +598,21 @@ export default function PlayersPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Edit Player</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Edit Player</h2>
                 <button
                   onClick={() => {
                     setIsEditModalOpen(false);
                     setPlayerToEdit(null);
                     setError(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
               <form onSubmit={handleEditSubmit}>
                 <div className="mb-4">
-                  <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="edit-name" className="block text-sm font-medium text-gray-400 mb-1">
                     Player Name
                   </label>
                   <input
@@ -620,19 +620,19 @@ export default function PlayersPage() {
                     id="edit-name"
                     value={editedPlayer.name}
                     onChange={(e) => setEditedPlayer({ ...editedPlayer, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="edit-gender" className="block text-sm font-medium text-gray-400 mb-1">
                     Gender
                   </label>
                   <select
                     id="edit-gender"
                     value={editedPlayer.gender}
                     onChange={(e) => setEditedPlayer({ ...editedPlayer, gender: e.target.value as 'Male' | 'Female' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   >
                     <option value="Male">Male</option>
@@ -647,13 +647,13 @@ export default function PlayersPage() {
                       setPlayerToEdit(null);
                       setError(null);
                     }}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                    className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                   >
                     Save Changes
                   </button>
@@ -668,18 +668,18 @@ export default function PlayersPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Delete Player</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Delete Player</h2>
                 <button
                   onClick={() => {
                     setIsDeleteModalOpen(false);
                     setPlayerToDelete(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
-              <p className="mb-4 text-gray-700">
+              <p className="mb-4 text-gray-400">
                 Are you sure you want to delete the player &quot;{playerToDelete.name}&quot;?
               </p>
               <div className="flex justify-end gap-2">
@@ -688,13 +688,13 @@ export default function PlayersPage() {
                     setIsDeleteModalOpen(false);
                     setPlayerToDelete(null);
                   }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                  className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700 transition-colors"
                 >
                   Delete
                 </button>
@@ -707,34 +707,34 @@ export default function PlayersPage() {
         {isHandicapModalOpen && handicapToUpdate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Update Handicap Index</h2>
-              <p className="text-sm text-gray-600 mb-4">
+              <h2 className="text-xl font-bold text-brand-dark mb-4">Update Handicap Index</h2>
+              <p className="text-sm text-gray-400 mb-4">
                 Updating handicap for <span className="font-medium">{handicapToUpdate.name}</span>
               </p>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Handicap Index</label>
+                <label className="block text-sm font-medium text-gray-400 mb-1">New Handicap Index</label>
                 <input
                   type="text"
                   value={handicapToUpdate.newHandicap}
                   onChange={(e) => setHandicapToUpdate({ ...handicapToUpdate, newHandicap: e.target.value })}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !loadingEvents) handleUpdateHandicap(); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:outline-none focus:ring-2 focus:ring-brand"
                   autoFocus
                 />
-                <p className="mt-1 text-xs text-gray-500">Current: {handicapToUpdate.currentHandicap}</p>
+                <p className="mt-1 text-xs text-gray-400">Current: {handicapToUpdate.currentHandicap}</p>
               </div>
 
               {/* Future Events Section */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
                   Update handicap in future events
                 </label>
                 {loadingEvents ? (
-                  <p className="text-sm text-gray-500">Loading events...</p>
+                  <p className="text-sm text-gray-400">Loading events...</p>
                 ) : futureEvents.length === 0 ? (
-                  <p className="text-sm text-gray-500">No future events found for this player</p>
+                  <p className="text-sm text-gray-400">No future events found for this player</p>
                 ) : (
-                  <div className="border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+                  <div className="border border-gray-100 rounded-md max-h-60 overflow-y-auto">
                     {futureEvents.map((event) => {
                       const eventKey = `${event._id}-${event.teamId}-${event.memberIndex}`;
                       const newHcpValue = parseFloat(handicapToUpdate.newHandicap.replace(',', '.'));
@@ -750,22 +750,22 @@ export default function PlayersPage() {
                             type="checkbox"
                             checked={selectedEventIds.has(eventKey)}
                             onChange={() => toggleEventSelection(eventKey)}
-                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="h-4 w-4 text-brand border-gray-100 rounded focus:ring-brand"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900">{event.name}</div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-sm font-medium text-brand-dark">{event.name}</div>
+                            <div className="text-xs text-gray-400">
                               {new Date(event.date).toLocaleDateString()} • Team: {event.teamName}
                             </div>
                             {event.tee ? (
-                              <div className="text-xs text-gray-600 mt-1">
+                              <div className="text-xs text-gray-400 mt-1">
                                 Playing HCP: {event.currentPlayingHcp}
                                 {newPlayingHcp !== null && newPlayingHcp !== event.currentPlayingHcp && (
-                                  <span className="text-blue-600 font-medium"> → {newPlayingHcp}</span>
+                                  <span className="text-brand font-medium"> → {newPlayingHcp}</span>
                                 )}
                               </div>
                             ) : (
-                              <div className="text-xs text-orange-500 mt-1">No tee selected</div>
+                              <div className="text-xs text-brand mt-1">No tee selected</div>
                             )}
                           </div>
                         </label>
@@ -778,14 +778,14 @@ export default function PlayersPage() {
                     <button
                       type="button"
                       onClick={() => setSelectedEventIds(new Set(futureEvents.map(e => `${e._id}-${e.teamId}-${e.memberIndex}`)))}
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-brand hover:text-brand/80"
                     >
                       Select all
                     </button>
                     <button
                       type="button"
                       onClick={() => setSelectedEventIds(new Set())}
-                      className="text-xs text-blue-600 hover:text-blue-800"
+                      className="text-xs text-brand hover:text-brand/80"
                     >
                       Deselect all
                     </button>
@@ -793,18 +793,18 @@ export default function PlayersPage() {
                 )}
               </div>
 
-              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>}
+              {error && <div className="mb-4 p-3 bg-danger-50 text-danger-700 rounded-md text-sm">{error}</div>}
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => { setIsHandicapModalOpen(false); setHandicapToUpdate(null); setFutureEvents([]); setSelectedEventIds(new Set()); setError(null); }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                  className="px-4 py-2 bg-gray-50 text-gray-400 rounded-md hover:bg-gray-100"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleUpdateHandicap}
                   disabled={loadingEvents}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-brand text-white rounded-md hover:bg-brand/90 disabled:opacity-50"
                 >
                   Save
                 </button>

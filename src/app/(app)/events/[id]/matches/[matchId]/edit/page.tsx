@@ -596,7 +596,7 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -1013,7 +1013,7 @@ export default function EditMatch({ params }: { params: { id: string; matchId: s
               </button>
               <button
                 type="submit"
-                className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
               >
                 Save Changes
               </button>

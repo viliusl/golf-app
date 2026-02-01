@@ -156,10 +156,10 @@ export default function EventScorecard() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          <div className="bg-danger-50 text-danger-700 p-4 rounded-md mb-4">
             {error}
           </div>
-          <Link href={`/scorecard/${tournamentId}`} className="text-blue-500 hover:text-blue-700">
+          <Link href={`/scorecard/${tournamentId}`} className="text-brand hover:text-brand/80">
             ← Back to Tournament
           </Link>
         </div>
@@ -174,7 +174,7 @@ export default function EventScorecard() {
           <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
             Event not found
           </div>
-          <Link href={`/scorecard/${tournamentId}`} className="text-blue-500 hover:text-blue-700">
+          <Link href={`/scorecard/${tournamentId}`} className="text-brand hover:text-brand/80">
             ← Back to Tournament
           </Link>
         </div>
@@ -282,7 +282,7 @@ export default function EventScorecard() {
                       <div className="text-sm text-black">{match.player2.score}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={`text-sm ${match.completed ? 'text-green-600' : 'text-yellow-600'}`}>
+                      <div className={`text-sm ${match.completed ? 'text-success-600' : 'text-orange-600'}`}>
                         {match.completed ? 'Completed' : 'In Progress'}
                       </div>
                     </td>

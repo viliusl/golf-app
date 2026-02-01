@@ -198,17 +198,17 @@ export default function TournamentsPage() {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Tournaments</h1>
+          <h1 className="text-3xl font-bold text-brand-dark">Tournaments</h1>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
           >
             Add Tournament
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -216,47 +216,47 @@ export default function TournamentsPage() {
         {/* Tournaments Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
           {loading ? (
-            <p className="text-black">Loading tournaments...</p>
+            <p className="text-brand-dark">Loading tournaments...</p>
           ) : tournaments.length === 0 ? (
-            <p className="text-black">No tournaments found</p>
+            <p className="text-brand-dark">No tournaments found</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-100">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Tournament Name
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Type
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Events
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {tournaments.map((tournament) => (
                     <tr key={tournament._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-blue-600 hover:text-blue-900 cursor-pointer" onClick={() => handleEditClick(tournament)}>
+                        <div className="text-sm font-medium text-brand hover:text-brand/80 cursor-pointer" onClick={() => handleEditClick(tournament)}>
                           {tournament.name}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                           tournament.type === 'Individual' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-blue-100 text-blue-800'
+                            ? 'bg-orange-100 text-brand' 
+                            : 'bg-gray-100 text-brand-dark'
                         }`}>
                           {tournament.type || 'Team'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-black">
+                        <div className="text-sm text-brand-dark">
                           {getEventsForTournament(tournament._id).map(event => event.name).join(', ') || '-'}
                         </div>
                       </td>
@@ -265,13 +265,13 @@ export default function TournamentsPage() {
                           <Link
                             href={`/scores/${tournament._id}`}
                             target="_blank"
-                            className="text-green-600 hover:text-green-900"
+                            className="text-success-600 hover:text-success-700"
                           >
                             Leaderboard
                           </Link>
                           <button
                             onClick={() => handleDeleteClick(tournament)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-danger-700 hover:text-danger-600"
                           >
                             Delete
                           </button>
@@ -290,75 +290,79 @@ export default function TournamentsPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">
+                <h2 className="text-xl font-semibold text-brand-dark">
                   {editingTournament ? 'Edit Tournament' : 'Add New Tournament'}
                 </h2>
                 <button
                   onClick={handleCloseModal}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-400 mb-1">
                   Tournament Name
                 </label>
                 <input
                   type="text"
                   value={newTournament.name}
                   onChange={(e) => setNewTournament(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-100 rounded-md focus:outline-none focus:ring-1 focus:ring-brand text-brand-dark"
                   placeholder="Enter tournament name"
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
                   Tournament Type
                 </label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className={`flex items-center gap-2 ${editingTournament ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                     <input
                       type="radio"
                       name="tournamentType"
                       value="Team"
                       checked={newTournament.type === 'Team'}
                       onChange={(e) => setNewTournament(prev => ({ ...prev, type: e.target.value as 'Team' | 'Individual' }))}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      disabled={!!editingTournament}
+                      className="h-4 w-4 text-brand focus:ring-brand border-gray-100 disabled:opacity-60"
                     />
-                    <span className="text-sm text-black">Team</span>
+                    <span className="text-sm text-brand-dark">Team</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className={`flex items-center gap-2 ${editingTournament ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                     <input
                       type="radio"
                       name="tournamentType"
                       value="Individual"
                       checked={newTournament.type === 'Individual'}
                       onChange={(e) => setNewTournament(prev => ({ ...prev, type: e.target.value as 'Team' | 'Individual' }))}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                      disabled={!!editingTournament}
+                      className="h-4 w-4 text-brand focus:ring-brand border-gray-100 disabled:opacity-60"
                     />
-                    <span className="text-sm text-black">Individual</span>
+                    <span className="text-sm text-brand-dark">Individual</span>
                   </label>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  {newTournament.type === 'Team' 
-                    ? 'Players compete as part of teams' 
-                    : 'Players compete individually without teams'}
+                <p className="mt-1 text-xs text-gray-400">
+                  {editingTournament 
+                    ? 'Tournament type cannot be changed after creation'
+                    : newTournament.type === 'Team' 
+                      ? 'Players compete as part of teams' 
+                      : 'Players compete individually without teams'}
                 </p>
               </div>
 
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="px-4 py-2 text-gray-400 hover:text-gray-500 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveTournament}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  className="px-4 py-2 bg-brand text-white rounded hover:bg-brand/90 transition-colors"
                 >
                   {editingTournament ? 'Update Tournament' : 'Save Tournament'}
                 </button>
@@ -371,20 +375,20 @@ export default function TournamentsPage() {
         {isDeleteModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h2 className="text-xl font-semibold mb-4 text-black">Delete Tournament</h2>
-              <p className="text-black mb-6">
+              <h2 className="text-xl font-semibold mb-4 text-brand-dark">Delete Tournament</h2>
+              <p className="text-gray-400 mb-6">
                 Are you sure you want to delete this tournament? This action cannot be undone.
               </p>
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="px-4 py-2 text-gray-400 hover:text-gray-500 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  className="px-4 py-2 bg-danger-600 text-white rounded hover:bg-danger-700 transition-colors"
                 >
                   Delete
                 </button>

@@ -351,10 +351,10 @@ export default function TournamentScorecard() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          <div className="bg-danger-50 text-danger-700 p-4 rounded-md mb-4">
             {error}
           </div>
-          <Link href="/tournaments" className="text-blue-500 hover:text-blue-700">
+          <Link href="/tournaments" className="text-brand hover:text-brand/80">
             ← Back to Tournaments
           </Link>
         </div>
@@ -366,10 +366,10 @@ export default function TournamentScorecard() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
+          <div className="bg-orange-100 text-orange-800 p-4 rounded-md mb-4">
             Tournament not found
           </div>
-          <Link href="/tournaments" className="text-blue-500 hover:text-blue-700">
+          <Link href="/tournaments" className="text-brand hover:text-brand/80">
             ← Back to Tournaments
           </Link>
         </div>
@@ -394,7 +394,7 @@ export default function TournamentScorecard() {
               <Link
                 href={`/scores/${tournamentId}`}
                 target="_blank"
-                className="text-blue-500 hover:text-blue-700 mb-2 inline-block"
+                className="text-brand hover:text-brand/80 mb-2 inline-block"
               >
                 Open Public Scorecard ↗
               </Link>
@@ -414,7 +414,7 @@ export default function TournamentScorecard() {
                   <Link
                     key={event._id}
                     href={`/scorecard/${tournament._id}/event/${event._id}`}
-                    className="block text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                    className="block text-sm text-brand hover:text-brand/80 hover:underline"
                   >
                     {event.name} ({new Date(event.date).toLocaleDateString()})
                   </Link>
@@ -439,7 +439,7 @@ export default function TournamentScorecard() {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div 
-                  className="bg-blue-600 h-2.5 rounded-full" 
+                  className="bg-brand h-2.5 rounded-full" 
                   style={{ width: `${matchProgress.percent}%` }}
                 ></div>
               </div>
@@ -470,7 +470,7 @@ export default function TournamentScorecard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {aggregateScores.map((team, index) => (
-                  <tr key={team.name} className={index === 0 ? 'bg-yellow-50' : ''}>
+                  <tr key={team.name} className={index === 0 ? 'bg-orange-50' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-black">{team.name}</div>
                     </td>
@@ -516,7 +516,7 @@ export default function TournamentScorecard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {playerScores.map((player, index) => (
-                  <tr key={player.name} className={index === 0 ? 'bg-yellow-50' : ''}>
+                  <tr key={player.name} className={index === 0 ? 'bg-orange-50' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-black">{player.name}</div>
                     </td>

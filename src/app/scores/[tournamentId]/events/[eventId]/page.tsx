@@ -241,7 +241,7 @@ export default function PublicEventScorecard() {
     return (
       <main className="p-8">
         <div className="max-w-6xl mx-auto">
-          <p className="text-black">Loading event data...</p>
+          <p className="text-brand-dark">Loading event data...</p>
         </div>
       </main>
     );
@@ -251,7 +251,7 @@ export default function PublicEventScorecard() {
     return (
       <main className="p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          <div className="bg-danger-50 text-danger-700 p-4 rounded-md mb-4">
             {error}
           </div>
         </div>
@@ -263,7 +263,7 @@ export default function PublicEventScorecard() {
     return (
       <main className="p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
+          <div className="bg-orange-100 text-orange-800 p-4 rounded-md mb-4">
             Event not found
           </div>
         </div>
@@ -469,7 +469,7 @@ export default function PublicEventScorecard() {
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           match.completed 
-                            ? 'bg-green-100 text-green-800' 
+                            ? 'bg-success-100 text-success-700' 
                             : 'bg-orange-100 text-orange-800'
                         }`}>
                           {match.completed ? 'Completed' : 'In Progress'}

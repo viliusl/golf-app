@@ -251,7 +251,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <p className="text-black">Loading course...</p>
+          <p className="text-brand-dark">Loading course...</p>
         </div>
       </main>
     );
@@ -263,18 +263,18 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
         <div className="mb-8">
           <button
             onClick={() => router.push('/courses')}
-            className="text-blue-600 hover:text-blue-800 mb-4 inline-flex items-center"
+            className="text-brand hover:text-brand/80 mb-4 inline-flex items-center"
           >
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Courses
           </button>
-          <h1 className="text-3xl font-bold text-black">Edit Course</h1>
+          <h1 className="text-3xl font-bold text-brand-dark">Edit Course</h1>
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -282,10 +282,10 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
         <form onSubmit={handleSubmit}>
           {/* Basic Info */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-lg font-semibold text-black mb-4">Basic Information</h2>
+            <h2 className="text-lg font-semibold text-brand-dark mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-400 mb-1">
                   Course Name
                 </label>
                 <input
@@ -293,12 +293,12 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                  className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                   required
                 />
               </div>
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-400 mb-1">
                   Address
                 </label>
                 <input
@@ -306,34 +306,34 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                   id="address"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                  className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                   required
                 />
               </div>
             </div>
             
             {/* Course Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
               <div>
-                <span className="text-sm font-medium text-gray-700">Holes: </span>
-                <span className="text-sm text-black">{formData.holes.length}</span>
+                <span className="text-sm font-medium text-gray-400">Holes: </span>
+                <span className="text-sm text-brand-dark">{formData.holes.length}</span>
                 {formData.holes.length > 0 && (
-                  <span className="text-sm text-gray-500 ml-2">
+                  <span className="text-sm text-gray-400 ml-2">
                     (PAR {formData.holes.reduce((sum, h) => sum + h.par, 0)})
                   </span>
                 )}
               </div>
               <div>
-                <span className="text-sm font-medium text-gray-700">Men&apos;s Tees: </span>
-                <span className="text-sm text-black">
+                <span className="text-sm font-medium text-gray-400">Men&apos;s Tees: </span>
+                <span className="text-sm text-brand-dark">
                   {formData.menTees.length > 0 
                     ? formData.menTees.map(t => t.name || '(unnamed)').join(', ')
                     : 'None'}
                 </span>
               </div>
               <div>
-                <span className="text-sm font-medium text-gray-700">Women&apos;s Tees: </span>
-                <span className="text-sm text-black">
+                <span className="text-sm font-medium text-gray-400">Women&apos;s Tees: </span>
+                <span className="text-sm text-brand-dark">
                   {formData.womenTees.length > 0 
                     ? formData.womenTees.map(t => t.name || '(unnamed)').join(', ')
                     : 'None'}
@@ -345,7 +345,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
           {/* Tabs Section */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
             {/* Tab Headers */}
-            <div className="border-b border-gray-200">
+            <div className="border-b border-gray-100">
               <nav className="flex -mb-px">
                 {tabs.map((tab) => (
                   <button
@@ -354,8 +354,8 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                     onClick={() => setActiveTab(tab.key)}
                     className={`py-4 px-6 text-sm font-medium border-b-2 ${
                       activeTab === tab.key
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-brand text-brand'
+                        : 'border-transparent text-gray-400 hover:text-gray-500 hover:border-gray-200'
                     }`}
                   >
                     {tab.label} ({tab.count})
@@ -376,7 +376,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                     <button
                       type="button"
                       onClick={addHole}
-                      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                      className="bg-brand text-white px-4 py-2 rounded hover:bg-brand/90"
                     >
                       Add Hole
                     </button>
@@ -424,7 +424,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                                 <button
                                   type="button"
                                   onClick={() => removeHole(index)}
-                                  className="text-red-600 hover:text-red-800"
+                                  className="text-danger-700 hover:text-danger-600"
                                 >
                                   Remove
                                 </button>
@@ -442,13 +442,13 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
               {activeTab === 'menTees' && (
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-400">
                       Configure tee options for men players.
                     </p>
                     <button
                       type="button"
                       onClick={addMenTee}
-                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                      className="bg-brand text-white px-4 py-2 rounded hover:bg-brand/90"
                     >
                       Add Tee
                     </button>
@@ -509,7 +509,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                                 <button
                                   type="button"
                                   onClick={() => removeMenTee(index)}
-                                  className="text-red-600 hover:text-red-800"
+                                  className="text-danger-700 hover:text-danger-600"
                                 >
                                   Remove
                                 </button>
@@ -533,7 +533,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                     <button
                       type="button"
                       onClick={addWomenTee}
-                      className="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600"
+                      className="bg-brand text-white px-4 py-2 rounded hover:bg-brand/90"
                     >
                       Add Tee
                     </button>
@@ -594,7 +594,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
                                 <button
                                   type="button"
                                   onClick={() => removeWomenTee(index)}
-                                  className="text-red-600 hover:text-red-800"
+                                  className="text-danger-700 hover:text-danger-600"
                                 >
                                   Remove
                                 </button>
@@ -615,14 +615,14 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
             <button
               type="button"
               onClick={() => router.push('/courses')}
-              className="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              className="px-6 py-2 text-gray-400 bg-gray-50 hover:bg-gray-100 rounded-md"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+              className="px-6 py-2 bg-brand text-white rounded-md hover:bg-brand/90 disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
