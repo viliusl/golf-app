@@ -54,9 +54,26 @@ export async function PUT(
       );
     }
 
+    // Validate type if provided
+    if (tournament.type && tournament.type !== 'Team' && tournament.type !== 'Individual') {
+      return NextResponse.json(
+        { error: 'Type must be either "Team" or "Individual"' },
+        { status: 400 }
+      );
+    }
+
+    const updateFields: { name: string; eventIds: string[]; type?: string } = {
+      name: tournament.name,
+      eventIds: tournament.eventIds
+    };
+    
+    if (tournament.type) {
+      updateFields.type = tournament.type;
+    }
+
     const result = await mongoose.connection.db.collection('tournaments').updateOne(
       { _id: new ObjectId(params.id) },
-      { $set: { name: tournament.name, eventIds: tournament.eventIds } }
+      { $set: updateFields }
     );
 
     if (result.matchedCount === 0) {

@@ -68,11 +68,11 @@ export async function POST(request: Request) {
     // If no ID is provided, we're creating a new event
     if (!id) {
       console.log('Creating new event:', body);
-      const { name, date, courseId, handicapAllowance = 100 } = body;
+      const { name, date, courseId, tournamentId, handicapAllowance = 100 } = body;
       
-      if (!name || !date || !courseId) {
+      if (!name || !date || !courseId || !tournamentId) {
         return NextResponse.json(
-          { error: 'Event name, date, and course are required' },
+          { error: 'Event name, date, course, and tournament are required' },
           { status: 400 }
         );
       }
@@ -106,6 +106,7 @@ export async function POST(request: Request) {
       const newEvent = new Event({
         name,
         date,
+        tournamentId,
         course: courseSnapshot,
         handicapAllowance: Math.min(100, Math.max(0, handicapValue)),
         teams: []

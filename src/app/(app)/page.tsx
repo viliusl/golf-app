@@ -9,10 +9,17 @@ interface Course {
   address: string;
 }
 
+interface Tournament {
+  _id: string;
+  name: string;
+  type: 'Team' | 'Individual';
+}
+
 interface Event {
   _id: string;
   name: string;
   date: string;
+  tournamentId?: string;
   course?: {
     _id: string;
     name: string;
@@ -34,17 +41,19 @@ interface Event {
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-  const [newEvent, setNewEvent] = useState({ name: '', date: '', courseId: '', handicapAllowance: 100 });
+  const [newEvent, setNewEvent] = useState({ name: '', date: '', courseId: '', tournamentId: '', handicapAllowance: 100 });
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     fetchEvents();
     fetchCourses();
+    fetchTournaments();
   }, []);
 
   const fetchEvents = async () => {
@@ -76,6 +85,19 @@ export default function Home() {
     }
   };
 
+  const fetchTournaments = async () => {
+    try {
+      const response = await fetch('/api/tournaments');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setTournaments(data);
+    } catch (error) {
+      console.error('Error fetching tournaments:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -98,7 +120,7 @@ export default function Home() {
       const createdEvent = await response.json();
       console.log('Event created successfully:', createdEvent);
       
-      setNewEvent({ name: '', date: '', courseId: '', handicapAllowance: 100 });
+      setNewEvent({ name: '', date: '', courseId: '', tournamentId: '', handicapAllowance: 100 });
       setIsModalOpen(false);
       fetchEvents();
     } catch (error) {
@@ -273,6 +295,25 @@ export default function Home() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
                     required
                   />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="tournamentId" className="block text-sm font-medium text-gray-700 mb-1">
+                    Tournament
+                  </label>
+                  <select
+                    id="tournamentId"
+                    value={newEvent.tournamentId}
+                    onChange={(e) => setNewEvent({ ...newEvent, tournamentId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    required
+                  >
+                    <option value="">Select a tournament</option>
+                    {tournaments.map((tournament) => (
+                      <option key={tournament._id} value={tournament._id}>
+                        {tournament.name} ({tournament.type})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="courseId" className="block text-sm font-medium text-gray-700 mb-1">

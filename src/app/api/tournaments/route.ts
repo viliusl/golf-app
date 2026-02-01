@@ -25,9 +25,17 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    if (!body.name || !body.eventIds) {
+    if (!body.name || !body.eventIds || !body.type) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields (name, eventIds, type)' },
+        { status: 400 }
+      );
+    }
+
+    // Validate type
+    if (body.type !== 'Team' && body.type !== 'Individual') {
+      return NextResponse.json(
+        { error: 'Type must be either "Team" or "Individual"' },
         { status: 400 }
       );
     }
@@ -41,6 +49,7 @@ export async function POST(request: Request) {
     // Create a new tournament
     const tournament = await mongoose.connection.db.collection('tournaments').insertOne({
       name: body.name,
+      type: body.type,
       eventIds: body.eventIds,
       createdAt: new Date()
     });

@@ -12,6 +12,7 @@ interface Event {
 interface Tournament {
   _id: string;
   name: string;
+  type: 'Team' | 'Individual';
   eventIds: string[];
   createdAt: string;
 }
@@ -25,6 +26,7 @@ export default function TournamentsPage() {
   const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [newTournament, setNewTournament] = useState<Omit<Tournament, '_id' | 'createdAt'>>({
     name: '',
+    type: 'Team',
     eventIds: [],
   });
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export default function TournamentsPage() {
 
         const createdTournament = await response.json();
         setTournaments(prev => [...prev, createdTournament]);
-        setNewTournament({ name: '', eventIds: [] });
+        setNewTournament({ name: '', type: 'Team', eventIds: [] });
         setIsModalOpen(false);
         setSearchQuery('');
       } catch (error) {
@@ -164,6 +166,7 @@ export default function TournamentsPage() {
     setEditingTournament(tournament);
     setNewTournament({
       name: tournament.name,
+      type: tournament.type || 'Team',
       eventIds: tournament.eventIds,
     });
     setIsModalOpen(true);
@@ -211,7 +214,7 @@ export default function TournamentsPage() {
         setTournaments(prev => [...prev, createdTournament]);
       }
 
-      setNewTournament({ name: '', eventIds: [] });
+      setNewTournament({ name: '', type: 'Team', eventIds: [] });
       setEditingTournament(null);
       setIsModalOpen(false);
       setSearchQuery('');
@@ -226,7 +229,7 @@ export default function TournamentsPage() {
     setError(null);
     setSearchQuery('');
     setEditingTournament(null);
-    setNewTournament({ name: '', eventIds: [] });
+    setNewTournament({ name: '', type: 'Team', eventIds: [] });
   };
 
   return (
@@ -263,6 +266,9 @@ export default function TournamentsPage() {
                       Tournament Name
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Events
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -277,6 +283,15 @@ export default function TournamentsPage() {
                         <div className="text-sm font-medium text-blue-600 hover:text-blue-900 cursor-pointer" onClick={() => handleEditClick(tournament)}>
                           {tournament.name}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          tournament.type === 'Individual' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {tournament.type || 'Team'}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-black">
@@ -335,6 +350,41 @@ export default function TournamentsPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black"
                   placeholder="Enter tournament name"
                 />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tournament Type
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tournamentType"
+                      value="Team"
+                      checked={newTournament.type === 'Team'}
+                      onChange={(e) => setNewTournament(prev => ({ ...prev, type: e.target.value as 'Team' | 'Individual' }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="text-sm text-black">Team</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tournamentType"
+                      value="Individual"
+                      checked={newTournament.type === 'Individual'}
+                      onChange={(e) => setNewTournament(prev => ({ ...prev, type: e.target.value as 'Team' | 'Individual' }))}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300"
+                    />
+                    <span className="text-sm text-black">Individual</span>
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  {newTournament.type === 'Team' 
+                    ? 'Players compete as part of teams' 
+                    : 'Players compete individually without teams'}
+                </p>
               </div>
 
               <div className="mb-4">
