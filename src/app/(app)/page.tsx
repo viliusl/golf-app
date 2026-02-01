@@ -169,17 +169,17 @@ export default function Home() {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black">Events</h1>
+          <h1 className="text-3xl font-bold text-brand-dark">Events</h1>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+            className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
           >
             Add Event
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -187,64 +187,64 @@ export default function Home() {
         {/* Events Table */}
         <div className="bg-white rounded-lg shadow-md p-6">
           {loading ? (
-            <p className="text-black">Loading events...</p>
+            <p className="text-brand-dark">Loading events...</p>
           ) : events.length === 0 ? (
-            <p className="text-black">No events found</p>
+            <p className="text-brand-dark">No events found</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-100">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Event Name
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Tournament
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Date
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Teams/Players
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {events.map((event) => (
                     <tr key={event._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleEventClick(event._id)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-brand hover:text-brand/80"
                         >
                           {event.name}
                         </button>
                         {event.course && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-gray-400 mt-1">
                             {event.course.name}
                           </div>
                         )}
                         {event.handicapAllowance !== undefined && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-400">
                             HCP Allowance: {event.handicapAllowance}%
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-black">
+                        <div className="text-sm text-brand-dark">
                           {getTournament(event.tournamentId)?.name || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">
+                        <div className="text-sm font-medium text-brand-dark">
                           {new Date(event.date).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-black">
+                        <div className="text-sm font-medium text-brand-dark">
                           {(() => {
                             const tournament = getTournament(event.tournamentId);
                             const totalPlayers = event.teams.reduce((sum, t) => sum + (t.members?.length || 0), 0);
@@ -259,7 +259,7 @@ export default function Home() {
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleDeleteClick(event)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-danger-700 hover:text-danger-600"
                           >
                             Delete
                           </button>
@@ -278,20 +278,20 @@ export default function Home() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Add New Event</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Add New Event</h2>
                 <button
                   onClick={() => {
                     setIsModalOpen(false);
                     setError(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-400 mb-1">
                     Event Name
                   </label>
                   <input
@@ -299,12 +299,12 @@ export default function Home() {
                     id="name"
                     value={newEvent.name}
                     onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="date" className="block text-sm font-medium text-gray-400 mb-1">
                     Event Date
                   </label>
                   <input
@@ -312,19 +312,19 @@ export default function Home() {
                     id="date"
                     value={newEvent.date}
                     onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="tournamentId" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="tournamentId" className="block text-sm font-medium text-gray-400 mb-1">
                     Tournament
                   </label>
                   <select
                     id="tournamentId"
                     value={newEvent.tournamentId}
                     onChange={(e) => setNewEvent({ ...newEvent, tournamentId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   >
                     <option value="">Select a tournament</option>
@@ -336,14 +336,14 @@ export default function Home() {
                   </select>
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="courseId" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="courseId" className="block text-sm font-medium text-gray-400 mb-1">
                     Course
                   </label>
                   <select
                     id="courseId"
                     value={newEvent.courseId}
                     onChange={(e) => setNewEvent({ ...newEvent, courseId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     required
                   >
                     <option value="">Select a course</option>
@@ -355,7 +355,7 @@ export default function Home() {
                   </select>
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="handicapAllowance" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="handicapAllowance" className="block text-sm font-medium text-gray-400 mb-1">
                     HCP Allowance (%)
                   </label>
                   <input
@@ -363,7 +363,7 @@ export default function Home() {
                     id="handicapAllowance"
                     value={newEvent.handicapAllowance}
                     onChange={(e) => setNewEvent({ ...newEvent, handicapAllowance: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                    className="w-full px-3 py-2 border border-gray-100 rounded-md text-brand-dark focus:ring-brand focus:border-brand"
                     min="0"
                     max="100"
                     required
@@ -376,13 +376,13 @@ export default function Home() {
                       setIsModalOpen(false);
                       setError(null);
                     }}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                    className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+                    className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                   >
                     Add Event
                   </button>
@@ -397,18 +397,18 @@ export default function Home() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-black">Delete Event</h2>
+                <h2 className="text-xl font-semibold text-brand-dark">Delete Event</h2>
                 <button
                   onClick={() => {
                     setIsDeleteModalOpen(false);
                     setEventToDelete(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-500"
                 >
                   ✕
                 </button>
               </div>
-              <p className="mb-4 text-gray-700">
+              <p className="mb-4 text-gray-400">
                 Are you sure you want to delete the event &quot;{eventToDelete.name}&quot;?
               </p>
               <div className="flex justify-end gap-2">
@@ -417,13 +417,13 @@ export default function Home() {
                     setIsDeleteModalOpen(false);
                     setEventToDelete(null);
                   }}
-                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                  className="px-4 py-2 text-gray-400 hover:bg-gray-50 rounded-md"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+                  className="bg-danger-600 text-white py-2 px-4 rounded-md hover:bg-danger-700 transition-colors"
                 >
                   Delete
                 </button>

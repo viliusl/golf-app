@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Match as MatchType } from '@/app/api/matches/route';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { calculateEffectiveHandicap } from '@/lib/handicap';
 
 interface Event {
@@ -56,7 +57,7 @@ export default function PrintMatchCards() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <p className="text-black">Loading match data...</p>
+          <p className="text-brand-dark">Loading match data...</p>
         </div>
       </main>
     );
@@ -66,7 +67,7 @@ export default function PrintMatchCards() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          <div className="bg-danger-50 text-danger-700 p-4 rounded-md mb-4">
             {error}
           </div>
         </div>
@@ -78,7 +79,7 @@ export default function PrintMatchCards() {
     return (
       <main className="p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
+          <div className="bg-orange-100 text-orange-800 p-4 rounded-md mb-4">
             Event not found
           </div>
         </div>
@@ -90,11 +91,11 @@ export default function PrintMatchCards() {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-black">Match Cards - {event.name}</h1>
+          <h1 className="text-2xl font-semibold text-brand-dark">Match Cards - {event.name}</h1>
           <div className="flex gap-2">
             <button
               onClick={() => window.print()}
-              className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+              className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
             >
               Print Cards
             </button>
@@ -111,7 +112,7 @@ export default function PrintMatchCards() {
           <div className="space-y-1.5">
             {matches.map((match, index) => (
               <div key={match._id} className="bg-white rounded-lg shadow-sm p-1.5 border border-gray-200">
-                <div className="flex justify-between items-center mb-0.5">
+                <div className="flex justify-between items-start mb-0.5">
                   <div>
                     <h2 className="text-sm font-semibold text-black leading-snug">Match Card / {event.name} / {new Date(event.date).toISOString().split('T')[0]}</h2>
                     <p className="text-xs text-black leading-snug">
@@ -119,6 +120,13 @@ export default function PrintMatchCards() {
                       Tee Time: {new Date(match.teeTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} | Starting Hole: {match.tee}
                     </p>
                   </div>
+                  <Image
+                    src="/logo.svg"
+                    alt="DGL.ONLINE"
+                    width={80}
+                    height={32}
+                    className="h-6 w-auto print-logo"
+                  />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-1.5 mt-0.5">
@@ -236,6 +244,10 @@ export default function PrintMatchCards() {
             }
             .print-section tr {
               page-break-inside: avoid;
+            }
+            .print-logo {
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
             }
             @page {
               size: A4;

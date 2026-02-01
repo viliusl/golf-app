@@ -557,7 +557,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
     <main className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-black">Add New Match</h1>
+          <h1 className="text-2xl font-semibold text-brand-dark">Add New Match</h1>
           <button 
             onClick={handleCancel}
             className="px-4 py-2 bg-white text-black border border-gray-300 hover:bg-gray-100 rounded-md"
@@ -567,7 +567,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-4 bg-danger-50 text-danger-700 rounded-md">
             {error}
           </div>
         )}
@@ -1050,7 +1050,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                 </button>
                 <button
                   type="submit"
-                  className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors"
+                  className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
                 >
                   Create Match
                 </button>
