@@ -239,10 +239,11 @@ export default function PublicEventScorecard() {
     });
 
     const playerScoresArray = Array.from(playerScoreMap.values());
+    // Sort by total strokes (lower is better), then by net score (lower is better)
     playerScoresArray.sort((a, b) => 
-      b.totalScore !== a.totalScore 
-        ? b.totalScore - a.totalScore 
-        : b.matchCount - a.matchCount
+      a.totalStrokes !== b.totalStrokes 
+        ? a.totalStrokes - b.totalStrokes 
+        : a.totalNetScore - b.totalNetScore
     );
     
     return playerScoresArray;
