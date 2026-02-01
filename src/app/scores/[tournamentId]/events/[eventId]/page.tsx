@@ -344,7 +344,7 @@ export default function PublicEventScorecard() {
                         Team
                       </th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        Total Score
+                        DGL Points
                       </th>
                       <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Matches
@@ -393,7 +393,7 @@ export default function PublicEventScorecard() {
                       Player
                     </th>
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Score
+                      DGL Points
                     </th>
                     <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Strokes
