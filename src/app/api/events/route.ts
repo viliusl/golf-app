@@ -259,6 +259,41 @@ export async function PUT(request: Request) {
     // Handle team operations with complete team objects (including members)
     else if (teams && Array.isArray(teams) && teams.length > 0 && typeof teams[0] === 'object' && teams[0]._id) {
       console.log('Updating teams with complete team objects');
+      
+      // Check for handicap changes and sync to Player documents and other future events
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      for (const newTeam of teams) {
+        const oldTeam = event.teams.find((t: { _id: string }) => t._id === newTeam._id);
+        if (oldTeam) {
+          for (const newMember of newTeam.members) {
+            const oldMember = oldTeam.members.find((m: { playerId: string }) => m.playerId === newMember.playerId);
+            if (oldMember && oldMember.handicap !== newMember.handicap) {
+              // Update the Player document
+              await Player.findByIdAndUpdate(newMember.playerId, { handicap: newMember.handicap });
+              
+              // Update other future events (excluding current event)
+              await Event.updateMany(
+                {
+                  _id: { $ne: id },
+                  date: { $gte: today },
+                  'teams.members.playerId': newMember.playerId
+                },
+                {
+                  $set: { 'teams.$[].members.$[member].handicap': newMember.handicap }
+                },
+                {
+                  arrayFilters: [{ 'member.playerId': newMember.playerId }]
+                }
+              );
+              
+              console.log(`Synced handicap ${newMember.handicap} for player ${newMember.playerId}`);
+            }
+          }
+        }
+      }
+      
       // This is the case where we're receiving full team objects
       event.teams = new Types.DocumentArray(teams);
     }
