@@ -265,10 +265,10 @@ export async function PUT(request: Request) {
       today.setHours(0, 0, 0, 0);
       
       for (const newTeam of teams) {
-        const oldTeam = event.teams.find((t: { _id: string }) => t._id === newTeam._id);
+        const oldTeam = event.teams.find((t) => (t as unknown as EventTeam)._id === newTeam._id);
         if (oldTeam) {
           for (const newMember of newTeam.members) {
-            const oldMember = oldTeam.members.find((m: { playerId: string }) => m.playerId === newMember.playerId);
+            const oldMember = (oldTeam as unknown as EventTeam).members.find((m) => m.playerId === newMember.playerId);
             if (oldMember && oldMember.handicap !== newMember.handicap) {
               // Update the Player document
               await Player.findByIdAndUpdate(newMember.playerId, { handicap: newMember.handicap });
