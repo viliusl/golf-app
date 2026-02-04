@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Player from '@/models/Player';
+import Event from '@/models/Event';
 
 export interface Player {
   _id: string;
@@ -88,9 +89,15 @@ export async function PUT(request: Request) {
 
     const body = await request.json();
     
-    if (!body.name || body.handicap === undefined || !body.gender) {
+    // Build update object with only provided fields
+    const updateData: Partial<{ name: string; handicap: number; gender: string }> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.handicap !== undefined) updateData.handicap = body.handicap;
+    if (body.gender !== undefined) updateData.gender = body.gender;
+    
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'No fields to update' },
         { status: 400 }
       );
     }
@@ -100,11 +107,7 @@ export async function PUT(request: Request) {
     // Update the player
     const updatedPlayer = await Player.findByIdAndUpdate(
       id,
-      {
-        name: body.name,
-        handicap: body.handicap,
-        gender: body.gender
-      },
+      updateData,
       { new: true, runValidators: true }
     );
     
@@ -112,6 +115,25 @@ export async function PUT(request: Request) {
       return NextResponse.json(
         { error: 'Player not found' },
         { status: 404 }
+      );
+    }
+    
+    // If handicap was updated, also update future events
+    if (updateData.handicap !== undefined) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      await Event.updateMany(
+        {
+          date: { $gte: today },
+          'teams.members.playerId': id
+        },
+        {
+          $set: { 'teams.$[].members.$[member].handicap': updateData.handicap }
+        },
+        {
+          arrayFilters: [{ 'member.playerId': id }]
+        }
       );
     }
     
