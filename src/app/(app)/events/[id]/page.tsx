@@ -348,7 +348,8 @@ export default function EventDetails({ params }: { params: { id: string } }) {
 
       const newMember: EventTeamMember = {
         playerId: player._id,
-        isCaptain: false
+        isCaptain: false,
+        handicap: player.handicap
       };
 
       const updatedTeams = [...event.teams];
@@ -1269,8 +1270,11 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {team.members?.length ? (
-                            team.members.map((member, idx) => {
-                              const playerDetails = getPlayerDetails(member.playerId);
+                            [...team.members]
+                              .map((member, idx) => ({ member, idx, playerDetails: getPlayerDetails(member.playerId) }))
+                              .filter(item => item.playerDetails !== undefined)
+                              .sort((a, b) => (a.playerDetails?.name || '').localeCompare(b.playerDetails?.name || ''))
+                              .map(({ member, idx, playerDetails }) => {
                               if (!playerDetails) return null;
                               
                               const availableTees = playerDetails.gender === 'Female' 
@@ -1463,20 +1467,45 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               </div>
               
               <div className="space-y-4 overflow-y-auto flex-grow">
-                {allPlayers.length === 0 ? (
-                  <div className="text-center p-4">
-                    <p className="text-sm text-gray-500 mb-2">No players available</p>
-                    <Link href="/players" className="text-brand hover:text-brand/80">Create a new player</Link>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-sm text-gray-500">Select a player to add to this team:</p>
-                    {allPlayers
-                      .filter(player => 
-                        playerSearchTerm === '' || 
-                        player.name.toLowerCase().includes(playerSearchTerm.toLowerCase())
-                      )
-                      .map((player) => (
+                {(() => {
+                  const availablePlayers = allPlayers
+                    .filter(player => {
+                      // Exclude players already in the event
+                      const isAlreadyInEvent = event?.teams.some(team => 
+                        team.members.some(member => member.playerId === player._id)
+                      );
+                      if (isAlreadyInEvent) return false;
+                      
+                      // Filter by search term
+                      return playerSearchTerm === '' || 
+                        player.name.toLowerCase().includes(playerSearchTerm.toLowerCase());
+                    })
+                    .sort((a, b) => a.name.localeCompare(b.name));
+
+                  if (allPlayers.length === 0) {
+                    return (
+                      <div className="text-center p-4">
+                        <p className="text-sm text-gray-500 mb-2">No players available</p>
+                        <Link href="/players" className="text-brand hover:text-brand/80">Create a new player</Link>
+                      </div>
+                    );
+                  }
+
+                  if (availablePlayers.length === 0) {
+                    return (
+                      <div className="text-center p-4">
+                        <p className="text-sm text-gray-500 mb-2">
+                          {playerSearchTerm ? 'No matching players found' : 'All players are already in this event'}
+                        </p>
+                        <Link href="/players" className="text-brand hover:text-brand/80">Create a new player</Link>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <p className="text-sm text-gray-500">Select a player to add to this team:</p>
+                      {availablePlayers.map((player) => (
                         <div key={player._id} className="flex justify-between items-center p-4 border rounded-md hover:bg-gray-50">
                           <div>
                             <h3 className="text-sm font-medium text-black">{player.name}</h3>
@@ -1490,8 +1519,9 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                           </button>
                         </div>
                       ))}
-                  </>
-                )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
