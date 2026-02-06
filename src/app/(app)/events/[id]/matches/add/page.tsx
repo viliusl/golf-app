@@ -484,17 +484,21 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       const player2PuttCount = validatedHoleScores.filter(h => h.player2Putt).length;
       
       // Prepare match data
+      const p1Opt = playerOptions.find(p => p.name === newMatch.player1.name);
+      const p2Opt = playerOptions.find(p => p.name === newMatch.player2.name);
       const matchData = {
         eventId: params.id,
         player1: {
           ...newMatch.player1,
           putts: player1PuttCount,
-          handicap: playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0
+          handicap: p1Opt?.playingHandicap || 0,
+          handicapIndex: p1Opt?.handicapIndex
         },
         player2: {
           ...newMatch.player2,
           putts: player2PuttCount,
-          handicap: playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0
+          handicap: p2Opt?.playingHandicap || 0,
+          handicapIndex: p2Opt?.handicapIndex
         },
         teeTime: newMatch.teeTime,
         tee: newMatch.tee,
@@ -813,7 +817,13 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {holeScores.map((hole, idx) => (
+                        {(() => {
+                          const p1Hcp = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
+                          const p2Hcp = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
+                          const frontNine = holeScores.slice(0, 9);
+                          const backNine = holeScores.slice(9, 18);
+
+                          const renderHoleRow = (hole: typeof holeScores[0], idx: number) => (
                           <tr key={`hole-${hole.hole}`} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-gray-900 border-r border-gray-200">
                               {hole.hole}
@@ -847,9 +857,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             </td>
                             <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-blue-50">
                               {(() => {
-                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
-                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
-                                const [player1EffHcp, _] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                const [player1EffHcp, _] = calculateEffectiveHandicap(p1Hcp, p2Hcp, hole.handicap);
                                 return player1EffHcp;
                               })()}
                             </td>
@@ -858,9 +866,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             }`}>
                               {hole.player1Score > 0 ? 
                                 (() => {
-                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
-                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
-                                  const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                  const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(p1Hcp, p2Hcp, hole.handicap);
                                   
                                   const result = calculateScore(
                                     player1EffHcp, 
@@ -900,9 +906,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             </td>
                             <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-600 text-center border-r border-gray-200 bg-green-50">
                               {(() => {
-                                const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
-                                const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
-                                const [_, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                const [_, player2EffHcp] = calculateEffectiveHandicap(p1Hcp, p2Hcp, hole.handicap);
                                 return player2EffHcp;
                               })()}
                             </td>
@@ -911,9 +915,7 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             }`}>
                               {hole.player2Score > 0 ? 
                                 (() => {
-                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
-                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
-                                  const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                  const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(p1Hcp, p2Hcp, hole.handicap);
                                   
                                   const result = calculateScore(
                                     player1EffHcp, 
@@ -934,14 +936,11 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                             <td className="px-3 py-1 whitespace-nowrap text-xs font-medium text-center">
                               {
                                 (() => {
-                                  // If either player's score is 0, show Tie
                                   if (hole.player1Score === 0 || hole.player2Score === 0) {
                                     return <span className="text-gray-600">Tie</span>;
                                   }
 
-                                  const player1Handicap = playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0;
-                                  const player2Handicap = playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0;
-                                  const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(player1Handicap, player2Handicap, hole.handicap);
+                                  const [player1EffHcp, player2EffHcp] = calculateEffectiveHandicap(p1Hcp, p2Hcp, hole.handicap);
 
                                   const result = calculateScore(
                                     player1EffHcp, 
@@ -963,7 +962,57 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 })()}
                             </td>
                           </tr>
-                        ))}
+                          );
+
+                          const renderSummaryRow = (label: string, holes: typeof holeScores) => {
+                            const parSum = holes.reduce((s, h) => s + h.par, 0);
+                            const p1StrokesSum = holes.reduce((s, h) => s + (h.player1Score || 0), 0);
+                            const p2StrokesSum = holes.reduce((s, h) => s + (h.player2Score || 0), 0);
+                            const p1PuttCount = holes.filter(h => h.player1Putt).length;
+                            const p2PuttCount = holes.filter(h => h.player2Putt).length;
+                            const p1EffSum = holes.reduce((s, h) => s + calculateEffectiveHandicap(p1Hcp, p2Hcp, h.handicap)[0], 0);
+                            const p2EffSum = holes.reduce((s, h) => s + calculateEffectiveHandicap(p1Hcp, p2Hcp, h.handicap)[1], 0);
+                            const p1ScoreSum = holes.reduce((s, h) => {
+                              if (h.player1Score > 0 && h.player2Score > 0) {
+                                const [e1, e2] = calculateEffectiveHandicap(p1Hcp, p2Hcp, h.handicap);
+                                return s + calculateScore(e1, h.player1Score, h.player1Putt, e2, h.player2Score, h.player2Putt, h.par).player1Score;
+                              }
+                              return s;
+                            }, 0);
+                            const p2ScoreSum = holes.reduce((s, h) => {
+                              if (h.player1Score > 0 && h.player2Score > 0) {
+                                const [e1, e2] = calculateEffectiveHandicap(p1Hcp, p2Hcp, h.handicap);
+                                return s + calculateScore(e1, h.player1Score, h.player1Putt, e2, h.player2Score, h.player2Putt, h.par).player2Score;
+                              }
+                              return s;
+                            }, 0);
+                            return (
+                              <tr key={label} className="bg-gray-200 font-semibold">
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">{label}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-500 border-r border-gray-200"></td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 border-r-2 border-gray-300">{parSum}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">{p1StrokesSum || ''}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">{p1PuttCount || ''}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">{p1EffSum}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-green-600 text-center bg-blue-50 border-r-2 border-gray-300">{p1ScoreSum || ''}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">{p2StrokesSum || ''}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">{p2PuttCount || ''}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">{p2EffSum}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-green-600 text-center bg-green-50 border-r-2 border-gray-300">{p2ScoreSum || ''}</td>
+                                <td className="px-3 py-1 whitespace-nowrap text-xs text-center"></td>
+                              </tr>
+                            );
+                          };
+
+                          return (
+                            <>
+                              {frontNine.map((hole, idx) => renderHoleRow(hole, idx))}
+                              {renderSummaryRow('Out', frontNine)}
+                              {backNine.map((hole, idx) => renderHoleRow(hole, idx + 9))}
+                              {renderSummaryRow('In', backNine)}
+                            </>
+                          );
+                        })()}
                         {/* Total row */}
                         <tr className="bg-gray-100 font-bold">
                           <td colSpan={3} className="px-3 py-1 whitespace-nowrap text-xs text-right text-gray-900 border-r-2 border-gray-300">
@@ -1024,9 +1073,9 @@ export default function AddMatch({ params }: { params: { id: string } }) {
                                 const player2Wins = holeScores.filter(h => h.winner === 'player2').length;
                                 
                                 if (player1Wins > player2Wins) {
-                                  return <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]} ({player1Wins} holes)</span>;
+                                  return <span className="text-blue-600">{newMatch.player1.name.split(' ')[0]} {player1Wins - player2Wins} up</span>;
                                 } else if (player2Wins > player1Wins) {
-                                  return <span className="text-green-600">{newMatch.player2.name.split(' ')[0]} ({player2Wins} holes)</span>;
+                                  return <span className="text-green-600">{newMatch.player2.name.split(' ')[0]} {player2Wins - player1Wins} up</span>;
                                 } else {
                                     return <span className="text-gray-600">Tie</span>;
                                 }

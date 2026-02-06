@@ -7,6 +7,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { calculateEffectiveHandicap } from '@/lib/handicap';
 
+interface EventTeamMember {
+  playerId: string;
+  handicap?: number;
+  tee?: string;
+}
+
+interface EventTeam {
+  _id: string;
+  name: string;
+  members: EventTeamMember[];
+}
+
 interface Event {
   _id: string;
   name: string;
@@ -15,33 +27,58 @@ interface Event {
     _id: string;
     name: string;
   };
+  teams?: EventTeam[];
+}
+
+interface PlayerRef {
+  _id: string;
+  name: string;
+  handicap: number;
 }
 
 export default function PrintMatchCards() {
   const params = useParams();
   const [event, setEvent] = useState<Event | null>(null);
   const [matches, setMatches] = useState<MatchType[]>([]);
+  const [nameToHcp, setNameToHcp] = useState<Map<string, number>>(new Map());
+  const [nameToTee, setNameToTee] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch event data
-        const eventResponse = await fetch(`/api/events?id=${params.id}`);
-        if (!eventResponse.ok) {
-          throw new Error(`HTTP error! status: ${eventResponse.status}`);
-        }
-        const eventData = await eventResponse.json();
-        setEvent(eventData);
+        const [eventResponse, matchesResponse, playersResponse] = await Promise.all([
+          fetch(`/api/events?id=${params.id}`),
+          fetch(`/api/matches?eventId=${params.id}`),
+          fetch('/api/players')
+        ]);
 
-        // Fetch matches data
-        const matchesResponse = await fetch(`/api/matches?eventId=${params.id}`);
-        if (!matchesResponse.ok) {
-          throw new Error(`HTTP error! status: ${matchesResponse.status}`);
-        }
+        if (!eventResponse.ok) throw new Error(`HTTP error! status: ${eventResponse.status}`);
+        if (!matchesResponse.ok) throw new Error(`HTTP error! status: ${matchesResponse.status}`);
+        if (!playersResponse.ok) throw new Error(`HTTP error! status: ${playersResponse.status}`);
+
+        const eventData: Event = await eventResponse.json();
         const matchesData = await matchesResponse.json();
+        const playersData: PlayerRef[] = await playersResponse.json();
+
+        setEvent(eventData);
         setMatches(matchesData);
+
+        const playerById = new Map(playersData.map((p) => [p._id, p]));
+        const hcpByName = new Map<string, number>();
+        const teeByName = new Map<string, string>();
+        eventData.teams?.forEach((team) => {
+          team.members?.forEach((member) => {
+            const player = member.playerId ? playerById.get(member.playerId) : undefined;
+            if (player?.name == null) return;
+            const hcp = member.handicap ?? player?.handicap;
+            if (hcp != null) hcpByName.set(player.name, hcp);
+            if (member.tee) teeByName.set(player.name, member.tee);
+          });
+        });
+        setNameToHcp(hcpByName);
+        setNameToTee(teeByName);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError(error instanceof Error ? error.message : 'Failed to load data');
@@ -132,38 +169,62 @@ export default function PrintMatchCards() {
                 <div className="grid grid-cols-2 gap-1.5 mt-0.5">
                   {/* Player 1 */}
                   <div className="border border-gray-200 rounded-lg p-1">
-                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player1.name}</h3>
-                    <p className="text-xs text-black leading-snug">Team: {match.player1.teamName} | P_HCP: {match.player1.handicap}</p>
+                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player1.name} <span className="font-normal">({match.player1.handicapIndex ?? nameToHcp.get(match.player1.name) ?? '–'})</span></h3>
+                    <p className="text-xs text-black leading-snug">
+                      {match.player1.teamName?.trim() && match.player1.teamName !== '-' && <>Team: {match.player1.teamName} | </>}
+                      Tee: {nameToTee.get(match.player1.name) ?? '–'} | P_HCP: {match.player1.handicap}
+                    </p>
                     <div className="mt-0.5">
-                      <table className="w-full text-xs">
+                      <table className="w-full text-xs border-collapse border border-gray-300">
                         <thead>
                           <tr>
-                            <th className="text-left text-black py-0.5">HOLE</th>
-                            <th className="text-left text-black py-0.5">PAR</th>
-                            <th className="text-left text-black py-0.5">HCP</th>
-                            <th className="text-left text-black py-0.5">EFF HCP</th>
-                            <th className="text-left text-black py-0.5">Score</th>
-                            <th className="text-left text-black py-0.5">1 Putt</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">HOLE</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">PAR</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">HCP</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">Ad. Strokes</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {match.holes.map((hole) => {
-                            const [player1EffHcp, _] = calculateEffectiveHandicap(
-                              match.player1.handicap,
-                              match.player2.handicap,
-                              hole.handicap
-                            );
-                            return (
-                              <tr key={hole.hole} className="h-3.5">
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.hole}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.par}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.handicap}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{player1EffHcp}</td>
-                                <td className="border-b border-gray-200 py-0.5"></td>
-                                <td className="border-b border-gray-200 py-0.5"></td>
+                          {(() => {
+                            const frontNine = match.holes.slice(0, 9);
+                            const backNine = match.holes.slice(9, 18);
+                            const getP1Eff = (hole: typeof match.holes[0]) => calculateEffectiveHandicap(match.player1.handicap, match.player2.handicap, hole.handicap)[0];
+                            const frontPar = frontNine.reduce((s, h) => s + h.par, 0);
+                            const backPar = backNine.reduce((s, h) => s + h.par, 0);
+                            const frontStrokes = frontNine.reduce((s, h) => s + getP1Eff(h), 0);
+                            const backStrokes = backNine.reduce((s, h) => s + getP1Eff(h), 0);
+                            const summaryRow = (label: string, par: number, strokes: number) => (
+                              <tr key={label} className="h-3 bg-gray-100 font-semibold">
+                                <td className="text-black py-px px-0.5 border border-gray-300">{label}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300"></td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{strokes}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
                               </tr>
                             );
-                          })}
+                            const holeRow = (hole: typeof match.holes[0]) => (
+                              <tr key={hole.hole} className="h-3">
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.hole}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.handicap}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{getP1Eff(hole)}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                              </tr>
+                            );
+                            return (
+                              <>
+                                {frontNine.map(holeRow)}
+                                {summaryRow('Out', frontPar, frontStrokes)}
+                                {backNine.map(holeRow)}
+                                {summaryRow('In', backPar, backStrokes)}
+                                {summaryRow('TOT', frontPar + backPar, frontStrokes + backStrokes)}
+                              </>
+                            );
+                          })()}
                         </tbody>
                       </table>
                     </div>
@@ -171,38 +232,62 @@ export default function PrintMatchCards() {
                   
                   {/* Player 2 */}
                   <div className="border border-gray-200 rounded-lg p-1">
-                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player2.name}</h3>
-                    <p className="text-xs text-black leading-snug">Team: {match.player2.teamName} | P_HCP: {match.player2.handicap}</p>
+                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player2.name} <span className="font-normal">({match.player2.handicapIndex ?? nameToHcp.get(match.player2.name) ?? '–'})</span></h3>
+                    <p className="text-xs text-black leading-snug">
+                      {match.player2.teamName?.trim() && match.player2.teamName !== '-' && <>Team: {match.player2.teamName} | </>}
+                      Tee: {nameToTee.get(match.player2.name) ?? '–'} | P_HCP: {match.player2.handicap}
+                    </p>
                     <div className="mt-0.5">
-                      <table className="w-full text-xs">
+                      <table className="w-full text-xs border-collapse border border-gray-300">
                         <thead>
                           <tr>
-                            <th className="text-left text-black py-0.5">HOLE</th>
-                            <th className="text-left text-black py-0.5">PAR</th>
-                            <th className="text-left text-black py-0.5">HCP</th>
-                            <th className="text-left text-black py-0.5">EFF HCP</th>
-                            <th className="text-left text-black py-0.5">Score</th>
-                            <th className="text-left text-black py-0.5">1 Putt</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">HOLE</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">PAR</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">HCP</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">Ad. Strokes</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {match.holes.map((hole) => {
-                            const [_, player2EffHcp] = calculateEffectiveHandicap(
-                              match.player1.handicap,
-                              match.player2.handicap,
-                              hole.handicap
-                            );
-                            return (
-                              <tr key={hole.hole} className="h-3.5">
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.hole}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.par}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.handicap}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{player2EffHcp}</td>
-                                <td className="border-b border-gray-200 py-0.5"></td>
-                                <td className="border-b border-gray-200 py-0.5"></td>
+                          {(() => {
+                            const frontNine = match.holes.slice(0, 9);
+                            const backNine = match.holes.slice(9, 18);
+                            const getP2Eff = (hole: typeof match.holes[0]) => calculateEffectiveHandicap(match.player1.handicap, match.player2.handicap, hole.handicap)[1];
+                            const frontPar = frontNine.reduce((s, h) => s + h.par, 0);
+                            const backPar = backNine.reduce((s, h) => s + h.par, 0);
+                            const frontStrokes = frontNine.reduce((s, h) => s + getP2Eff(h), 0);
+                            const backStrokes = backNine.reduce((s, h) => s + getP2Eff(h), 0);
+                            const summaryRow = (label: string, par: number, strokes: number) => (
+                              <tr key={label} className="h-3 bg-gray-100 font-semibold">
+                                <td className="text-black py-px px-0.5 border border-gray-300">{label}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300"></td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{strokes}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
                               </tr>
                             );
-                          })}
+                            const holeRow = (hole: typeof match.holes[0]) => (
+                              <tr key={hole.hole} className="h-3">
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.hole}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.handicap}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{getP2Eff(hole)}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                              </tr>
+                            );
+                            return (
+                              <>
+                                {frontNine.map(holeRow)}
+                                {summaryRow('Out', frontPar, frontStrokes)}
+                                {backNine.map(holeRow)}
+                                {summaryRow('In', backPar, backStrokes)}
+                                {summaryRow('TOT', frontPar + backPar, frontStrokes + backStrokes)}
+                              </>
+                            );
+                          })()}
                         </tbody>
                       </table>
                     </div>

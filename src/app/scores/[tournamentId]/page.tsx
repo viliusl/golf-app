@@ -219,8 +219,8 @@ export default function PublicTournamentScorecard() {
       const player2Strokes = match.holes?.reduce((sum, h) => sum + (h.player2Score || 0), 0) || 0;
       
       // Calculate net scores
-      const player1NetScore = player1Strokes - coursePar + (match.player1.handicap || 0);
-      const player2NetScore = player2Strokes - coursePar + (match.player2.handicap || 0);
+      const player1NetScore = player1Strokes - (coursePar + (match.player1.handicap || 0));
+      const player2NetScore = player2Strokes - (coursePar + (match.player2.handicap || 0));
 
       const team1 = teamScoreMap.get(match.player1.teamName);
       if (team1) {
@@ -333,9 +333,9 @@ export default function PublicTournamentScorecard() {
         const player1Strokes = match.holes?.reduce((sum, h) => sum + (h.player1Score || 0), 0) || 0;
         const player2Strokes = match.holes?.reduce((sum, h) => sum + (h.player2Score || 0), 0) || 0;
         
-        // Calculate net score: Strokes - PAR + Handicap
-        const player1NetScore = player1Strokes - coursePar + (match.player1.handicap || 0);
-        const player2NetScore = player2Strokes - coursePar + (match.player2.handicap || 0);
+        // Calculate net score: Strokes - (PAR + Handicap)
+        const player1NetScore = player1Strokes - (coursePar + (match.player1.handicap || 0));
+        const player2NetScore = player2Strokes - (coursePar + (match.player2.handicap || 0));
 
         // Process player 1
         const player1Key = match.player1.name;
