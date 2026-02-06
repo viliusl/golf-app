@@ -169,21 +169,21 @@ export default function PrintMatchCards() {
                 <div className="grid grid-cols-2 gap-1.5 mt-0.5">
                   {/* Player 1 */}
                   <div className="border border-gray-200 rounded-lg p-1">
-                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player1.name}</h3>
+                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player1.name} <span className="font-normal">({match.player1.handicapIndex ?? nameToHcp.get(match.player1.name) ?? '–'})</span></h3>
                     <p className="text-xs text-black leading-snug">
                       {match.player1.teamName?.trim() && match.player1.teamName !== '-' && <>Team: {match.player1.teamName} | </>}
-                      Tee: {nameToTee.get(match.player1.name) ?? '–'} | HCP: {match.player1.handicapIndex ?? nameToHcp.get(match.player1.name) ?? '–'} | P_HCP: {match.player1.handicap}
+                      Tee: {nameToTee.get(match.player1.name) ?? '–'} | P_HCP: {match.player1.handicap}
                     </p>
                     <div className="mt-0.5">
-                      <table className="w-full text-xs">
+                      <table className="w-full text-xs border-collapse border border-gray-300">
                         <thead>
                           <tr>
-                            <th className="text-left text-black py-0.5">HOLE</th>
-                            <th className="text-left text-black py-0.5">PAR</th>
-                            <th className="text-left text-black py-0.5">HCP</th>
-                            <th className="text-left text-black py-0.5">EFF HCP</th>
-                            <th className="text-left text-black py-0.5">Score</th>
-                            <th className="text-left text-black py-0.5">1 Putt</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">HOLE</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">PAR</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">HCP</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">Ad. Strokes</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -195,12 +195,12 @@ export default function PrintMatchCards() {
                             );
                             return (
                               <tr key={hole.hole} className="h-3.5">
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.hole}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.par}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.handicap}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{player1EffHcp}</td>
-                                <td className="border-b border-gray-200 py-0.5"></td>
-                                <td className="border-b border-gray-200 py-0.5"></td>
+                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.hole}</td>
+                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.par}</td>
+                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.handicap}</td>
+                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{player1EffHcp}</td>
+                                <td className="py-0.5 px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-0.5 px-0.5 border border-gray-300 bg-green-50"></td>
                               </tr>
                             );
                           })}
@@ -211,21 +211,21 @@ export default function PrintMatchCards() {
                   
                   {/* Player 2 */}
                   <div className="border border-gray-200 rounded-lg p-1">
-                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player2.name}</h3>
+                    <h3 className="font-semibold text-xs text-black leading-snug">{match.player2.name} <span className="font-normal">({match.player2.handicapIndex ?? nameToHcp.get(match.player2.name) ?? '–'})</span></h3>
                     <p className="text-xs text-black leading-snug">
                       {match.player2.teamName?.trim() && match.player2.teamName !== '-' && <>Team: {match.player2.teamName} | </>}
-                      Tee: {nameToTee.get(match.player2.name) ?? '–'} | HCP: {match.player2.handicapIndex ?? nameToHcp.get(match.player2.name) ?? '–'} | P_HCP: {match.player2.handicap}
+                      Tee: {nameToTee.get(match.player2.name) ?? '–'} | P_HCP: {match.player2.handicap}
                     </p>
                     <div className="mt-0.5">
-                      <table className="w-full text-xs">
+                      <table className="w-full text-xs border-collapse border border-gray-300">
                         <thead>
                           <tr>
-                            <th className="text-left text-black py-0.5">HOLE</th>
-                            <th className="text-left text-black py-0.5">PAR</th>
-                            <th className="text-left text-black py-0.5">HCP</th>
-                            <th className="text-left text-black py-0.5">EFF HCP</th>
-                            <th className="text-left text-black py-0.5">Score</th>
-                            <th className="text-left text-black py-0.5">1 Putt</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">HOLE</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">PAR</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">HCP</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">Ad. Strokes</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
+                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -237,12 +237,12 @@ export default function PrintMatchCards() {
                             );
                             return (
                               <tr key={hole.hole} className="h-3.5">
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.hole}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.par}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{hole.handicap}</td>
-                                <td className="text-black py-0.5 border-b border-gray-200">{player2EffHcp}</td>
-                                <td className="border-b border-gray-200 py-0.5"></td>
-                                <td className="border-b border-gray-200 py-0.5"></td>
+                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.hole}</td>
+                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.par}</td>
+                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.handicap}</td>
+                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{player2EffHcp}</td>
+                                <td className="py-0.5 px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-0.5 px-0.5 border border-gray-300 bg-green-50"></td>
                               </tr>
                             );
                           })}
