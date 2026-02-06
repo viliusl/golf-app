@@ -946,6 +946,14 @@ export default function EventDetails({ params }: { params: { id: string } }) {
                 )}
               </p>
             </div>
+            {event?.tournamentId && (
+              <Link
+                href={`/scores/${event.tournamentId}/events/${params.id}`}
+                className="bg-brand text-white py-2 px-4 rounded-md hover:bg-brand/90 transition-colors"
+              >
+                View Leaderboard
+              </Link>
+            )}
           </div>
         </div>
 
