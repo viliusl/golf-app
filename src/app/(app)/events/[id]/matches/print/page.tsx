@@ -178,32 +178,53 @@ export default function PrintMatchCards() {
                       <table className="w-full text-xs border-collapse border border-gray-300">
                         <thead>
                           <tr>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">HOLE</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">PAR</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">HCP</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">Ad. Strokes</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">HOLE</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">PAR</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">HCP</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">Ad. Strokes</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {match.holes.map((hole) => {
-                            const [player1EffHcp, _] = calculateEffectiveHandicap(
-                              match.player1.handicap,
-                              match.player2.handicap,
-                              hole.handicap
-                            );
-                            return (
-                              <tr key={hole.hole} className="h-3.5">
-                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.hole}</td>
-                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.par}</td>
-                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.handicap}</td>
-                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{player1EffHcp}</td>
-                                <td className="py-0.5 px-0.5 border border-gray-300 bg-green-50"></td>
-                                <td className="py-0.5 px-0.5 border border-gray-300 bg-green-50"></td>
+                          {(() => {
+                            const frontNine = match.holes.slice(0, 9);
+                            const backNine = match.holes.slice(9, 18);
+                            const getP1Eff = (hole: typeof match.holes[0]) => calculateEffectiveHandicap(match.player1.handicap, match.player2.handicap, hole.handicap)[0];
+                            const frontPar = frontNine.reduce((s, h) => s + h.par, 0);
+                            const backPar = backNine.reduce((s, h) => s + h.par, 0);
+                            const frontStrokes = frontNine.reduce((s, h) => s + getP1Eff(h), 0);
+                            const backStrokes = backNine.reduce((s, h) => s + getP1Eff(h), 0);
+                            const summaryRow = (label: string, par: number, strokes: number) => (
+                              <tr key={label} className="h-3 bg-gray-100 font-semibold">
+                                <td className="text-black py-px px-0.5 border border-gray-300">{label}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300"></td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{strokes}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
                               </tr>
                             );
-                          })}
+                            const holeRow = (hole: typeof match.holes[0]) => (
+                              <tr key={hole.hole} className="h-3">
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.hole}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.handicap}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{getP1Eff(hole)}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                              </tr>
+                            );
+                            return (
+                              <>
+                                {frontNine.map(holeRow)}
+                                {summaryRow('Out', frontPar, frontStrokes)}
+                                {backNine.map(holeRow)}
+                                {summaryRow('In', backPar, backStrokes)}
+                                {summaryRow('TOT', frontPar + backPar, frontStrokes + backStrokes)}
+                              </>
+                            );
+                          })()}
                         </tbody>
                       </table>
                     </div>
@@ -220,32 +241,53 @@ export default function PrintMatchCards() {
                       <table className="w-full text-xs border-collapse border border-gray-300">
                         <thead>
                           <tr>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">HOLE</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">PAR</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">HCP</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300">Ad. Strokes</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
-                            <th className="text-left text-black py-0.5 px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">HOLE</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">PAR</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">HCP</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300">Ad. Strokes</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {match.holes.map((hole) => {
-                            const [_, player2EffHcp] = calculateEffectiveHandicap(
-                              match.player1.handicap,
-                              match.player2.handicap,
-                              hole.handicap
-                            );
-                            return (
-                              <tr key={hole.hole} className="h-3.5">
-                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.hole}</td>
-                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.par}</td>
-                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{hole.handicap}</td>
-                                <td className="text-black py-0.5 px-0.5 border border-gray-300">{player2EffHcp}</td>
-                                <td className="py-0.5 px-0.5 border border-gray-300 bg-green-50"></td>
-                                <td className="py-0.5 px-0.5 border border-gray-300 bg-green-50"></td>
+                          {(() => {
+                            const frontNine = match.holes.slice(0, 9);
+                            const backNine = match.holes.slice(9, 18);
+                            const getP2Eff = (hole: typeof match.holes[0]) => calculateEffectiveHandicap(match.player1.handicap, match.player2.handicap, hole.handicap)[1];
+                            const frontPar = frontNine.reduce((s, h) => s + h.par, 0);
+                            const backPar = backNine.reduce((s, h) => s + h.par, 0);
+                            const frontStrokes = frontNine.reduce((s, h) => s + getP2Eff(h), 0);
+                            const backStrokes = backNine.reduce((s, h) => s + getP2Eff(h), 0);
+                            const summaryRow = (label: string, par: number, strokes: number) => (
+                              <tr key={label} className="h-3 bg-gray-100 font-semibold">
+                                <td className="text-black py-px px-0.5 border border-gray-300">{label}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300"></td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{strokes}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
                               </tr>
                             );
-                          })}
+                            const holeRow = (hole: typeof match.holes[0]) => (
+                              <tr key={hole.hole} className="h-3">
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.hole}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{hole.handicap}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300">{getP2Eff(hole)}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                              </tr>
+                            );
+                            return (
+                              <>
+                                {frontNine.map(holeRow)}
+                                {summaryRow('Out', frontPar, frontStrokes)}
+                                {backNine.map(holeRow)}
+                                {summaryRow('In', backPar, backStrokes)}
+                                {summaryRow('TOT', frontPar + backPar, frontStrokes + backStrokes)}
+                              </>
+                            );
+                          })()}
                         </tbody>
                       </table>
                     </div>
