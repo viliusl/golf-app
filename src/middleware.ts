@@ -11,6 +11,7 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/_next') || 
     request.nextUrl.pathname.includes('/public/') ||
     request.nextUrl.pathname === '/favicon.ico' ||
+    /\.(svg|png|jpg|jpeg|gif|ico|webp|css|js|woff|woff2|ttf|eot)$/.test(request.nextUrl.pathname) ||
     request.nextUrl.pathname === '/scores' || 
     request.nextUrl.pathname.startsWith('/scores/') ||
     // Allow API routes needed for public scorecard
