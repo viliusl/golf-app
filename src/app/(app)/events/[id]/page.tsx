@@ -813,14 +813,16 @@ export default function EventDetails({ params }: { params: { id: string } }) {
               teamName: shuffledPlayers[i].teamName,
               score: 0,
               holeWins: 0,
-              handicap: shuffledPlayers[i].handicap
+              handicap: shuffledPlayers[i].handicap,
+              handicapIndex: shuffledPlayers[i].handicap
             },
             player2: {
               name: shuffledPlayers[j].name,
               teamName: shuffledPlayers[j].teamName,
               score: 0,
               holeWins: 0,
-              handicap: shuffledPlayers[j].handicap
+              handicap: shuffledPlayers[j].handicap,
+              handicapIndex: shuffledPlayers[j].handicap
             },
             teeTime: new Date().toISOString(),
             tee: 1,

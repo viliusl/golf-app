@@ -484,17 +484,21 @@ export default function AddMatch({ params }: { params: { id: string } }) {
       const player2PuttCount = validatedHoleScores.filter(h => h.player2Putt).length;
       
       // Prepare match data
+      const p1Opt = playerOptions.find(p => p.name === newMatch.player1.name);
+      const p2Opt = playerOptions.find(p => p.name === newMatch.player2.name);
       const matchData = {
         eventId: params.id,
         player1: {
           ...newMatch.player1,
           putts: player1PuttCount,
-          handicap: playerOptions.find(p => p.name === newMatch.player1.name)?.playingHandicap || 0
+          handicap: p1Opt?.playingHandicap || 0,
+          handicapIndex: p1Opt?.handicapIndex
         },
         player2: {
           ...newMatch.player2,
           putts: player2PuttCount,
-          handicap: playerOptions.find(p => p.name === newMatch.player2.name)?.playingHandicap || 0
+          handicap: p2Opt?.playingHandicap || 0,
+          handicapIndex: p2Opt?.handicapIndex
         },
         teeTime: newMatch.teeTime,
         tee: newMatch.tee,

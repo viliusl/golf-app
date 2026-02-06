@@ -7,6 +7,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { calculateEffectiveHandicap } from '@/lib/handicap';
 
+interface EventTeamMember {
+  playerId: string;
+  handicap?: number;
+  tee?: string;
+}
+
+interface EventTeam {
+  _id: string;
+  name: string;
+  members: EventTeamMember[];
+}
+
 interface Event {
   _id: string;
   name: string;
@@ -15,33 +27,58 @@ interface Event {
     _id: string;
     name: string;
   };
+  teams?: EventTeam[];
+}
+
+interface PlayerRef {
+  _id: string;
+  name: string;
+  handicap: number;
 }
 
 export default function PrintMatchCards() {
   const params = useParams();
   const [event, setEvent] = useState<Event | null>(null);
   const [matches, setMatches] = useState<MatchType[]>([]);
+  const [nameToHcp, setNameToHcp] = useState<Map<string, number>>(new Map());
+  const [nameToTee, setNameToTee] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch event data
-        const eventResponse = await fetch(`/api/events?id=${params.id}`);
-        if (!eventResponse.ok) {
-          throw new Error(`HTTP error! status: ${eventResponse.status}`);
-        }
-        const eventData = await eventResponse.json();
-        setEvent(eventData);
+        const [eventResponse, matchesResponse, playersResponse] = await Promise.all([
+          fetch(`/api/events?id=${params.id}`),
+          fetch(`/api/matches?eventId=${params.id}`),
+          fetch('/api/players')
+        ]);
 
-        // Fetch matches data
-        const matchesResponse = await fetch(`/api/matches?eventId=${params.id}`);
-        if (!matchesResponse.ok) {
-          throw new Error(`HTTP error! status: ${matchesResponse.status}`);
-        }
+        if (!eventResponse.ok) throw new Error(`HTTP error! status: ${eventResponse.status}`);
+        if (!matchesResponse.ok) throw new Error(`HTTP error! status: ${matchesResponse.status}`);
+        if (!playersResponse.ok) throw new Error(`HTTP error! status: ${playersResponse.status}`);
+
+        const eventData: Event = await eventResponse.json();
         const matchesData = await matchesResponse.json();
+        const playersData: PlayerRef[] = await playersResponse.json();
+
+        setEvent(eventData);
         setMatches(matchesData);
+
+        const playerById = new Map(playersData.map((p) => [p._id, p]));
+        const hcpByName = new Map<string, number>();
+        const teeByName = new Map<string, string>();
+        eventData.teams?.forEach((team) => {
+          team.members?.forEach((member) => {
+            const player = member.playerId ? playerById.get(member.playerId) : undefined;
+            if (player?.name == null) return;
+            const hcp = member.handicap ?? player?.handicap;
+            if (hcp != null) hcpByName.set(player.name, hcp);
+            if (member.tee) teeByName.set(player.name, member.tee);
+          });
+        });
+        setNameToHcp(hcpByName);
+        setNameToTee(teeByName);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError(error instanceof Error ? error.message : 'Failed to load data');
@@ -133,7 +170,10 @@ export default function PrintMatchCards() {
                   {/* Player 1 */}
                   <div className="border border-gray-200 rounded-lg p-1">
                     <h3 className="font-semibold text-xs text-black leading-snug">{match.player1.name}</h3>
-                    <p className="text-xs text-black leading-snug">Team: {match.player1.teamName} | P_HCP: {match.player1.handicap}</p>
+                    <p className="text-xs text-black leading-snug">
+                      {match.player1.teamName?.trim() && match.player1.teamName !== '-' && <>Team: {match.player1.teamName} | </>}
+                      Tee: {nameToTee.get(match.player1.name) ?? '–'} | HCP: {match.player1.handicapIndex ?? nameToHcp.get(match.player1.name) ?? '–'} | P_HCP: {match.player1.handicap}
+                    </p>
                     <div className="mt-0.5">
                       <table className="w-full text-xs">
                         <thead>
@@ -172,7 +212,10 @@ export default function PrintMatchCards() {
                   {/* Player 2 */}
                   <div className="border border-gray-200 rounded-lg p-1">
                     <h3 className="font-semibold text-xs text-black leading-snug">{match.player2.name}</h3>
-                    <p className="text-xs text-black leading-snug">Team: {match.player2.teamName} | P_HCP: {match.player2.handicap}</p>
+                    <p className="text-xs text-black leading-snug">
+                      {match.player2.teamName?.trim() && match.player2.teamName !== '-' && <>Team: {match.player2.teamName} | </>}
+                      Tee: {nameToTee.get(match.player2.name) ?? '–'} | HCP: {match.player2.handicapIndex ?? nameToHcp.get(match.player2.name) ?? '–'} | P_HCP: {match.player2.handicap}
+                    </p>
                     <div className="mt-0.5">
                       <table className="w-full text-xs">
                         <thead>
