@@ -196,13 +196,13 @@ export default function PrintMatchCards() {
                             const frontStrokes = frontNine.reduce((s, h) => s + getP1Eff(h), 0);
                             const backStrokes = backNine.reduce((s, h) => s + getP1Eff(h), 0);
                             const summaryRow = (label: string, par: number, strokes: number) => (
-                              <tr key={label} className="h-3 bg-gray-100 font-semibold">
-                                <td className="text-black py-px px-0.5 border border-gray-300">{label}</td>
-                                <td className="text-black py-px px-0.5 border border-gray-300">{par}</td>
-                                <td className="text-black py-px px-0.5 border border-gray-300"></td>
-                                <td className="text-black py-px px-0.5 border border-gray-300">{strokes}</td>
-                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
-                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                              <tr key={label} className="h-3 bg-gray-200 font-semibold">
+                                <td className="text-black py-px px-0.5 border border-gray-300 bg-gray-200">{label}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300 bg-gray-200">{par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300 bg-gray-200"></td>
+                                <td className="text-black py-px px-0.5 border border-gray-300 bg-gray-200">{strokes}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-gray-200"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-gray-200"></td>
                               </tr>
                             );
                             const holeRow = (hole: typeof match.holes[0]) => (
@@ -245,8 +245,8 @@ export default function PrintMatchCards() {
                             <th className="text-left text-black py-px px-0.5 border border-gray-300">PAR</th>
                             <th className="text-left text-black py-px px-0.5 border border-gray-300">HCP</th>
                             <th className="text-left text-black py-px px-0.5 border border-gray-300">Ad. Strokes</th>
-                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">Score</th>
-                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-green-50 text-green-800">1 Putt</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-red-50 text-red-800">Score</th>
+                            <th className="text-left text-black py-px px-0.5 border border-gray-300 bg-red-50 text-red-800">1 Putt</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -259,13 +259,13 @@ export default function PrintMatchCards() {
                             const frontStrokes = frontNine.reduce((s, h) => s + getP2Eff(h), 0);
                             const backStrokes = backNine.reduce((s, h) => s + getP2Eff(h), 0);
                             const summaryRow = (label: string, par: number, strokes: number) => (
-                              <tr key={label} className="h-3 bg-gray-100 font-semibold">
-                                <td className="text-black py-px px-0.5 border border-gray-300">{label}</td>
-                                <td className="text-black py-px px-0.5 border border-gray-300">{par}</td>
-                                <td className="text-black py-px px-0.5 border border-gray-300"></td>
-                                <td className="text-black py-px px-0.5 border border-gray-300">{strokes}</td>
-                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
-                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                              <tr key={label} className="h-3 bg-gray-200 font-semibold">
+                                <td className="text-black py-px px-0.5 border border-gray-300 bg-gray-200">{label}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300 bg-gray-200">{par}</td>
+                                <td className="text-black py-px px-0.5 border border-gray-300 bg-gray-200"></td>
+                                <td className="text-black py-px px-0.5 border border-gray-300 bg-gray-200">{strokes}</td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-gray-200"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-gray-200"></td>
                               </tr>
                             );
                             const holeRow = (hole: typeof match.holes[0]) => (
@@ -274,8 +274,8 @@ export default function PrintMatchCards() {
                                 <td className="text-black py-px px-0.5 border border-gray-300">{hole.par}</td>
                                 <td className="text-black py-px px-0.5 border border-gray-300">{hole.handicap}</td>
                                 <td className="text-black py-px px-0.5 border border-gray-300">{getP2Eff(hole)}</td>
-                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
-                                <td className="py-px px-0.5 border border-gray-300 bg-green-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-red-50"></td>
+                                <td className="py-px px-0.5 border border-gray-300 bg-red-50"></td>
                               </tr>
                             );
                             return (
@@ -330,7 +330,7 @@ export default function PrintMatchCards() {
             .print-section tr {
               page-break-inside: avoid;
             }
-            .print-logo {
+            .print-section, .print-section * {
               print-color-adjust: exact;
               -webkit-print-color-adjust: exact;
             }

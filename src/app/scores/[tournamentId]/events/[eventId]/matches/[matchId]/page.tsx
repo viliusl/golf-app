@@ -377,14 +377,14 @@ export default function PublicMatchView() {
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">{label}</td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-500 border-r border-gray-200"></td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 border-r-2 border-gray-300">{parSum}</td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">{p1StrokesSum || ''}</td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">{p1PuttCount || ''}</td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">{p1EffSum}</td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-green-600 text-center bg-blue-50 border-r-2 border-gray-300">{p1ScoreSum || ''}</td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">{p2StrokesSum || ''}</td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">{p2PuttCount || ''}</td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">{p2EffSum}</td>
-                          <td className="px-3 py-1 whitespace-nowrap text-xs text-green-600 text-center bg-green-50 border-r-2 border-gray-300">{p2ScoreSum || ''}</td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">{p1StrokesSum || ''}</td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">{p1PuttCount || ''}</td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">{p1EffSum}</td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-green-600 text-center border-r-2 border-gray-300">{p1ScoreSum || ''}</td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">{p2StrokesSum || ''}</td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">{p2PuttCount || ''}</td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">{p2EffSum}</td>
+                          <td className="px-3 py-1 whitespace-nowrap text-xs text-green-600 text-center border-r-2 border-gray-300">{p2ScoreSum || ''}</td>
                           <td className="px-3 py-1 whitespace-nowrap text-xs text-center"></td>
                         </tr>
                       );
@@ -401,18 +401,20 @@ export default function PublicMatchView() {
                   })()}
                   
                   {/* Totals row */}
-                  <tr className="bg-gray-100 font-bold">
-                    <td colSpan={3} className="px-3 py-1 whitespace-nowrap text-xs text-right text-gray-900 border-r-2 border-gray-300">
-                      Total:
+                  <tr className="bg-gray-200 font-bold">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 border-r border-gray-200">Total</td>
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-500 border-r border-gray-200"></td>
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 border-r-2 border-gray-300">
+                      {match.holes.reduce((s, h) => s + h.par, 0)}
                     </td>
                     {/* Player 1 totals */}
-                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">
                       {match.holes.reduce((total, hole) => total + (hole.player1Score || 0), 0)}
                     </td>
-                    <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 bg-blue-50 border-r border-gray-200">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 border-r border-gray-200">
                       {match.holes.filter(h => h.player1Putt).length}
                     </td>
-                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r border-gray-200">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">
                       {match.holes.reduce((total, hole) => {
                         const [player1EffHcp, _] = calculateEffectiveHandicap(
                           match.player1.handicap || 0,
@@ -422,18 +424,18 @@ export default function PublicMatchView() {
                         return total + player1EffHcp;
                       }, 0)}
                     </td>
-                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-blue-50 border-r-2 border-gray-300 text-green-600">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r-2 border-gray-300 text-green-600">
                       {match.player1.score}
                     </td>
                     
                     {/* Player 2 totals */}
-                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">
                       {match.holes.reduce((total, hole) => total + (hole.player2Score || 0), 0)}
                     </td>
-                    <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 bg-green-50 border-r border-gray-200">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-center text-gray-900 border-r border-gray-200">
                       {match.holes.filter(h => h.player2Putt).length}
                     </td>
-                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r border-gray-200">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r border-gray-200">
                       {match.holes.reduce((total, hole) => {
                         const [_, player2EffHcp] = calculateEffectiveHandicap(
                           match.player1.handicap || 0,
@@ -443,7 +445,7 @@ export default function PublicMatchView() {
                         return total + player2EffHcp;
                       }, 0)}
                     </td>
-                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center bg-green-50 border-r-2 border-gray-300 text-green-600">
+                    <td className="px-3 py-1 whitespace-nowrap text-xs text-gray-900 text-center border-r-2 border-gray-300 text-green-600">
                       {match.player2.score}
                     </td>
                     
